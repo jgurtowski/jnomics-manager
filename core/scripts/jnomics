@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+# TODO: First check should be for a $JNOMICS_HOME; if that's not set then look at the paths.
+
+bin=$(dirname "$0")
+bin=$(cd "$bin"; pwd)
+
+if [ -z "$(which hadoop)" ]
+then
+	echo "Jnomics cannot find the hadoop command. Please verify that Hadoop is installed and included in your command path." 1>&2
+	exit 1
+fi
+
+if [ -e ./jnomics.jar ]
+then
+	JNOMICS_JAR=$PWD/jnomics.jar
+	
+	IFS=$(echo -en "\n\r")
+	hadoop jar $JNOMICS_JAR $@
+fi
+

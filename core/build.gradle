@@ -1,0 +1,17 @@
+
+
+repositories {
+ mavenCentral()
+}
+
+dependencies{
+ compile 'org.apache.hadoop:hadoop-core:0.20.2'
+ compile 'org.apache.hadoop:hadoop-tools:0.20.2'
+ compile 'commons-logging:commons-logging:1.1.1'
+ compile 'commons-cli:commons-cli:1.2'
+ compile fileTree(dir:'lib', include: '*.jar')
+}
+
+jar {
+ baseName 'jnomics-core'
+}

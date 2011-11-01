@@ -1,0 +1,28 @@
+
+subprojects{
+	
+	apply plugin: 'java'
+	apply plugin: 'eclipse'
+
+	jar{
+		manifest.attributes provider: 'gradle'
+	}	
+}
+
+Project toolsProject = project(':tools')
+
+gradle.taskGraph.afterTask { task ->
+  if(task.getPath() == ':tools:build'){
+   copy{
+	from 'tools/build/libs/jnomics-tools.jar'
+	into '.'
+   }
+  }
+}
+
+
+gradle.taskGraph.afterTask { task ->
+  if(task.getPath() == ':tools:clean'){
+    delete 'jnomics-tools.jar'
+  }	
+}

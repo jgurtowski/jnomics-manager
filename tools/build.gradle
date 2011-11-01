@@ -1,0 +1,26 @@
+repositories {
+ mavenCentral()
+}
+
+Project jnomicsCore = project(':core')
+
+dependencies {
+	compile jnomicsCore
+	compile 'org.apache.hadoop:hadoop-core:0.20.2'
+	compile 'org.apache.hadoop:hadoop-tools:0.20.2'
+	compile 'commons-logging:commons-logging:1.1.1'
+	compile 'commons-cli:commons-cli:1.2'
+}
+
+
+jar {
+    baseName 'jnomics-tools'
+    from {
+    	 jnomicsCore.fileTree(jnomicsCore.getProperties()["sourceSets"]["main"].getOutput().getClassesDir())
+   }
+   from {
+     jnomicsCore.file('lib').listFiles().findAll{
+  	    it.name.endsWith('.jar')}.collect{ zipTree(it) }
+
+   }
+}
