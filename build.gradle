@@ -20,6 +20,10 @@ gradle.taskGraph.afterTask { task ->
   }
 }
 
+task wrapper(type: Wrapper){
+     gradleVersion = '1.0-milestone-5'
+}
+
 
 gradle.taskGraph.afterTask { task ->
   if(task.getPath() == ':tools:clean'){
