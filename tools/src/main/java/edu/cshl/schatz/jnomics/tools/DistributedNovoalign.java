@@ -283,7 +283,7 @@ public class DistributedNovoalign extends DistributedBinary {
     public int run(String[] args) throws Exception {
         getJob().setReducerClass(DistributedNovoalignReducer.class);
         
-        return getJob().waitForCompletion(true) ? 0 : 1;
+        return getJob().waitForCompletion() ? 0 : 1;
     }
 
     /**

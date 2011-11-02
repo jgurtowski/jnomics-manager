@@ -14,8 +14,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.cli.Options;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
+
+import edu.cshl.schatz.jnomics.mapreduce.JnomicsTool;
 
 /**
  * Used to query default Hadoop job properties without needing to locate and
@@ -23,7 +26,35 @@ import org.apache.hadoop.mapreduce.Job;
  * 
  * @author Matthew Titmus
  */
-public class PropertyQuery {
+public class PropertyQuery extends JnomicsTool {
+    /*
+     * @see
+     * edu.cshl.schatz.jnomics.mapreduce.JnomicsTool#buildDefaultJnomicsOptions
+     * (Options, java.lang.String[])
+     */
+    @Override
+    protected Options buildDefaultJnomicsOptions(Options opts, String... exclude) {
+        return super.buildDefaultJnomicsOptions(opts, "fout", "verbose");
+    }
+
+    /*
+     * @see
+     * edu.cshl.schatz.jnomics.mapreduce.JnomicsTool#buildDefaultHadoopOptions
+     * (Options, java.lang.String[])
+     */
+    @Override
+    protected Options buildDefaultHadoopOptions(Options opts, String... exclude) {
+        return super.buildDefaultHadoopOptions(opts, "in", "out", "archives", "files");
+    }
+
+    /**
+     * Zero-argument constructor.
+     */
+    public PropertyQuery() {
+        setHelpUsage(CMD_NAME + " <all|property>");
+        setHelpHeading(CMD_DESCRIPTION);
+    }
+
     public static final String CMD_DESCRIPTION = "Query Hadoop MapReduce job properties.";
 
     public static final String CMD_NAME = "query";
@@ -96,32 +127,34 @@ public class PropertyQuery {
     }
 
     /**
+     * Convenience implementation that invokes {@link JnomicsTool}.
+     */
+    public static void main(String[] args) throws Exception {
+        JnomicsTool.run(new PropertyQuery(), args);
+    }
+
+    /**
      * TODO Add support for standard Hadoop CLI options.
      * 
      * @param args
      * @throws IOException
      */
-    public static void main(String[] args) throws IOException {
-        int exit = 1;
+    public int run(String[] args) throws IOException {
+        Configuration conf = getConf();
 
-        if (args.length != 1) {
-            System.err.printf("Syntax: %s <all|property>%n", CMD_NAME);
-            System.exit(exit);
+        if (args[0].equals("config")) {
+            dumpProperties(conf);
+        } else if (args[0].equals("vm")) {
+            dumpProperties(conf, QueryOptions.INCLUDE_VM);
+        } else if (args[0].equals("env")) {
+            dumpProperties(conf, QueryOptions.INCLUDE_VM);
+        } else if (args[0].equals("all")) {
+            dumpProperties(conf, QueryOptions.INCLUDE_VM, QueryOptions.INCLUDE_ENVIRONMENT);
         } else {
-            Configuration conf = new Job().getConfiguration();
-
-            if (args[0].equals("config")) {
-                dumpProperties(conf);
-            } else if (args[0].equals("vm")) {
-                dumpProperties(conf, QueryOptions.INCLUDE_VM);
-            } else if (args[0].equals("env")) {
-                dumpProperties(conf, QueryOptions.INCLUDE_VM);
-            } else if (args[0].equals("all")) {
-                dumpProperties(conf, QueryOptions.INCLUDE_VM, QueryOptions.INCLUDE_ENVIRONMENT);
-            } else {
-                System.out.println(conf.get(args[0], "(null)"));
-            }
+            System.out.println(conf.get(args[0], "(null)"));
         }
+
+        return STATUS_OK;
     }
 
     /**
