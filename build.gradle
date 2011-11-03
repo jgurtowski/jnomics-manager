@@ -52,12 +52,6 @@ gradle.taskGraph.afterTask { task ->
   }	
 }
 
-
-task exampleData << {
-     
-}
-
-
 task downloadExampleData {
      outzip = "example-data.zip"
      doFirst{
