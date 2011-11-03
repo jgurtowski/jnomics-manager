@@ -164,6 +164,11 @@ public enum ReadFileFormat {
         String formats = null;
 
         for (ReadFileFormat rf : ReadFileFormat.values()) {
+            // Ignore the 'empty string' format.
+            if (rf.toString().length() == 0) {
+                continue;
+            }
+            
             if (formats == null) {
                 formats = rf.toString().toLowerCase();
             } else {

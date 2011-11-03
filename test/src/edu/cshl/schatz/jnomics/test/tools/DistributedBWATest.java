@@ -30,7 +30,7 @@ public class DistributedBWATest extends TestCase {
         DistributedBWA bin = new DistributedBWA();
 
         // Does the process exit successfully?
-        assertEquals(JnomicsTool.STATUS_OK_NO_PARAMS, JnomicsTool.run(bin, new String[] {}));
+        assertEquals(JnomicsTool.STATUS_OK, JnomicsTool.run(bin, new String[] {}));
 
         // "group.name" gets set by the Hadoop framework when a distributed job
         // is executed, so it should not be null here.
