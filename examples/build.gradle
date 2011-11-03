@@ -5,6 +5,8 @@ dependencies {
 	compile jnomicsTools
 }
 
+defaultTasks ''
+
 
 jar {
     baseName 'jnomics-examples'

@@ -53,7 +53,7 @@ gradle.taskGraph.afterTask { task ->
 }
 
 
-task downloadExampleData{
+task downloadExampleData << {
      println "Downloading Jnomics Example Data"
      ant {
      	 get src:"http://www.google.com",
