@@ -1,21 +1,48 @@
 #!/usr/bin/env bash
 
-# TODO: First check should be for a $JNOMICS_HOME; if that's not set then look at the paths.
+# Jnomics command script.
+# Author: Matthew Titmus
 
-bin=$(dirname "$0")
-bin=$(cd "$bin"; pwd)
-
+# First things first. Is Hadoop around, and can we find it?
 if [ -z "$(which hadoop)" ]
 then
-	echo "Jnomics cannot find the hadoop command. Please verify that Hadoop is installed and included in your command path." 1>&2
+	echo "Jnomics cannot find the Hadoop command. Please verify that Hadoop is installed and included in your command path." 1>&2
 	exit 1
 fi
 
-if [ -e ./jnomics.jar ]
+JNOMICS_BIN=$(dirname "$0")
+JNOMICS_BIN=$(cd "$JNOMICS_BIN"; pwd)
+
+JNOMICS_ROOT=$(dirname "$JNOMICS_BIN")
+JNOMICS_CONF=$JNOMICS_ROOT/conf
+
+if [ -z "$JNOMICS_JAR" ]
 then
-	JNOMICS_JAR=$PWD/jnomics.jar
-	
-	IFS=$(echo -en "\n\r")
-	hadoop jar $JNOMICS_JAR $@
+	JNOMICS_JAR=$(find .. | grep '/jnomics-tools.*\.jar$' | tail -n 1)
 fi
 
+if [ -z "$JNOMICS_JAR" ]
+then
+	echo "Jnomics cannot find jnomics-tools.jar. Please set \$JNOMICS_JAR to indicate the jar path." 1>&2
+	exit 1
+else
+	JNOMICS_JAR=$(readlink -f $JNOMICS_JAR)
+fi
+
+if [ ! -e $JNOMICS_JAR ]
+then
+	echo "Cannot find the Jnomics tools jar (JNOMICS_JAR=$JNOMICS_JAR)." 1>&2
+	exit 1
+fi
+
+# TODO Figure out a nice way to use the configurations in $JNOMICS_CONF/jnomics_conf.xml.
+
+IFS=
+HADOOP_CONF_DIR=$JNOMICS_CONF
+for f in $JNOMICS_ROOT/jnomics-*.jar; do
+	CLASSPATH=${CLASSPATH}:$f;
+done
+
+exec hadoop jar $JNOMICS_JAR $@
+
+exit $?

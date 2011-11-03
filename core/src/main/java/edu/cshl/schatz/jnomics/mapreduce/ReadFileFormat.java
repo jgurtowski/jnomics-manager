@@ -162,7 +162,7 @@ public enum ReadFileFormat {
      */
     public static String getAvailableFormatsString() {
         String formats = null;
-
+        
         for (ReadFileFormat rf : ReadFileFormat.values()) {
             // Ignore the 'empty string' format.
             if (rf.toString().length() == 0) {
