@@ -1,43 +1,67 @@
 <?xml version="1.0"?>
 <configuration>	
+	<!-- HDFS blocksize of 256MB. Default: 67108864 (bytes). With a small cluster (6-10)
+	     and large data set, the default (64MB) block size will create a large number 
+	     of map tasks. -->
 	<property>
 		<name>dfs.block.size</name>
 		<value>268435456</value>
 	</property>
+
+	<!-- The number of NameNode server threads to handle RPCs from DataNodes. 
+	     Increase for large clusters. Sort900 used 40 for 900 nodes, sort1400 
+	     and sort2000 used 60 for 1400 and 2000 nodes, respectively. Default: 10 -->
+	<property>
+		<name>dfs.namenode.handler.count</name>
+		<value>10</value>
+	</property>
 	
+	<!-- Memory allocated for the in-memory file-system used to merge map-outputs at the reduces. -->
+	<property>
+		<name>fs.inmemory.size.mb</name>
+		<value>200</value>
+	</property>
+	
+	<!-- The number of streams to merged at once while sorting files. 
+           Hadoop default: 10. -->
 	<property>
 		<name>io.sort.factor</name>
 		<value>100</value>
-	</property>	
-	
-	<property>
-		<name>mapred.compress.map.output</name>
-		<value>true</value>
 	</property>
 
-	<property>
-		<name>mapred.min.split.size</name>
-		<value>268435456</value>
-	</property>
-
-	<property>
-		<name>mapred.reduce.parallel.copies</name>
-		<value>10</value>
-	</property>	
-	
-	<property>
-		<name>mapred.task.profile</name>
-		<value>false</value>
-	</property>
-
+	<!-- Buffer size (MBs) for sorting. For jobs with large map output (i.e., most 
+	     whole-genome sequencing jobs); this will increase the memory required by each map
+	     task, but will reduce spills to the disk, saving write to the disk. Default: 100 -->
 	<property>
 		<name>io.sort.mb</name>
 		<value>512</value>
 	</property>	
 	
+	<!-- Mapper output compression. Set to true if you're bandwidth 
+           constrained; false if you're CPU constrained. Default: false. -->
+	<property>
+		<name>mapred.compress.map.output</name>
+		<value>false</value>
+	</property>
+	
+	<!-- JVM settings for each child task. Default: -Xmx200m -->
 	<property>
 		<name>mapred.child.java.opts</name>
 		<value>-Xmx1024m</value>
+	</property>
+
+	<!-- The minimum number of bytes to assign to a split. -->
+	<property>
+		<name>mapred.min.split.size</name>
+		<value>268435456</value>
+	</property>
+
+	<!-- The number of threads used to copy map outputs to the Reducer. For large jobs 
+           in which the map output is very large, the value of this property can be 
+	     increased though it will increase thetotal CPU usage. Default: 5 -->
+	<property>
+		<name>mapred.reduce.parallel.copies</name>
+		<value>10</value>
 	</property>
 </configuration>
 		
