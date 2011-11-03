@@ -53,10 +53,25 @@ gradle.taskGraph.afterTask { task ->
 }
 
 
-task downloadExampleData << {
-     println "Downloading Jnomics Example Data"
-     ant {
-     	 get src:"http://www.google.com",
-	 dest: "google.html", verbose:"true"
-     }     
+task exampleData << {
+     
+}
+
+
+task downloadExampleData {
+     outzip = "example-data.zip"
+     doFirst{
+        println "Downloading Jnomics Example Data"
+        ant {
+          get src:"http://downloads.sourceforge.net/project/jnomics/example-data.zip?r=&ts=1320345336&use_mirror=garr",
+	  dest: outzip, verbose:"true"
+        }     
+     }
+     doLast{
+       println "Extracting Example Data to ./example-data"
+       ant {
+         unzip src:outzip, dest: "."
+       }
+       delete outzip
+     }
 }
