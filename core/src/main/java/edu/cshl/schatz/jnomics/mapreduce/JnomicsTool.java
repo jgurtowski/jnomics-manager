@@ -184,20 +184,32 @@ public abstract class JnomicsTool extends Configured implements Tool {
      * @return exit code of the {@link Tool#run(String[])} method.
      */
     public static int run(Tool tool, String[] args) throws Exception {
-        if (null == tool.getConf()) {
-            tool.setConf(new Configuration());
-        }
-
         if (tool instanceof JnomicsTool) {
             JnomicsTool jtool = (JnomicsTool) tool;
             int status;
 
             if (STATUS_OK < (status = jtool.handleParameters(args))) {
                 return status;
+            } else if (STATUS_OK > status) {
+                // Negative is a non-error exit code; return 0.
+                return STATUS_OK;
             }
         }
 
-        return tool.run(args);
+        try {
+            return tool.run(args);
+        } catch (Exception e) {
+            if (tool.getConf().getBoolean(JnomicsJob.P_VERBOSE, false)) {
+                // Flush the standard output stream first, then print the stack.
+                System.out.flush();
+                e.printStackTrace();
+            } else {
+                // Non-verbose mode. Just print the exception class and message.
+                System.err.printf("%s: %s%n", e.getClass().getName(), e.getMessage());
+            }
+
+            return STATUS_ERROR_GENERAL;
+        }
     }
 
     /*
@@ -294,12 +306,21 @@ public abstract class JnomicsTool extends Configured implements Tool {
     }
 
     /**
+     * If any options are excluded, they're kept here so the correct help menu
+     * can be build if needed.
+     */
+    protected String[] excludedHadoopOptions = new String[] {},
+            excludedJnomicsOptions = new String[] {};
+
+    /**
      * Outputs the "help" menu to the specified {@link PrintStream}.
      */
     public void printHelp(PrintStream outTo) {
         PrintWriter pw = new PrintWriter(outTo);
 
-        Options options = buildDefaultHadoopOptions(buildDefaultJnomicsOptions(getOptions()));
+        Options options = buildDefaultHadoopOptions(
+            buildDefaultJnomicsOptions(getOptions(), excludedJnomicsOptions), excludedHadoopOptions);
+
         getHelpFormatter().printHelp(
             pw, 80, helpUsage, helpHeading, options, HelpFormatter.DEFAULT_LEFT_PAD,
             HelpFormatter.DEFAULT_DESC_PAD, null, false);
@@ -367,6 +388,8 @@ public abstract class JnomicsTool extends Configured implements Tool {
         }
 
         Set<String> excludeSet = new HashSet<String>();
+        this.excludedHadoopOptions = exclude;
+
         for (String ex : exclude) {
             excludeSet.add(ex);
         }
@@ -467,12 +490,14 @@ public abstract class JnomicsTool extends Configured implements Tool {
         }
 
         Set<String> excludeSet = new HashSet<String>();
+        this.excludedJnomicsOptions = exclude;
+
         for (String ex : exclude) {
             excludeSet.add(ex);
         }
 
         /** @formatter:off */
-        if (!excludeSet.contains("fout")) {
+        if (!excludeSet.contains("fout") && !excludeSet.contains("out-format")) { 
             options.addOption(optionBuilder
                 .withLongOpt("out-format")
                 .withArgName("fmt")
@@ -504,7 +529,16 @@ public abstract class JnomicsTool extends Configured implements Tool {
                 .create("out"));
         }
 
-        if (!excludeSet.contains("?")) {
+        if (!excludeSet.contains("v") && !excludeSet.contains("verbose")) {
+            options.addOption(optionBuilder
+                .withLongOpt("verbose")
+                .withDescription("Generates verbose Hadoop output.")
+                .withWeight(-5)
+                .isRequired(false)
+                .create("v"));
+        }
+
+        if (!excludeSet.contains("?") && !excludeSet.contains("help")) {
             options.addOption(optionBuilder
                 .withLongOpt("help")
                 .withDescription("Outputs this list and exits.")
@@ -614,6 +648,10 @@ public abstract class JnomicsTool extends Configured implements Tool {
         if (cmd.hasOption('?')) {
             printHelp();
         } else {
+            if (cmd.hasOption("v")) {
+                getConf().setBoolean(JnomicsJob.P_VERBOSE, true);
+            }
+
             getJob().setSequencingReadOutputFormat(cmd.getOptionValue("fout", "sam"));
 
             if (cmd.hasOption("in")) {

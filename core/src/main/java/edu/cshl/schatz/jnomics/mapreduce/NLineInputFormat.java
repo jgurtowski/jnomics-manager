@@ -39,6 +39,8 @@ import org.apache.hadoop.util.LineReader;
  * default, one line is fed as a value to one map task, and key is the offset.
  * i.e. (k,v) is (LongWritable, Text). The location hints will span the whole
  * mapred cluster.
+ * 
+ * @deprecated No longer needed by Jnomics framework.
  */
 // @InterfaceAudience.Public
 // @InterfaceStability.Stable

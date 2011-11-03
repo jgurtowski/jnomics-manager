@@ -64,6 +64,13 @@ public class JnomicsJob extends Job {
     public static final String P_REFERENCE_INDEX = "jnomics.aligner.indexfile";
 
     /**
+     * A {@link Configuration} property: Specifies the value to be passed to
+     * {@link Job#waitForCompletion(boolean)} when a verbose flag isn't
+     * specified. Default=<code>false</code>.
+     */
+    public static final String P_VERBOSE = "jnomics.verbose";
+
+    /**
      * Builds a new job client using a default {@link Configuration}, and
      * connects to the default {@link JobTracker}.
      * 
@@ -184,6 +191,22 @@ public class JnomicsJob extends Job {
         } else {
             setSequencingReadOutputFormat(outputSequenceFormat);
         }
+    }
+
+    /**
+     * Submit the job to the cluster and wait for it to finish. Rather than
+     * having the user specify a <code>verbose</code> value, this method passes
+     * the (boolean) configuration value of "jnomics.verbose".
+     * 
+     * @return true if the job succeeded
+     * @throws IOException thrown if the communication with the
+     *             <code>JobTracker</code> is lost
+     * @see Job#waitForCompletion(boolean)
+     */
+    public boolean waitForCompletion()
+            throws IOException, InterruptedException, ClassNotFoundException {
+
+        return waitForCompletion(getConfiguration().getBoolean(P_VERBOSE, false));
     }
 
     /**

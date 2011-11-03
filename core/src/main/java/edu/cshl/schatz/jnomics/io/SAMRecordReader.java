@@ -37,7 +37,7 @@ import edu.cshl.schatz.jnomics.util.TextUtil;
  * key/value pairs for input to the Mapper.
  */
 public class SAMRecordReader extends JnomicsFileRecordReader {
-    private static final Log LOG = LogFactory.getLog(SAMRecordReader.class);
+    static final Log LOG = LogFactory.getLog(SAMRecordReader.class);
 
     private static HashMap<String, SAMFileHeader> samFileHeaders = new HashMap<String, SAMFileHeader>();
 

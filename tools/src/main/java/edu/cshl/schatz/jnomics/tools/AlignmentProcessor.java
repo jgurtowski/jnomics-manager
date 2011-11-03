@@ -407,17 +407,11 @@ public class AlignmentProcessor extends JnomicsTool {
      */
     @Override
     public int run(String[] args) throws Exception {
-        int status = 1;
+        getJob().setJarByClass(AlignmentProcessor.class);
+        getJob().setReducerClass(AlignmentReducer.class);
+        getJob().setCombinerClass(AlignmentReducer.class);
 
-        if (STATUS_OK == handleParameters(args)) {
-            getJob().setJarByClass(AlignmentProcessor.class);
-            getJob().setReducerClass(AlignmentReducer.class);
-            getJob().setCombinerClass(AlignmentReducer.class);
-
-            status = getJob().waitForCompletion(true) ? 0 : 1;
-        }
-
-        return status;
+        return getJob().waitForCompletion() ? 0 : 1;
     }
 
     public static class AlignmentReducer

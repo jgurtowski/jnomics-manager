@@ -166,10 +166,10 @@ abstract class AbstractReadInputFormatTest extends TestCase {
         runSplitTest((int) (0.5 + (getInfileSize() / 2.0)));
     }
 
-    Job buildTestJob(long splitSize)
+    JnomicsJob buildTestJob(long splitSize)
             throws IOException, InterruptedException, ClassNotFoundException {
 
-        Job job = new JnomicsJob();
+        JnomicsJob job = new JnomicsJob();
         Configuration conf = job.getConfiguration();
 
         conf.setLong("mapred.max.split.size", splitSize);
@@ -222,9 +222,9 @@ abstract class AbstractReadInputFormatTest extends TestCase {
         if (!initialized) {
             System.setErr(new FilteringPrintStream(System.err, FILTER_TEXT));
 
-            Job job = buildTestJob(Integer.MAX_VALUE);
+            JnomicsJob job = buildTestJob(Integer.MAX_VALUE);
 
-            job.waitForCompletion(false);
+            job.waitForCompletion();
 
             CounterGroup countGroup = job.getCounters().getGroup("Test Reducer");
             Counter templateCounter = countGroup.findCounter("Templates");
