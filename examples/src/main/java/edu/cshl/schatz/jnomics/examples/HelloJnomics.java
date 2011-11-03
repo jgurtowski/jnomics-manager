@@ -1,4 +1,4 @@
-package edu.cshl.schatz.jnomics.tools.examples;
+package edu.cshl.schatz.jnomics.examples;
 
 import java.io.IOException;
 

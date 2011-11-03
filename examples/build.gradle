@@ -1,15 +1,21 @@
 Project jnomicsCore = project(':core')
+Project jnomicsTools = project(':tools')
 
 dependencies {
-	compile jnomicsCore
+	compile jnomicsTools
 }
 
 
 jar {
-    baseName 'jnomics-tools'
+    baseName 'jnomics-examples'
     from {
     	 jnomicsCore.fileTree(jnomicsCore.getProperties()["sourceSets"]["main"].getOutput().getClassesDir())
    }
+
+   from {
+       	 jnomicsTools.fileTree(jnomicsTools.getProperties()["sourceSets"]["main"].getOutput().getClassesDir())
+   }
+
    from {
      jnomicsCore.file('lib').listFiles().findAll{
   	    it.name.endsWith('.jar')}.collect{ zipTree(it) }
