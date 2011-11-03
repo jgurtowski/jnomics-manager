@@ -27,37 +27,21 @@ import edu.cshl.schatz.jnomics.mapreduce.JnomicsTool;
  * @author Matthew Titmus
  */
 public class PropertyQuery extends JnomicsTool {
-    /*
-     * @see
-     * edu.cshl.schatz.jnomics.mapreduce.JnomicsTool#buildDefaultJnomicsOptions
-     * (Options, java.lang.String[])
-     */
-    @Override
-    protected Options buildDefaultJnomicsOptions(Options opts, String... exclude) {
-        return super.buildDefaultJnomicsOptions(opts, "fout", "verbose");
-    }
+    public static final String CMD_DESCRIPTION = "Query Hadoop MapReduce job properties.";
 
-    /*
-     * @see
-     * edu.cshl.schatz.jnomics.mapreduce.JnomicsTool#buildDefaultHadoopOptions
-     * (Options, java.lang.String[])
-     */
-    @Override
-    protected Options buildDefaultHadoopOptions(Options opts, String... exclude) {
-        return super.buildDefaultHadoopOptions(opts, "in", "out", "archives", "files");
-    }
+    public static final String CMD_NAME = "query";
+
+    public static final String CMD_TEXT = "Can be used to query Hadoop configuration properties. Expects one argument:\n"
+            + "\"all\": Prints all Hadoop configuration properties, including any specified using the -conf parameter.\n"
+            + "A specific property: Any property value. Undefined values will be (NULL).";
 
     /**
      * Zero-argument constructor.
      */
     public PropertyQuery() {
         setHelpUsage(CMD_NAME + " <all|property>");
-        setHelpHeading(CMD_DESCRIPTION);
+        setHelpHeading(CMD_TEXT);
     }
-
-    public static final String CMD_DESCRIPTION = "Query Hadoop MapReduce job properties.";
-
-    public static final String CMD_NAME = "query";
 
     /**
      * Dumps all of the properties set in a {@link Configuration} instance to
@@ -134,30 +118,6 @@ public class PropertyQuery extends JnomicsTool {
     }
 
     /**
-     * TODO Add support for standard Hadoop CLI options.
-     * 
-     * @param args
-     * @throws IOException
-     */
-    public int run(String[] args) throws IOException {
-        Configuration conf = getConf();
-
-        if (args[0].equals("config")) {
-            dumpProperties(conf);
-        } else if (args[0].equals("vm")) {
-            dumpProperties(conf, QueryOptions.INCLUDE_VM);
-        } else if (args[0].equals("env")) {
-            dumpProperties(conf, QueryOptions.INCLUDE_VM);
-        } else if (args[0].equals("all")) {
-            dumpProperties(conf, QueryOptions.INCLUDE_VM, QueryOptions.INCLUDE_ENVIRONMENT);
-        } else {
-            System.out.println(conf.get(args[0], "(null)"));
-        }
-
-        return STATUS_OK;
-    }
-
-    /**
      * Dumps all of the properties set in a {@link Configuration} instance to
      * the standard output stream.
      * 
@@ -186,6 +146,57 @@ public class PropertyQuery extends JnomicsTool {
         }
 
         return value;
+    }
+
+    /**
+     * TODO Add support for standard Hadoop CLI options.
+     * 
+     * @param args
+     * @throws IOException
+     */
+    @Override
+    public int run(String[] args) throws IOException {
+        Configuration conf = getConf();
+
+        if (args[0].equals("all")) {
+            dumpProperties(conf);
+        } else {
+            System.out.printf("%s=%s%n", args[0], conf.get(args[0], "(null)"));
+        }
+
+//        if (args[0].equals("all")) {
+//            dumpProperties(conf);
+//        } else if (args[0].equals("vm")) {
+//            dumpProperties(conf, QueryOptions.INCLUDE_VM);
+//        } else if (args[0].equals("env")) {
+//            dumpProperties(conf, QueryOptions.INCLUDE_VM);
+//        } else if (args[0].equals("all")) {
+//            dumpProperties(conf, QueryOptions.INCLUDE_VM, QueryOptions.INCLUDE_ENVIRONMENT);
+//        } else {
+//            System.out.println(conf.get(args[0], "(null)"));
+//        }
+
+        return STATUS_OK;
+    }
+
+    /*
+     * @see
+     * edu.cshl.schatz.jnomics.mapreduce.JnomicsTool#buildDefaultHadoopOptions
+     * (Options, java.lang.String[])
+     */
+    @Override
+    protected Options buildDefaultHadoopOptions(Options opts, String... exclude) {
+        return super.buildDefaultHadoopOptions(opts, "libjars", "archives", "files");
+    }
+
+    /*
+     * @see
+     * edu.cshl.schatz.jnomics.mapreduce.JnomicsTool#buildDefaultJnomicsOptions
+     * (Options, java.lang.String[])
+     */
+    @Override
+    protected Options buildDefaultJnomicsOptions(Options opts, String... exclude) {
+        return super.buildDefaultJnomicsOptions(opts, "in", "out", "fout", "verbose");
     }
 
     public static enum QueryOptions {

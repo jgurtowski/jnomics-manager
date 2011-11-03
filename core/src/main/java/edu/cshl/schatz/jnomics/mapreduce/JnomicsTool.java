@@ -306,20 +306,12 @@ public abstract class JnomicsTool extends Configured implements Tool {
     }
 
     /**
-     * If any options are excluded, they're kept here so the correct help menu
-     * can be build if needed.
-     */
-    protected String[] excludedHadoopOptions = new String[] {},
-            excludedJnomicsOptions = new String[] {};
-
-    /**
      * Outputs the "help" menu to the specified {@link PrintStream}.
      */
     public void printHelp(PrintStream outTo) {
         PrintWriter pw = new PrintWriter(outTo);
 
-        Options options = buildDefaultHadoopOptions(
-            buildDefaultJnomicsOptions(getOptions(), excludedJnomicsOptions), excludedHadoopOptions);
+        Options options = buildDefaultHadoopOptions(buildDefaultJnomicsOptions(getOptions()));
 
         getHelpFormatter().printHelp(
             pw, 80, helpUsage, helpHeading, options, HelpFormatter.DEFAULT_LEFT_PAD,
@@ -388,7 +380,6 @@ public abstract class JnomicsTool extends Configured implements Tool {
         }
 
         Set<String> excludeSet = new HashSet<String>();
-        this.excludedHadoopOptions = exclude;
 
         for (String ex : exclude) {
             excludeSet.add(ex);
@@ -490,7 +481,6 @@ public abstract class JnomicsTool extends Configured implements Tool {
         }
 
         Set<String> excludeSet = new HashSet<String>();
-        this.excludedJnomicsOptions = exclude;
 
         for (String ex : exclude) {
             excludeSet.add(ex);
