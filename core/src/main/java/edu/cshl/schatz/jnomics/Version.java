@@ -43,7 +43,7 @@ public final class Version {
     /**
      * The current package version "patch revision" number (digit 3)
      */
-    public static final String PATCH = "0";
+    public static final String PATCH = "1";
 
     /**
      * The current package development status, indicated by a one or two
@@ -59,12 +59,12 @@ public final class Version {
     /**
      * The current package revision number ($Revision$).
      */
-    public static final String REVISION = "$Revision$";
+    public static final String REVISION = "12";
 
     /**
      * The date of the most recent revision ($Date$).
      */
-    public static final String REVISION_DATE = "$Date$";
+    public static final String REVISION_DATE = "Fri Nov  4 14:11:06 EDT 2011";
 
     /**
      * The current version of the Jnomics API.

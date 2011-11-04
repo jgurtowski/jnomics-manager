@@ -1,0 +1,12 @@
+Jnomics uses Gradle (http://www.gradle.org/) to manage its build. 
+
+To install, unzip this zip file into your $HOME/bin directory and build the enclosed source code, issue the gradlew build command from this directory:
+
+   ./gradlew build
+
+Gradle should pull in all compile and runtime dependencies, including the Hadoop libraries. Once complete, there should be two jar files: jnomics-tools.jar and jnomics-examples.jar. 
+
+Finally, add $HOME/bin/jnomics/bin to your command path.
+
+For more detailed installation instructions, please see https://sourceforge.net/apps/mediawiki/jnomics/index.php?title=Quickstart
+
