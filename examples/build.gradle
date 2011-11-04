@@ -3,6 +3,7 @@ Project jnomicsTools = project(':tools')
 
 dependencies {
 	compile jnomicsTools
+	compile jnomicsCore
 }
 
 defaultTasks ''
