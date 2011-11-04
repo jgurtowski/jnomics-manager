@@ -120,6 +120,7 @@ public class TolerantParser extends GnuParser {
         List<String> unknownTokens = new ArrayList<String>();
         List<String> tokens = knownTokens;
 
+        int numArgs = 0;
         boolean eatTheRest = false;
 
         for (int i = 0; i < arguments.length; i++) {
@@ -138,6 +139,12 @@ public class TolerantParser extends GnuParser {
                 String opt = stripLeadingHyphens(arg);
 
                 if (options.hasOption(opt)) {
+                    numArgs = options.getOption(opt).getArgs();
+                    
+                    if (Option.UNLIMITED_VALUES == numArgs) {
+                        numArgs = Integer.MAX_VALUE;
+                    }
+
                     (tokens = knownTokens).add(arg);
                 } else {
                     if ((opt.indexOf('=') != -1)
@@ -150,9 +157,11 @@ public class TolerantParser extends GnuParser {
                         (tokens = unknownTokens).add(arg);
                     }
                 }
-            } else {
+            } else if (numArgs-- > 0) {
                 // Add to the last used token list.
                 tokens.add(arg);
+            } else {
+                unknownTokens.add(arg);
             }
 
             if (eatTheRest) {

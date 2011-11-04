@@ -36,7 +36,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.util.Tool;
-import org.apache.hadoop.util.ToolRunner;
 
 import edu.cshl.schatz.jnomics.cli.OptionBuilder;
 import edu.cshl.schatz.jnomics.cli.OptionWeightComparater;
@@ -101,6 +100,12 @@ public abstract class JnomicsTool extends Configured implements Tool {
     private String helpUsage = "<undefined; please specify a usage via JnomicsTool.setUsage(String)>";
 
     private JnomicsJob job;
+
+    /**
+     * The 'args' array, after all default command line processing is complete.
+     * This is the same object that is passed to {@link #run(String[])}.
+     */
+    protected String[] remainingArgs = null;
 
     /**
      * Builds a new JnomicsTool using a a default {@link Configuration}, and
@@ -188,12 +193,16 @@ public abstract class JnomicsTool extends Configured implements Tool {
             JnomicsTool jtool = (JnomicsTool) tool;
             int status;
 
+            jtool.remainingArgs = args;
+
             if (STATUS_OK < (status = jtool.handleParameters(args))) {
                 return status;
             } else if (STATUS_OK > status) {
                 // Negative is a non-error exit code; return 0.
                 return STATUS_OK;
             }
+
+            args = jtool.remainingArgs;
         }
 
         try {
@@ -599,9 +608,12 @@ public abstract class JnomicsTool extends Configured implements Tool {
                         new URLClassLoader(libjars, Thread.currentThread().getContextClassLoader()));
                 }
             }
+
             if (line.hasOption("files")) {
                 conf.set("tmpfiles", validateFiles(line.getOptionValue("files"), conf));
+                System.out.println(conf.get("tmpfiles"));
             }
+
             if (line.hasOption("archives")) {
                 conf.set("tmparchives", validateFiles(line.getOptionValue("archives"), conf));
             }
@@ -685,7 +697,7 @@ public abstract class JnomicsTool extends Configured implements Tool {
         // If we get no incoming options, or if we see the "help" command, print
         // the help text and exit.
 
-        if (args.length == 0) {
+        if (remainingArgs.length == 0) {
             printHelp(System.out);
             return STATUS_OK_NO_PARAMS;
         }
@@ -697,21 +709,21 @@ public abstract class JnomicsTool extends Configured implements Tool {
             int response;
 
             tier = "Error parsing default Hadoop parameter: ";
-            clHadoop = parser.parse(buildDefaultHadoopOptions(), args, false);
+            clHadoop = parser.parse(buildDefaultHadoopOptions(), remainingArgs, false);
             if (STATUS_OK < (response = handleDefaultHadoopOptions(clHadoop))) {
                 return response;
             }
 
             tier = "Error parsing default Jnomics parameter: ";
-            args = clHadoop.getArgs();
-            clJnomics = parser.parse(buildDefaultJnomicsOptions(), args, false);
+            remainingArgs = clHadoop.getArgs();
+            clJnomics = parser.parse(buildDefaultJnomicsOptions(), remainingArgs, false);
             if (STATUS_OK < (response = handleDefaultJnomicsOptions(clJnomics))) {
                 return response;
             }
 
             tier = "Error parsing command parameter: ";
-            args = clJnomics.getArgs();
-            clCustom = parser.parse(getOptions(), args, false);
+            remainingArgs = clJnomics.getArgs();
+            clCustom = parser.parse(getOptions(), remainingArgs, false);
             if (STATUS_OK < (response = handleOptions(clCustom))) {
                 return response;
             }
@@ -750,8 +762,8 @@ public abstract class JnomicsTool extends Configured implements Tool {
     }
 
     /**
-     * Sets the job to be used by this tool. It it called by the
-     * {@link ToolRunner}, and generally shouldn't be called manually.
+     * Sets the job to be used by this tool. It it called by
+     * {@link #run(Tool, String[])}, and generally shouldn't be called manually.
      */
     protected void setJob(JnomicsJob job) {
         this.job = job;
