@@ -37,7 +37,7 @@ public class HelloJnomics extends JnomicsTool {
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(QueryTemplate.class);
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(Text.class);
+        job.setOutputValueClass(IntWritable.class);
         job.setOutputFormatClass(TextOutputFormat.class);
 
         return job.waitForCompletion(true) ? 0 : 1;
@@ -50,22 +50,19 @@ public class HelloJnomics extends JnomicsTool {
      * @author James
      */
     public static class HelloJnomicsReducer
-            extends JnomicsReducer<Writable, QueryTemplate, Writable, Writable> {
-        int counter = 1;
-
-        final IntWritable outCount = new IntWritable();
-
-        final Text outText = new Text();
+            extends JnomicsReducer<Writable, QueryTemplate, Text, IntWritable> {
+    	
+    	final IntWritable outCount = new IntWritable();
+    	final Text outText = new Text();
 
         @Override
         protected void reduce(Writable key, Iterable<QueryTemplate> values, Context cxt)
                 throws IOException, InterruptedException {
-            counter = 1;
-            for (final QueryTemplate template : values) {
-                outCount.set(counter++);
+            
+        	for (final QueryTemplate template : values) {
+        		outCount.set(template.size());
                 outText.set(template.getTemplateName());
-
-                cxt.write(outCount, outText);
+                cxt.write(outText, outCount);
             }
         }
     }
