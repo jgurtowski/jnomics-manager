@@ -47,7 +47,7 @@ public abstract class JnomicsFileRecordReader extends RecordReader<Writable, Que
         int len = text.getLength();
         byte[] bytes = text.getBytes();
 
-        return (bytes[len - 2] == (byte) '/' && Character.isDigit(bytes[len - 1]));
+        return (len > 2 && bytes[len - 2] == (byte) '/' && Character.isDigit(bytes[len - 1]));
     }
 
     public static void trimTrailingSlashNumber(Text text) {
