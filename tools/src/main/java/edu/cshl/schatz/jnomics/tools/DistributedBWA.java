@@ -23,6 +23,9 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
 
 import edu.cshl.schatz.jnomics.cli.OptionBuilder;
@@ -72,10 +75,6 @@ public class DistributedBWA extends DistributedBinary {
         setHelpHeading(CMD_HEADING);
     }
 
-    public static void main(String[] args) throws Exception {
-        System.exit(JnomicsTool.run(new DistributedBWA(), args));
-    }
-
     static void checkExists(File file) throws IOException {
         if (!file.exists()) {
             throw new IOException("File not found: " + file.getCanonicalPath());
@@ -98,6 +97,10 @@ public class DistributedBWA extends DistributedBinary {
         }
 
         return s;
+    }
+
+    public static void main(String[] args) throws Exception {
+        System.exit(JnomicsTool.run(new DistributedBWA(), args));
     }
 
     /**
@@ -375,12 +378,30 @@ public class DistributedBWA extends DistributedBinary {
             }
         }
 
-        File binaryDir;
-        if (null == (binaryDir = findFile("bwa"))) {
-            throw new FileNotFoundException("Unable to find the bwa binary");
+        // Temporary: this will soon use the new distributed acche framework
+        // (when that's working)
+
+        Path bin = findLocalCommand("bwa"), cache;
+        if (bin == null) {
+            throw new FileNotFoundException("Could not find bwa binary");
         } else {
-            getConf().set(P_BINARY_PATH, binaryDir.getParentFile().getCanonicalPath());
+            System.out.println("Found bwa binary: "
+                    + FileSystem.getLocal(getConf()).makeQualified(bin).toUri().toString());
+
+            cache = distributeIfNew(bin.toString(), "dist/bwa");
+
+            LOG.info("Binary cached: " + bin.toUri() + " --> " + cache.toUri());
+
+            getConf().set(P_BINARY_PATH, cache.toUri().toString());
         }
+
+        // File binaryDir;
+        // if (null == (binaryDir = findLocalFile("bwa"))) {
+        // throw new FileNotFoundException("Unable to find the bwa binary");
+        // } else {
+        // getConf().set(P_BINARY_PATH,
+        // binaryDir.getParentFile().getCanonicalPath());
+        // }
 
         return STATUS_OK;
     }
@@ -398,27 +419,6 @@ public class DistributedBWA extends DistributedBinary {
     }
 
     /**
-     * {@inheritDoc}
-     * 
-     * @see edu.cshl.schatz.jnomics.mapreduce.DistributedBinary#includeFile(java.lang.String)
-     */
-    @Override
-    protected File includeFile(String path) throws FileNotFoundException {
-        File binaryFile = DistributedBinary.findFile(path);
-
-        if (binaryFile == null) {
-            String msg = String.format(
-                "File %s does not exist in command path (PATH=%s)", path, System.getenv("PATH"));
-
-            throw new FileNotFoundException(msg);
-        }
-
-        System.err.println("WARNING: includeFile() not fully implemented!");
-
-        return binaryFile;
-    }
-
-    /**
      * @author Matthew A. Titmus
      */
     public static class DistributedBWAReducer
@@ -426,9 +426,9 @@ public class DistributedBWA extends DistributedBinary {
 
         private String binaryAlnArgs, binarySamxeArgs;
 
-        private File binaryDirFile, binaryFile;
+        private File binaryFile;
 
-        private String binaryDirName;
+        private String binaryPath;
 
         private final String counterName = this.getClass().getSimpleName();
 
@@ -489,54 +489,6 @@ public class DistributedBWA extends DistributedBinary {
                 localFastqOutFirst.write(key, template);
                 localFastqOutLast.write(key, template);
             }
-        }
-
-        /**
-         * {@inheritDoc}
-         * 
-         * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
-         */
-        @Override
-        protected void setup(Context context) throws IOException, InterruptedException {
-            // Get configuration properties
-            Configuration conf = context.getConfiguration();
-
-            referenceGenomeName = getReq(conf, JnomicsJob.P_REFERENCE_GENOME);
-            binaryDirName = getReq(conf, P_BINARY_PATH);
-            binaryAlnArgs = conf.get(P_BINARY_ALN_ARGS, "");
-            binarySamxeArgs = conf.get(P_BINARY_SAMXE_ARGS, "");
-
-            // These are REQUIRED to exist. If they don't, throw a
-            // FileNotFoundException
-            checkExists(binaryDirFile = new File(binaryDirName));
-            checkExists(binaryFile = new File(binaryDirFile, "bwa"));
-            checkExists(referenceGenomeFile = new File(referenceGenomeName));
-
-            // Create temporary FASTA files. We also register them for automatic
-            // deletion once the JVM exits, since we don't want to fill up the
-            // node's local disks with these (possibly large) files!
-
-            String taskAttemptId = context.getTaskAttemptID().toString();
-
-            fastqFileFirst = File.createTempFile(taskAttemptId, ".1.fq");
-            fastqFileLast = File.createTempFile(taskAttemptId, ".2.fq");
-            // fastqFileFirst = new File(taskAttemptId + ".2.fq");
-            // fastqFileLast = new File(taskAttemptId + ".2.fq");
-            fastqFileFirst.deleteOnExit();
-            fastqFileLast.deleteOnExit();
-
-            saiFileFirst = new File(fastqFileFirst.getCanonicalPath() + ".sai");
-            saiFileLast = new File(fastqFileLast.getCanonicalPath() + ".sai");
-            saiFileFirst.deleteOnExit();
-            saiFileLast.deleteOnExit();
-
-            localFastqOutFirst = new FastqRecordWriter<Writable, QueryTemplate>(
-                new DataOutputStream(new FileOutputStream(fastqFileFirst)), conf,
-                FastqRecordWriter.MEMBER_FIRST);
-
-            localFastqOutLast = new FastqRecordWriter<Writable, QueryTemplate>(
-                new DataOutputStream(new FileOutputStream(fastqFileLast)), conf,
-                FastqRecordWriter.MEMBER_LAST);
         }
 
         /**
@@ -686,6 +638,78 @@ public class DistributedBWA extends DistributedBinary {
             }
 
             return processExitStatus;
+        }
+
+        /**
+         * {@inheritDoc}
+         * 
+         * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
+         */
+        @Override
+        protected void setup(Context context) throws IOException, InterruptedException {
+            // Get configuration properties
+            Configuration conf = context.getConfiguration();
+
+            referenceGenomeName = getReq(conf, JnomicsJob.P_REFERENCE_GENOME);
+            binaryPath = getReq(conf, P_BINARY_PATH);
+            binaryAlnArgs = conf.get(P_BINARY_ALN_ARGS, "");
+            binarySamxeArgs = conf.get(P_BINARY_SAMXE_ARGS, "");
+
+            { // TODO Replace this with the new file distribution framework
+                final String OUT_DIR = "mapred.output.dir";
+
+                FileSystem fs = FileSystem.get(conf);
+                FileSystem fsLocal = FileSystem.getLocal(conf);
+                Path sourcePath = new Path("dist/bwa");
+
+                Path cachePath = DistributedCache.getLocalCache(sourcePath.toUri(), //
+                    conf, //
+                    new Path(conf.get(OUT_DIR) + "/cache/"), //
+                    fs.getFileStatus(sourcePath), //
+                    false, //
+                    fs.getFileStatus(sourcePath).getModificationTime(), //
+                    new Path(conf.get(OUT_DIR)), //
+                    true);
+
+                cachePath = fsLocal.makeQualified(cachePath);
+
+                LOG.info(String.format(
+                    "Local cache: %s (Exists=%s)%n", cachePath.toString(),
+                    fsLocal.exists(cachePath)));
+
+                binaryPath = new File(cachePath.toUri()).getCanonicalPath();
+            }
+
+            // These are REQUIRED to exist. If they don't, throw a
+            // FileNotFoundException
+            checkExists(binaryFile = new File(binaryPath));
+            checkExists(referenceGenomeFile = new File(referenceGenomeName));
+
+            // Create temporary FASTA files. We also register them for automatic
+            // deletion once the JVM exits, since we don't want to fill up the
+            // node's local disks with these (possibly large) files!
+
+            String taskAttemptId = context.getTaskAttemptID().toString();
+
+            fastqFileFirst = File.createTempFile(taskAttemptId, ".1.fq");
+            fastqFileLast = File.createTempFile(taskAttemptId, ".2.fq");
+            // fastqFileFirst = new File(taskAttemptId + ".2.fq");
+            // fastqFileLast = new File(taskAttemptId + ".2.fq");
+            fastqFileFirst.deleteOnExit();
+            fastqFileLast.deleteOnExit();
+
+            saiFileFirst = new File(fastqFileFirst.getCanonicalPath() + ".sai");
+            saiFileLast = new File(fastqFileLast.getCanonicalPath() + ".sai");
+            saiFileFirst.deleteOnExit();
+            saiFileLast.deleteOnExit();
+
+            localFastqOutFirst = new FastqRecordWriter<Writable, QueryTemplate>(
+                new DataOutputStream(new FileOutputStream(fastqFileFirst)), conf,
+                FastqRecordWriter.MEMBER_FIRST);
+
+            localFastqOutLast = new FastqRecordWriter<Writable, QueryTemplate>(
+                new DataOutputStream(new FileOutputStream(fastqFileLast)), conf,
+                FastqRecordWriter.MEMBER_LAST);
         }
 
         /**
