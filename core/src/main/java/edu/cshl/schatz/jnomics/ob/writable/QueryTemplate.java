@@ -588,8 +588,8 @@ public class QueryTemplate extends AbstractList<SequencingRead>
     public void readFields(DataInput in) throws IOException {
         SequencingRead sr;
         int readCount;
-
-        ensureCapacity(readCount = in.readInt());
+        System.out.println(readCount = in.readInt());
+        ensureCapacity(readCount);
 
         for (int i = 0; i < readCount; i++) {
             if (null == (sr = readsArray[i])) {
@@ -886,7 +886,88 @@ public class QueryTemplate extends AbstractList<SequencingRead>
 
         return a;
     }
+    
+    static class DataOutputWrapper implements DataOutput {
+    	DataOutput out = null;
+    	
+    	public DataOutputWrapper(DataOutput out) {
+    		this.out = out;
+    	}
 
+		public void write(int arg0) throws IOException {
+			System.out.println("Int: " + arg0);
+			out.write(arg0);
+		}
+
+		public void write(byte[] arg0) throws IOException {
+			System.out.println("Write: " + arg0);
+			out.write(arg0);
+		}
+
+		public void write(byte[] arg0, int arg1, int arg2) throws IOException {
+			System.out.println("Write: " + arg0 + ", " + arg1 + ", " + arg2);
+			out.write(arg0, arg1, arg2);
+		}
+
+		public void writeBoolean(boolean arg0) throws IOException {
+			System.out.println("write: " + arg0);
+			out.writeBoolean(arg0);
+		}
+
+		public void writeByte(int arg0) throws IOException {
+			System.out.println("Byt: " + arg0);
+			out.writeByte(arg0);
+		}
+
+		public void writeBytes(String arg0) throws IOException {
+			System.out.println("Bts: " + arg0);
+			out.writeBytes(arg0);
+			
+		}
+
+		public void writeChar(int arg0) throws IOException {
+			System.out.println("Chr: " + arg0);
+			out.writeChar(arg0);
+		}
+
+		public void writeChars(String arg0) throws IOException {
+			System.out.println("Str: " + arg0);
+			out.writeChars(arg0);
+		}
+
+		public void writeDouble(double arg0) throws IOException {
+			System.out.println("Dbl: " + arg0);
+			out.writeDouble(arg0);
+		}
+
+		public void writeFloat(float arg0) throws IOException {
+			System.out.println("Flt: " + arg0);
+			out.writeFloat(arg0);
+		}
+
+		public void writeInt(int arg0) throws IOException {
+			System.out.println("Int: " + arg0);
+			out.writeInt(arg0);
+		}
+
+		public void writeLong(long arg0) throws IOException {
+			System.out.println("Lng: " + arg0);
+			out.writeLong(arg0);			
+		}
+
+		public void writeShort(int arg0) throws IOException {
+			System.out.println("Srt: " + arg0);
+			out.writeShort(arg0);			
+		}
+
+		public void writeUTF(String arg0) throws IOException {
+			System.out.println("UTF: " + arg0);
+			out.writeUTF(arg0);			
+		}
+    }
+
+    int count = 5;
+    
     /**
      * Serializes the fields of this object to <code>out</code>.
      * 
@@ -894,14 +975,24 @@ public class QueryTemplate extends AbstractList<SequencingRead>
      * @throws IOException if thrown by the underlying output stream.
      */
     public void write(DataOutput out) throws IOException {
-        out.writeInt(size);
+//        if (count-- <= 0) {
+//        	System.exit(0);
+//        }
+        System.out.println("**********************");
+    	out = new DataOutputWrapper(out);
+    	
+    	out.writeInt(size);
 
         for (int i = 0; i < size; i++) {
-            readsArray[i].write(out, false);
+//        	System.out.println("readarr:"+i+":"+readsArray[i]);
+        	readsArray[i].write(out, false);
         }
 
+//        System.out.println("templatename:"+templateName);
         templateName.write(out);
+//        System.out.println("templatelen:"+templateLength);
         out.writeInt(templateLength);
+//        System.out.println("templatePosition:"+templatePosition);
         out.writeInt(templatePosition);
     }
 

@@ -98,9 +98,9 @@ public class DistributedNovoalign extends DistributedBinary {
          */
         options.addOption(optionBuilder
             .withArgName("threads")
-            .withDescription("Sets the number of threads to be used. On licensed "
-                    + "Novoalign versions defaults to the number of CPU cores. "
-                    + "On the free version this option is disabled.")
+            .withDescription("Sets the number of threads to be used.On licensed "
+                    + "Novoalign versions defaults to the number of CPU cores."
+                    + "On the free version this option is disabled.")
             .hasArg()
             .isRequired(false)
             .create('c'));
@@ -189,10 +189,10 @@ public class DistributedNovoalign extends DistributedBinary {
             }
         }
 
-        // -­c 99
-        // Sets the number of threads to be used. On licensed 
-        // versions it defaults to the number of CPU cores. On the
-        // free version this option is disabled.
+        //--c 99
+        // Sets the number of threads to be used. On licensed 
+        // versions it defaults to the number of CPU cores.On the
+        // free version this option is disabled.
 
         if (cmd.hasOption('c')) {
             alnArgs.append(" -c " + cmd.getOptionValue('c'));
