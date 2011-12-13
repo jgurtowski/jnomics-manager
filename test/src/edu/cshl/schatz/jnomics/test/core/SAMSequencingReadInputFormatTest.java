@@ -16,9 +16,11 @@ import edu.cshl.schatz.jnomics.mapreduce.ReadFileFormat;
 public class SAMSequencingReadInputFormatTest extends AbstractReadInputFormatTest {
     private final ReadFileFormat expectedReadFileFormat = ReadFileFormat.SAM;
 
-    private final Path[] inPaths = { new Path(FULL_FILE_PATH + "example.sam") };
+//    private final Path[] inPaths = { new Path(FULL_FILE_PATH + "example.sam") };
 
-    private final Path[] singleLineFileInPaths = { new Path(FULL_FILE_PATH + "example.flq") };
+    private final Path[] inPaths = { new Path("/home/mtitmus/sams") };
+
+    private final Path[] singleLineFileInPaths = { new Path(FULL_FILE_PATH + "example.sam") };
 
     /*
      * @see edu.cshl.schatz.jnomics.test.core.AbstractReadInputFormatTest#

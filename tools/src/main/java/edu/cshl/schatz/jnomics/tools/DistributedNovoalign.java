@@ -22,6 +22,8 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
 
 import edu.cshl.schatz.jnomics.cli.OptionBuilder;
@@ -229,12 +231,13 @@ public class DistributedNovoalign extends DistributedBinary {
         // binary directory.
 
         if (null == cmd.getOptionValue("novo")) {
-            File binaryDir;
-            if (null == (binaryDir = findFile("novoalign"))) {
+            Path binaryDir;
+            if (null == (binaryDir = findLocalCommand("novoalign"))) {
                 throw new FileNotFoundException(
                     "Unable to find the novoalign binary. Please use the -novo parameter.");
             } else {
-                getConf().set(P_BINARY_PATH, binaryDir.getParentFile().getCanonicalPath());
+                binaryDir = FileSystem.getLocal(getConf()).makeQualified(binaryDir.getParent());
+                getConf().set(P_BINARY_PATH, binaryDir.toUri().toString());
             }
         } else {
             conf.set(P_BINARY_PATH, cmd.getOptionValue("novo"));
@@ -282,7 +285,7 @@ public class DistributedNovoalign extends DistributedBinary {
     @Override
     public int run(String[] args) throws Exception {
         getJob().setReducerClass(DistributedNovoalignReducer.class);
-        
+
         return getJob().waitForCompletion() ? 0 : 1;
     }
 

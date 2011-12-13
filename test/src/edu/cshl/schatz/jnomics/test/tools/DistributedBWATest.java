@@ -19,7 +19,7 @@ import edu.cshl.schatz.jnomics.tools.DistributedBWA;
 public class DistributedBWATest extends TestCase {
     private static final String ARG_DB = "/bluearc/data/schatz/data/genomes/hg19/hg19.fa";
 
-    private static final String ARG_IN = "test-data/inputFormats/example.flq";
+    private static final String ARG_IN = "example-data/inputFormats/example.flq";
 
     private static final String ARG_OUT = "/tmp/bwaTest";
 

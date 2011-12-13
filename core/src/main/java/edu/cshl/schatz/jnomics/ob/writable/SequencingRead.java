@@ -17,6 +17,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 
 import edu.cshl.schatz.jnomics.ob.NucleotideSequence;
+import edu.cshl.schatz.jnomics.ob.header.HeaderDataLookup;
 
 /**
  * <ul>
@@ -137,6 +138,7 @@ public class SequencingRead extends NucleotideSequenceWritable
      * 
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
+    @Override
     public int compareTo(SequencingRead o) {
         return getReadName().compareTo(o.getReadName());
     }
@@ -614,9 +616,11 @@ public class SequencingRead extends NucleotideSequenceWritable
     }
 
     /**
-     * @param referenceSequence The referenceNameString to set
+     * @deprecated Use {@link HeaderDataLookup#getReferenceSequenceRecord(String)}
+     *             instead.
      */
-    public void setReferenceSequence(ReferenceSequence referenceSequence) {
+    @Deprecated
+    public void setReferenceSequence(Object referenceSequence) {
         throw new UnsupportedOperationException();
     }
 
@@ -752,7 +756,7 @@ public class SequencingRead extends NucleotideSequenceWritable
         properties.write(out);
 
         // The next bit indicates whether query template data follows.
-        if (!writeTemplateData || queryTemplate == null) {
+        if (!writeTemplateData || (queryTemplate == null)) {
             out.writeBoolean(false);
         } else if (writeTemplateData) {
             out.writeBoolean(true);
@@ -761,18 +765,6 @@ public class SequencingRead extends NucleotideSequenceWritable
             out.writeInt(queryTemplate.getTemplateLength());
         }
     }
-
-    /**
-     * TODO Not yet in use; to be implemented with addition of total support for
-     * SAM-style headers.
-     */
-    public class ProgramRecord {}
-
-    /**
-     * TODO Not yet in use; to be implemented with addition of total support for
-     * SAM-style headers.
-     */
-    public class ReadGroup {}
 
     /**
      * An extension of Hadoop's {@link MapWritable} class, optimized slightly to
@@ -961,162 +953,6 @@ public class SequencingRead extends NucleotideSequenceWritable
             sb.append('}');
 
             return sb.toString();
-        }
-    }
-
-    /**
-     * Basic information about the reference sequence used to generate an
-     * aligned {@link SequencingRead}.
-     * <p>
-     * TODO Not yet in use; to be implemented with addition of total support for
-     * SAM-style headers.
-     * 
-     * @author Matthew Titmus
-     */
-    public static class ReferenceSequence implements Writable {
-        private String assemblyIdentifier = "";
-
-        private int length;
-
-        private String md5 = "";
-
-        private String name = "";
-
-        private String species = "";
-
-        private String uri = "";
-
-        /**
-         * The basic constructor, which accepts only the required fields.
-         * 
-         * @param sequenceName
-         * @param sequenceLength
-         */
-        public ReferenceSequence(String sequenceName, int sequenceLength) {
-            this(sequenceName, sequenceLength, "", "", "", "");
-        }
-
-        /**
-         * A more elaborate constructor, which accepts all fields. Optional
-         * fields (anything except <code>sequenceName</code> and
-         * <code>sequenceLength</code>) may be passed <code>null</code> or an
-         * empty string ("").
-         * 
-         * @param sequenceName The reference sequence name. Required.
-         * @param sequenceLength The reference sequence length. Required
-         *            (greater than 0).
-         * @param genomeAssemblyIdentifier The genome assembly identifier.
-         * @param genomeSpecies
-         * @param sequenceMD5Checksum The md5 checksum of the sequence.
-         * @param sequenceURI URI of the sequence. If it does not start with a
-         *            standard schema (http, ftp, etc) it will be assumed to
-         *            refer to a filesystem path.
-         */
-        public ReferenceSequence(String sequenceName, int sequenceLength,
-            String genomeAssemblyIdentifier, String genomeSpecies, String sequenceMD5Checksum,
-            String sequenceURI) {
-
-            if ((sequenceName == null) || (sequenceName.length() == 0)) {
-                throw new IllegalArgumentException("Sequence name is required.");
-            } else {
-                name = sequenceName;
-            }
-
-            if (sequenceLength <= 0) {
-                throw new IllegalArgumentException("Sequence length is required.");
-            } else {
-                length = sequenceLength;
-            }
-
-            if (assemblyIdentifier == null) {
-                genomeAssemblyIdentifier = "";
-            }
-
-            if (genomeSpecies == null) {
-                genomeSpecies = "";
-            }
-
-            if (sequenceURI == null) {
-                sequenceURI = "";
-            } else {
-                if (!sequenceURI.matches("^\\w+:.*")) {
-                    sequenceURI = "file://" + sequenceURI;
-                }
-            }
-
-            if (sequenceMD5Checksum == null) {
-                sequenceMD5Checksum = "";
-            } else {
-                sequenceMD5Checksum = sequenceMD5Checksum.toUpperCase().replaceAll("[\\s]+", "");
-            }
-
-            assemblyIdentifier = genomeAssemblyIdentifier;
-            species = genomeSpecies;
-            md5 = sequenceMD5Checksum;
-            uri = sequenceURI;
-        }
-
-        /**
-         * Creates an empty reference sequence.
-         */
-        ReferenceSequence() {}
-
-        /**
-         * @return The identifier
-         */
-        public String getAssemblyIdentifier() {
-            return assemblyIdentifier;
-        }
-
-        /**
-         * @return The length
-         */
-        public int getLength() {
-            return length;
-        }
-
-        /**
-         * @return The mD5
-         */
-        public String getMD5() {
-            return md5;
-        }
-
-        /**
-         * @return The name
-         */
-        public String getName() {
-            return name;
-        }
-
-        /**
-         * @return The species
-         */
-        public String getSpecies() {
-            return species;
-        }
-
-        /**
-         * @return The URI
-         */
-        public String getURI() {
-            return uri;
-        }
-
-        /*
-         * @see org.apache.hadoop.io.Writable#readFields(java.io.DataInput)
-         */
-        public void readFields(DataInput in) throws IOException {
-            // TODO
-            throw new UnsupportedOperationException();
-        }
-
-        /*
-         * @see org.apache.hadoop.io.Writable#write(java.io.DataOutput)
-         */
-        public void write(DataOutput out) throws IOException {
-            // TODO
-            throw new UnsupportedOperationException();
         }
     }
 }

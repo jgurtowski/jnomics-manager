@@ -7,11 +7,12 @@ package edu.cshl.schatz.jnomics.mapreduce;
 import java.io.IOException;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapreduce.Job;
 
-import edu.cshl.schatz.jnomics.io.JnomicsFileRecordReader;
+import edu.cshl.schatz.jnomics.filecache.DistributedCacheFileSystem;
 import edu.cshl.schatz.jnomics.io.JnomicsOutputFormat;
 import edu.cshl.schatz.jnomics.io.SequencingReadInputFormat;
 import edu.cshl.schatz.jnomics.ob.writable.QueryTemplate;
@@ -236,6 +237,7 @@ public class JnomicsJob extends Job {
 
         conf.setBoolean("jnomics.job", true);
         conf.set(P_READ_FORMAT_OUT, "sam");
+        conf.setClass("fs.cache.impl", DistributedCacheFileSystem.class, FileSystem.class);
 
         setMapperClass(JnomicsMapper.class);
         setReducerClass(JnomicsReducer.class);
