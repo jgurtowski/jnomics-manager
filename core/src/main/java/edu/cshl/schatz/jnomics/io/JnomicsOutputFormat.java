@@ -49,7 +49,7 @@ public class JnomicsOutputFormat<K, V> extends FileOutputFormat<K, V> {
         final boolean isCompressed = getCompressOutput(job);
 
         Class<?> outputValueClass = conf.getClass("mapred.output.value.class", QueryTemplate.class);
-  
+
         if (outputValueClass.isAssignableFrom(QueryTemplate.class)
                 || outputValueClass.isAssignableFrom(SequencingRead.class)) {
 
@@ -77,6 +77,7 @@ public class JnomicsOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
             if (outputValueClass.isAssignableFrom(QueryTemplate.class)
                     || outputValueClass.isAssignableFrom(SequencingRead.class)) {
+
                 switch (readFormat) {
                 case SAM:
                     recordWriter = new SAMRecordWriter<K, V>(fileOut, conf);

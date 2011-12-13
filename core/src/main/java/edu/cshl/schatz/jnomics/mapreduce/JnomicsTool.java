@@ -93,6 +93,12 @@ public abstract class JnomicsTool extends Configured implements Tool {
 
     static final Log LOG = LogFactory.getLog(JnomicsTool.class);
 
+    /**
+     * The 'args' array, after all default command line processing is complete.
+     * This is the same object that is passed to {@link #run(String[])}.
+     */
+    protected String[] remainingArgs = null;
+
     private HelpFormatter helpFormatter;
 
     private String helpHeading = null;
@@ -100,12 +106,6 @@ public abstract class JnomicsTool extends Configured implements Tool {
     private String helpUsage = "<undefined; please specify a usage via JnomicsTool.setUsage(String)>";
 
     private JnomicsJob job;
-
-    /**
-     * The 'args' array, after all default command line processing is complete.
-     * This is the same object that is passed to {@link #run(String[])}.
-     */
-    protected String[] remainingArgs = null;
 
     /**
      * Builds a new JnomicsTool using a a default {@link Configuration}, and
@@ -332,6 +332,7 @@ public abstract class JnomicsTool extends Configured implements Tool {
     /*
      * @see org.apache.hadoop.util.Tool#run(java.lang.String[])
      */
+    @Override
     public int run(String[] args) throws Exception {
         return STATUS_OK;
     }
@@ -496,7 +497,7 @@ public abstract class JnomicsTool extends Configured implements Tool {
         }
 
         /** @formatter:off */
-        if (!excludeSet.contains("fout") && !excludeSet.contains("out-format")) { 
+        if (!excludeSet.contains("fout") && !excludeSet.contains("out-format")) {
             options.addOption(optionBuilder
                 .withLongOpt("out-format")
                 .withArgName("fmt")
@@ -610,11 +611,11 @@ public abstract class JnomicsTool extends Configured implements Tool {
             }
 
             if (line.hasOption("files")) {
-            	conf.set("tmpfiles", validateFiles(line.getOptionValue("files"), conf));
+                conf.set("tmpfiles", validateFiles(line.getOptionValue("files"), conf));
             }
 
             if (line.hasOption("archives")) {
-            	conf.set("tmparchives", validateFiles(line.getOptionValue("archives"), conf));
+                conf.set("tmparchives", validateFiles(line.getOptionValue("archives"), conf));
             }
         } catch (IOException ioe) {
             System.err.println(StringUtils.stringifyException(ioe));
@@ -766,7 +767,7 @@ public abstract class JnomicsTool extends Configured implements Tool {
      */
     protected void setJob(JnomicsJob job) {
         this.job = job;
-        setConf(job.getConfiguration());
+        setConf(job == null ? null : job.getConfiguration());
     }
 
     /**
@@ -797,21 +798,19 @@ public abstract class JnomicsTool extends Configured implements Tool {
             Path path = new Path(tmp);
             URI pathURI = path.toUri();
             FileSystem localFs = FileSystem.getLocal(conf);
-            
+
             if (pathURI.getScheme() == null) {
-            	String name = path.toString();
-            	int idx = name.lastIndexOf('#');
-            	Path tmpPath = path;
-            	
-            	if (idx != -1) {
-            		tmpPath = new Path(name.substring(0, idx));
-            	}
+                String name = path.toString();
+                int idx = name.lastIndexOf('#');
+                Path tmpPath = path;
+
+                if (idx != -1) {
+                    tmpPath = new Path(name.substring(0, idx));
+                }
 
                 // default to the local file system
                 // check if the file exists or not first
                 if (!localFs.exists(tmpPath)) {
-                	
-                	
                     throw new FileNotFoundException("File " + tmp + " does not exist.");
                 }
 

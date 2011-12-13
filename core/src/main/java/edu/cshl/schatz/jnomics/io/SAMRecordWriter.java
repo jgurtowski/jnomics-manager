@@ -68,7 +68,7 @@ public class SAMRecordWriter<K, V> extends JnomicsRecordWriter<K, V> {
      * .cshl.schatz.jnomics.util.SequencingRead)
      */
     @Override
-    protected void writeSequencingRead(SequencingRead read) throws IOException {        
+    protected void writeSequencingRead(SequencingRead read) throws IOException {
         writeObject(read.getQueryTemplate().getTemplateName());
         writeTab();
 

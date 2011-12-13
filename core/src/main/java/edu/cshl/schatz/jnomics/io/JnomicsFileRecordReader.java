@@ -9,6 +9,8 @@ package edu.cshl.schatz.jnomics.io;
 import java.io.IOException;
 import java.io.InputStream;
 
+import net.sf.samtools.SAMFileHeader;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -21,6 +23,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.util.LineReader;
 
 import edu.cshl.schatz.jnomics.ob.IUPACCodeException;
+import edu.cshl.schatz.jnomics.ob.header.HeaderData;
 import edu.cshl.schatz.jnomics.ob.writable.QueryTemplate;
 import edu.cshl.schatz.jnomics.util.TextCutter;
 
@@ -35,29 +38,54 @@ public abstract class JnomicsFileRecordReader extends RecordReader<Writable, Que
 
     protected static final byte[] SLASH_LAST = { '/', '2' };
 
+    protected LineReader in;
+
     protected Text key = null;
 
     protected long pos, splitStart, splitEnd;
 
     protected QueryTemplate value = null;
 
-    protected LineReader in;
-
     public static boolean hasTrailingSlashNumber(Text text) {
         int len = text.getLength();
         byte[] bytes = text.getBytes();
 
-        return (len > 2 && bytes[len - 2] == (byte) '/' && Character.isDigit(bytes[len - 1]));
+        return ((len > 2) && (bytes[len - 2] == (byte) '/') && Character.isDigit(bytes[len - 1]));
     }
 
     public static void trimTrailingSlashNumber(Text text) {
         int len = text.getLength();
         byte[] bytes = text.getBytes();
 
-        if (bytes[len - 2] == (byte) '/' && Character.isDigit(bytes[len - 1])) {
+        if ((bytes[len - 2] == (byte) '/') && Character.isDigit(bytes[len - 1])) {
             text.set(bytes, 0, len - 2);
         }
     }
+
+    // /**
+    // * Checks whether header data for the specified path is in memory, and
+    // grabs
+    // * it if it isn't.
+    // */
+    // public HeaderData getHeaderData(Path path, Configuration conf) throws
+    // IOException {
+    // String key = path.toString();
+    // HeaderData data;
+    //
+    // if (null == (data = HeaderDataLookup.getHeader(key))) {
+    // data = readHeaderData(path, conf);
+    // data.setId(path.toString());
+    //
+    // try {
+    // HeaderDataLookup.addHeader(key, data);
+    // } catch (IdConflictException e) {
+    // // This shouldn't happen, but if it does just log the exception.
+    // LOG.warn(e.getMessage(), e);
+    // }
+    // }
+    //
+    // return data;
+    // }
 
     /*
      * @see org.apache.hadoop.mapreduce.RecordReader#close()
@@ -102,15 +130,17 @@ public abstract class JnomicsFileRecordReader extends RecordReader<Writable, Que
      * @param conf
      * @throws IOException
      */
-    public abstract void initialize(FileSplit split, Configuration conf) throws IOException, InterruptedException;
+
+    public abstract void initialize(FileSplit split, Configuration conf)
+            throws IOException, InterruptedException;
 
     /*
      * @see
      * org.apache.hadoop.mapreduce.RecordReader#initialize(org.apache.hadoop
      * .mapreduce.InputSplit, org.apache.hadoop.mapreduce.TaskAttemptContext)
      */
-    @Override
-    public void initialize(InputSplit genericSplit, TaskAttemptContext context) throws IOException, InterruptedException{
+    public void initialize(InputSplit genericSplit, TaskAttemptContext context)
+            throws IOException, InterruptedException {
         initialize((FileSplit) genericSplit, context.getConfiguration());
     }
 
@@ -118,11 +148,29 @@ public abstract class JnomicsFileRecordReader extends RecordReader<Writable, Que
      * Allows a reader to be constructed from only a {@link Path} and
      * {@link Configuration}.
      */
-    public void initialize(Path file, Configuration conf) throws IOException, InterruptedException{
+    public void initialize(Path file, Configuration conf) throws IOException, InterruptedException {
         FileSystem fs = file.getFileSystem(conf);
         FileSplit split = new FileSplit(file, 0, fs.getFileStatus(file).getLen(), null);
 
         initialize(split, conf);
+    }
+
+    /**
+     * Grabs the header data for the file on the specified {@link Path} and
+     * returns a {@link HeaderData} object (a subclass of Picard's
+     * {@link SAMFileHeader}). The default implementation of this method returns
+     * <code>null</code>.
+     * <p>
+     * This method should not be accessed directly; instead use the methods
+     * provided by the {@link HeaderDataLookup} class.
+     * 
+     * @param path The path where the nucleotide sequence file lives.
+     * @param conf The {@link Configuration} that describes the filesystem.
+     * @return A {@link HeaderData} object, or <code>null</code>.
+     * @throws IOException
+     */
+    public HeaderData readHeaderData(Path path, Configuration conf) throws IOException {
+        return null;
     }
 
     /**

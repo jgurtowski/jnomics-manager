@@ -27,7 +27,7 @@ import edu.cshl.schatz.jnomics.mapreduce.JnomicsTool;
  * @author Matthew Titmus
  */
 public class PropertyQuery extends JnomicsTool {
-    public static final String CMD_DESCRIPTION = "Query Hadoop MapReduce job properties.";
+    public static final String CMD_DESCRIPTION = "Query one or more Hadoop MapReduce job properties.";
 
     public static final String CMD_NAME = "query";
 
@@ -35,11 +35,13 @@ public class PropertyQuery extends JnomicsTool {
             + "\"all\": Prints all Hadoop configuration properties, including any specified using the -conf parameter.\n"
             + "A specific property: Any property value. Undefined values will be (NULL).";
 
+    public static final String CMD_USAGE = CMD_NAME + " <all|property>";
+
     /**
      * Zero-argument constructor.
      */
     public PropertyQuery() {
-        setHelpUsage(CMD_NAME + " <all|property>");
+        setHelpUsage(CMD_USAGE);
         setHelpHeading(CMD_TEXT);
     }
 
@@ -158,23 +160,28 @@ public class PropertyQuery extends JnomicsTool {
     public int run(String[] args) throws IOException {
         Configuration conf = getConf();
 
-        if (args[0].equals("all")) {
-            dumpProperties(conf);
+        if (args.length == 0) {
+            System.out.println("Usage: " + CMD_USAGE);
         } else {
-            System.out.printf("%s=%s%n", args[0], conf.get(args[0], "(null)"));
+            if (args[0].equals("all")) {
+                dumpProperties(conf);
+            } else {
+                System.out.printf("%s=%s%n", args[0], conf.get(args[0], "(null)"));
+            }
         }
 
-//        if (args[0].equals("all")) {
-//            dumpProperties(conf);
-//        } else if (args[0].equals("vm")) {
-//            dumpProperties(conf, QueryOptions.INCLUDE_VM);
-//        } else if (args[0].equals("env")) {
-//            dumpProperties(conf, QueryOptions.INCLUDE_VM);
-//        } else if (args[0].equals("all")) {
-//            dumpProperties(conf, QueryOptions.INCLUDE_VM, QueryOptions.INCLUDE_ENVIRONMENT);
-//        } else {
-//            System.out.println(conf.get(args[0], "(null)"));
-//        }
+        // if (args[0].equals("all")) {
+        // dumpProperties(conf);
+        // } else if (args[0].equals("vm")) {
+        // dumpProperties(conf, QueryOptions.INCLUDE_VM);
+        // } else if (args[0].equals("env")) {
+        // dumpProperties(conf, QueryOptions.INCLUDE_VM);
+        // } else if (args[0].equals("all")) {
+        // dumpProperties(conf, QueryOptions.INCLUDE_VM,
+        // QueryOptions.INCLUDE_ENVIRONMENT);
+        // } else {
+        // System.out.println(conf.get(args[0], "(null)"));
+        // }
 
         return STATUS_OK;
     }

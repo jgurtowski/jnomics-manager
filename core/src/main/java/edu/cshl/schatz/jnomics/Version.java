@@ -54,7 +54,7 @@ public final class Version {
      * <li>rc &ndash release candidate
      * <li>r &ndash (final) release
      */
-    public static final String STATUS = "b";
+    public static final String STATUS = "a";
 
     /**
      * The current package revision number ($Revision$).

@@ -10,7 +10,6 @@ import static edu.cshl.schatz.jnomics.ob.writable.SequencingRead.FLAG_REVERSE_CO
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 
 import net.sf.samtools.SAMFileHeader;
 import net.sf.samtools.SAMFileReader;
@@ -27,6 +26,7 @@ import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
 import edu.cshl.schatz.jnomics.ob.Orientation;
+import edu.cshl.schatz.jnomics.ob.header.HeaderData;
 import edu.cshl.schatz.jnomics.ob.writable.QueryTemplate;
 import edu.cshl.schatz.jnomics.ob.writable.SequencingRead;
 import edu.cshl.schatz.jnomics.util.TextCutter;
@@ -39,38 +39,7 @@ import edu.cshl.schatz.jnomics.util.TextUtil;
 public class SAMRecordReader extends JnomicsFileRecordReader {
     static final Log LOG = LogFactory.getLog(SAMRecordReader.class);
 
-    private static HashMap<String, SAMFileHeader> samFileHeaders = new HashMap<String, SAMFileHeader>();
-
     private CompressionCodecFactory compressionCodecs = null;
-
-    /**
-     * TODO Figure out where and how to store headers.
-     */
-    private SAMFileHeader splitHeaders;
-
-    /**
-     * Grabs the header data for the SAM file on the specified Path.
-     * 
-     * @param path
-     * @param fs
-     * @return
-     * @throws IOException
-     */
-    private static final SAMFileHeader getHeaderData(Path path, FileSystem fs) throws IOException {
-        SAMFileHeader samFileHeader = null;
-        String qualifiedUri = path.makeQualified(fs).toUri().toString();
-
-        synchronized (samFileHeaders) {
-            if (null == (samFileHeader = samFileHeaders.get(qualifiedUri))) {
-                SAMFileReader reader = new SAMFileReader(fs.open(path));
-
-                samFileHeader = reader.getFileHeader();
-                samFileHeaders.put(qualifiedUri, samFileHeader);
-            }
-        }
-
-        return samFileHeader;
-    }
 
     /**
      * @param split
@@ -83,18 +52,12 @@ public class SAMRecordReader extends JnomicsFileRecordReader {
 
         final Path file = split.getPath();
         final CompressionCodec codec = compressionCodecs.getCodec(file);
-        FileSystem fs = file.getFileSystem(conf);
 
+        FileSystem fs = file.getFileSystem(conf);
         FSDataInputStream fileIn = fs.open(split.getPath());
 
         splitStart = split.getStart();
         splitEnd = splitStart + split.getLength();
-
-        try {
-            splitHeaders = getHeaderData(file, fs);
-        } catch (IllegalArgumentException e) {
-            LOG.warn(e);
-        }
 
         if (codec != null) {
             in = new SAMLineReader(codec.createInputStream(fileIn), conf);
@@ -173,6 +136,33 @@ public class SAMRecordReader extends JnomicsFileRecordReader {
 
             return true;
         }
+    }
+
+    /**
+     * Grabs the header data for the file on the specified {@link Path} and
+     * returns a {@link HeaderData} object (a subclass of Picard's
+     * {@link SAMFileHeader}). The default implementation of this method returns
+     * <code>null</code>.
+     * 
+     * @param path The path where the nucleotide sequence file lives.
+     * @param conf The {@link Configuration} that describes the filesystem.
+     * @return A {@link HeaderData} object, or <code>null</code>.
+     * @throws IOException
+     */
+    @Override
+    public HeaderData readHeaderData(Path path, Configuration conf) throws IOException {
+        CompressionCodec codec = compressionCodecs.getCodec(path);
+        FileSystem fs = path.getFileSystem(conf);
+        FSDataInputStream fileIn = fs.open(path);
+
+        if (codec != null) {
+            in = new SAMLineReader(codec.createInputStream(fileIn), conf);
+        }
+
+        SAMFileReader samFileReader = new SAMFileReader(fs.open(path));
+        SAMFileHeader samFileHeader = samFileReader.getFileHeader();
+
+        return new HeaderData(samFileHeader);
     }
 
     /**

@@ -58,9 +58,14 @@ public class IdentityTester {
         this.actual = actual;
         klass = expected.getClass();
 
-        TestCase.assertEquals(
-            klass.getName() + " != " + actual.getClass().getName(), expected.getClass(),
-            actual.getClass());
+        TestCase.assertTrue(
+            actual.getClass().getName() + " is not a subclass of " + klass.getName(),
+            klass.isAssignableFrom(actual.getClass()));
+
+        // TestCase.assertEquals(
+        // klass.getName() + " != " + actual.getClass().getName(),
+        // expected.getClass(),
+        // actual.getClass());
 
         for (Method method : klass.getMethods()) {
             String mName = method.toGenericString();
@@ -87,7 +92,7 @@ public class IdentityTester {
      */
     public AssertThat getMethodAction(Method method)
             throws SecurityException, NoSuchMethodException {
-        
+
         return methodActions.get(method.getName());
     }
 
@@ -146,6 +151,7 @@ public class IdentityTester {
                     } else {
                         doEvaluateReturns(message, expectedReturn, actualReturn, action);
                     }
+                    
                     // } catch (RuntimeException ex) {
                     // String message = String.format(
                     // "Got an exception trying %s.%s(). Stack trace follows:",

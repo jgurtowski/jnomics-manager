@@ -29,6 +29,12 @@ import edu.cshl.schatz.jnomics.ob.writable.QueryTemplate;
  * TODO Comment me.
  */
 public class SequencingReadInputFormat extends FileInputFormat<Writable, QueryTemplate> {
+    public static final JnomicsFileRecordReader newRecordReader(Path inputFile) {
+        ReadFileFormat readFormat = ReadFileFormat.get(inputFile);
+
+        return newRecordReader(readFormat);
+    }
+
     public static final JnomicsFileRecordReader newRecordReader(ReadFileFormat readFormat) {
         JnomicsFileRecordReader recordReader;
 
