@@ -42,9 +42,11 @@ public class SequencingReadInputFormat extends FileInputFormat<Writable, QueryTe
         case FASTQ:
             recordReader = new FastqRecordReader();
             break;
+        case FASTA:
+        	recordReader = new FastaRecordReader();
+        	break;
         case BAM:
         case BED:
-        case FASTA:
         case NONE:
         default:
             throw new UnsupportedOperationException(readFormat.toString()

@@ -73,7 +73,7 @@ public abstract class JnomicsFileRecordReader extends RecordReader<Writable, Que
      * @see org.apache.hadoop.mapreduce.RecordReader#getCurrentKey()
      */
     @Override
-    public Text getCurrentKey() {
+    public Text getCurrentKey() throws IOException, InterruptedException {
         return key;
     }
 
@@ -81,7 +81,7 @@ public abstract class JnomicsFileRecordReader extends RecordReader<Writable, Que
      * @see org.apache.hadoop.mapreduce.RecordReader#getCurrentValue()
      */
     @Override
-    public QueryTemplate getCurrentValue() {
+    public QueryTemplate getCurrentValue() throws IOException, InterruptedException {
         return value;
     }
 
@@ -89,7 +89,7 @@ public abstract class JnomicsFileRecordReader extends RecordReader<Writable, Que
      * Get the progress within the split
      */
     @Override
-    public float getProgress() {
+    public float getProgress() throws IOException, InterruptedException{
         if (splitStart == splitEnd) {
             return 0.0f;
         } else {
@@ -102,7 +102,7 @@ public abstract class JnomicsFileRecordReader extends RecordReader<Writable, Que
      * @param conf
      * @throws IOException
      */
-    public abstract void initialize(FileSplit split, Configuration conf) throws IOException;
+    public abstract void initialize(FileSplit split, Configuration conf) throws IOException, InterruptedException;
 
     /*
      * @see
@@ -110,7 +110,7 @@ public abstract class JnomicsFileRecordReader extends RecordReader<Writable, Que
      * .mapreduce.InputSplit, org.apache.hadoop.mapreduce.TaskAttemptContext)
      */
     @Override
-    public void initialize(InputSplit genericSplit, TaskAttemptContext context) throws IOException {
+    public void initialize(InputSplit genericSplit, TaskAttemptContext context) throws IOException, InterruptedException{
         initialize((FileSplit) genericSplit, context.getConfiguration());
     }
 
@@ -118,7 +118,7 @@ public abstract class JnomicsFileRecordReader extends RecordReader<Writable, Que
      * Allows a reader to be constructed from only a {@link Path} and
      * {@link Configuration}.
      */
-    public void initialize(Path file, Configuration conf) throws IOException {
+    public void initialize(Path file, Configuration conf) throws IOException, InterruptedException{
         FileSystem fs = file.getFileSystem(conf);
         FileSplit split = new FileSplit(file, 0, fs.getFileStatus(file).getLen(), null);
 

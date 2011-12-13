@@ -6,11 +6,11 @@ import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+
+import edu.cshl.schatz.jnomics.ob.writable.QueryTemplate;
+import edu.cshl.schatz.jnomics.ob.writable.SequencingRead;
 
 /**
  * @author james
@@ -19,7 +19,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
  * The value will be the FastaRecord itself
  */
 
-public class FastaRecordReader extends RecordReader<LongWritable, FastaRecord> {
+public class FastaRecordReader extends JnomicsFileRecordReader {
 
 	private static char newline = '\n';
 	private static char recordDelimiter = '>';
@@ -29,24 +29,29 @@ public class FastaRecordReader extends RecordReader<LongWritable, FastaRecord> {
 	private long splitStart;
 	private long filelen;
 	private byte buffer;
-
+	
+	
 	private final ByteArrayOutputStream strBuffer= new ByteArrayOutputStream();
-	private final FastaRecord fastaRecord = new FastaRecord();
-	private final LongWritable pos = new LongWritable();
+	private final QueryTemplate fastaRecord = new QueryTemplate();
+	private final Text pos = new Text();
+	private final SequencingRead read = new SequencingRead();
 		
+	public FastaRecordReader(){
+		fastaRecord.add(read);
+	}
+	
 	@Override
 	public void close() throws IOException {
 		fsin.close();
 	}
 
 	@Override
-	public LongWritable getCurrentKey() throws IOException,
-			InterruptedException {
+	public Text getCurrentKey() throws IOException,InterruptedException {
 		return pos;
 	}
 
 	@Override
-	public FastaRecord getCurrentValue() throws IOException, InterruptedException {
+	public QueryTemplate getCurrentValue() throws IOException, InterruptedException {
 		return fastaRecord;
 	}
 
@@ -59,10 +64,8 @@ public class FastaRecordReader extends RecordReader<LongWritable, FastaRecord> {
 	}
 
 	@Override
-	public void initialize(InputSplit inSplit, TaskAttemptContext context)
+	public void initialize(FileSplit split, Configuration conf)
 			throws IOException, InterruptedException {
-		FileSplit split = (FileSplit) inSplit;
-		Configuration conf = context.getConfiguration();
 		Path path = split.getPath();
 		FileSystem fs = path.getFileSystem(conf);
 		filelen = fs.getFileStatus(path).getLen();
@@ -77,12 +80,12 @@ public class FastaRecordReader extends RecordReader<LongWritable, FastaRecord> {
 	 */
 	private boolean readEntry() throws IOException{
 		strBuffer.reset();
-		pos.set(fsin.getPos());
+		pos.set(Long.toString(fsin.getPos()));
 		while((buffer = fsin.readByte()) != -1 
 				&& buffer != newline ){
 			strBuffer.write(buffer);
 		}
-		fastaRecord.setName(strBuffer.toByteArray());
+		fastaRecord.setTemplateName(strBuffer.toString());
 		strBuffer.reset();
 		while((buffer = fsin.readByte()) != -1
 				&& buffer != recordDelimiter){
@@ -90,7 +93,10 @@ public class FastaRecordReader extends RecordReader<LongWritable, FastaRecord> {
 				continue;
 			strBuffer.write(buffer);
 		}
-		fastaRecord.setSequence(strBuffer.toByteArray());
+		
+		SequencingRead r = fastaRecord.getEmptyRead();
+		r.setSequence(strBuffer.toByteArray(),true);
+		fastaRecord.set(r);
 		fsin.previous();// go back one so that seekToEntry works
 		return true;
 	}
@@ -107,5 +113,5 @@ public class FastaRecordReader extends RecordReader<LongWritable, FastaRecord> {
 	@Override
 	public boolean nextKeyValue() throws IOException, InterruptedException {
 		return seekToEntry() && readEntry();
-	}
+	}		
 }
