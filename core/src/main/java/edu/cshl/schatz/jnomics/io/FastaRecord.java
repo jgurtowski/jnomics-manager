@@ -20,7 +20,18 @@ public class FastaRecord implements WritableComparable<FastaRecord> {
 		_sequence.set(sequence);
 		_name.set(name);
 	}
-
+	
+	public void set(Text name, Text sequence){
+		_name.set(name);
+		_sequence.set(sequence);
+	}	
+	
+	public static FastaRecord newInstance(FastaRecord o){
+		FastaRecord n = new FastaRecord();
+		n.set(o.getName(),o.getSequence());
+		return n;
+	}
+	
 	public void setSequence(byte[] arr){
 		_sequence.set(arr);
 	}
@@ -78,4 +89,5 @@ public class FastaRecord implements WritableComparable<FastaRecord> {
 		FastaRecord r = (FastaRecord)o; 
 		return _name.equals(r.getName()) && _sequence.equals(r.getSequence());
 	}
+	
 }

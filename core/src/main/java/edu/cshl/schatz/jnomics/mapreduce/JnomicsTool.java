@@ -611,12 +611,11 @@ public abstract class JnomicsTool extends Configured implements Tool {
             }
 
             if (line.hasOption("files")) {
-                conf.set("tmpfiles", validateFiles(line.getOptionValue("files"), conf));
-                System.out.println(conf.get("tmpfiles"));
+            	conf.set("tmpfiles", validateFiles(line.getOptionValue("files"), conf));
             }
 
             if (line.hasOption("archives")) {
-                conf.set("tmparchives", validateFiles(line.getOptionValue("archives"), conf));
+            	conf.set("tmparchives", validateFiles(line.getOptionValue("archives"), conf));
             }
         } catch (IOException ioe) {
             System.err.println(StringUtils.stringifyException(ioe));
@@ -799,11 +798,21 @@ public abstract class JnomicsTool extends Configured implements Tool {
             Path path = new Path(tmp);
             URI pathURI = path.toUri();
             FileSystem localFs = FileSystem.getLocal(conf);
-
+            
             if (pathURI.getScheme() == null) {
+            	String name = path.toString();
+            	int idx = name.lastIndexOf('#');
+            	Path tmpPath = path;
+            	
+            	if (idx != -1) {
+            		tmpPath = new Path(name.substring(0, idx));
+            	}
+
                 // default to the local file system
                 // check if the file exists or not first
-                if (!localFs.exists(path)) {
+                if (!localFs.exists(tmpPath)) {
+                	
+                	
                     throw new FileNotFoundException("File " + tmp + " does not exist.");
                 }
 
