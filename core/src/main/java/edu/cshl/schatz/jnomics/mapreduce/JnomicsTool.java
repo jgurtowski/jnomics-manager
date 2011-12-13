@@ -93,6 +93,12 @@ public abstract class JnomicsTool extends Configured implements Tool {
 
     static final Log LOG = LogFactory.getLog(JnomicsTool.class);
 
+    /**
+     * The 'args' array, after all default command line processing is complete.
+     * This is the same object that is passed to {@link #run(String[])}.
+     */
+    protected String[] remainingArgs = null;
+
     private HelpFormatter helpFormatter;
 
     private String helpHeading = null;
@@ -100,12 +106,6 @@ public abstract class JnomicsTool extends Configured implements Tool {
     private String helpUsage = "<undefined; please specify a usage via JnomicsTool.setUsage(String)>";
 
     private JnomicsJob job;
-
-    /**
-     * The 'args' array, after all default command line processing is complete.
-     * This is the same object that is passed to {@link #run(String[])}.
-     */
-    protected String[] remainingArgs = null;
 
     /**
      * Builds a new JnomicsTool using a a default {@link Configuration}, and
@@ -332,6 +332,7 @@ public abstract class JnomicsTool extends Configured implements Tool {
     /*
      * @see org.apache.hadoop.util.Tool#run(java.lang.String[])
      */
+    @Override
     public int run(String[] args) throws Exception {
         return STATUS_OK;
     }
@@ -496,7 +497,7 @@ public abstract class JnomicsTool extends Configured implements Tool {
         }
 
         /** @formatter:off */
-        if (!excludeSet.contains("fout") && !excludeSet.contains("out-format")) { 
+        if (!excludeSet.contains("fout") && !excludeSet.contains("out-format")) {
             options.addOption(optionBuilder
                 .withLongOpt("out-format")
                 .withArgName("fmt")
@@ -767,7 +768,7 @@ public abstract class JnomicsTool extends Configured implements Tool {
      */
     protected void setJob(JnomicsJob job) {
         this.job = job;
-        setConf(job.getConfiguration());
+        setConf(job == null ? null : job.getConfiguration());
     }
 
     /**
