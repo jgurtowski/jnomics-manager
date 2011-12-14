@@ -49,7 +49,10 @@ public class HeaderLookupTest extends TestCase {
 
     @Test
     public void testBAMHeaders() throws Exception {
-        doTestFileHeaders(new Path(EXAMPLE_DATA + "example.bam"));
+        Path file = new Path(EXAMPLE_DATA + "example.bam");
+
+        doTestFileHeaders(file);
+        doTestReferenceSequences(file);
     }
 
     @Test
@@ -61,17 +64,24 @@ public class HeaderLookupTest extends TestCase {
 
     @Test
     public void testFastaHeaders() throws Exception {
-        doTestFileHeaders(new Path(EXAMPLE_DATA + "example.fa"));
+        Path file = new Path(EXAMPLE_DATA + "example.fa");
+
+        doTestFileHeaders(file);
     }
 
     @Test
     public void testBEDHeaders() throws Exception {
-        doTestFileHeaders(new Path(EXAMPLE_DATA + "example.bed"));
+        Path file = new Path(EXAMPLE_DATA + "example.bed");
+
+        doTestFileHeaders(file);
     }
 
     @Test
     public void testSAMHeaders() throws Exception {
-        doTestFileHeaders(new Path(EXAMPLE_DATA + "example.sam"));
+        Path file = new Path(EXAMPLE_DATA + "example.sam");
+
+        doTestFileHeaders(file);
+        doTestReferenceSequences(file);
     }
 
     private void doTestFileHeaders(Path... files) throws Exception {
@@ -85,7 +95,6 @@ public class HeaderLookupTest extends TestCase {
             // same instance.
             assertSame(data1, data2);
 
-            doTestReferenceSequences(file);
         }
     }
 

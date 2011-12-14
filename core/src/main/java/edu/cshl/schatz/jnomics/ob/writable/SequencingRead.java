@@ -558,6 +558,13 @@ public class SequencingRead extends NucleotideSequenceWritable
     }
 
     /**
+     * Sets the fragment's overall mapping quality.
+     */
+    public void setMappingPosition(int mappingPosition) {
+        reposition(mappingPosition);
+    }
+
+    /**
      * @param nextPosition The nextPosition to set
      */
     public void setNextPosition(int nextPosition) {

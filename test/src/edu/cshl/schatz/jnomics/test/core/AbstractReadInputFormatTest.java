@@ -40,9 +40,9 @@ import edu.cshl.schatz.jnomics.ob.writable.SequencingRead;
  * @author Matthew Titmus
  */
 abstract class AbstractReadInputFormatTest extends TestCase {
-    public static final String FULL_FILE_PATH = "test-data/inputFormats/";
+    public static final String FULL_FILE_PATH = "example-data/inputFormats/";
 
-    public static final String SINGLE_LINE_FILE_PATH = "test-data/inputFormats-1-line/";
+    public static final String SINGLE_LINE_FILE_PATH = "example-data/inputFormats-1-line/";
 
     static final Log LOG = LogFactory.getLog(AbstractReadInputFormatTest.class);
 
@@ -89,14 +89,20 @@ abstract class AbstractReadInputFormatTest extends TestCase {
                 read.isReverseComplemented() == (read.getOrientation() == Orientation.MINUS));
         }
 
-        { // Third, check that the read has a trailing trailing
-          // slash-number, and that the template does not.
+        { // Check that the read has a trailing trailing slash-number, and that
+          // the template does not.
             assertFalse(
                 prefix + "Template name has trailing slash-number",
                 TRAILING_SLASH_PATTERN.matcher(templateName).find());
 
             assertEquals(
                 prefix + "Read name is missing trailing slash-number", expectedName, readName);
+        }
+
+        { // Does the read name match the template name?
+            assertTrue(
+                prefix + "Read name does not match template",
+                read.getReadName().toString().startsWith(template.getTemplateNameString()));
         }
     }
 
@@ -367,7 +373,6 @@ abstract class AbstractReadInputFormatTest extends TestCase {
 
                 for (SequencingRead read : template) {
                     assertNotNull(read.getQueryTemplate());
-
                     validateRead(template, read);
                 }
 

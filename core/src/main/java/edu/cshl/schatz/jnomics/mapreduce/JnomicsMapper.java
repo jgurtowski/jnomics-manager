@@ -44,9 +44,7 @@ public class JnomicsMapper<KEYIN, VALUEIN, KEYOUT, VALUEOUT>
      */
     @SuppressWarnings("unchecked")
     @Override
-    public void run(Context context) throws IOException, InterruptedException {
-        System.out.println(context.getClass());
-        
+    public void run(Context context) throws IOException, InterruptedException {        
         final Configuration config = context.getConfiguration();
         final Class<?> valueOutClass = config.getClass("mapred.output.value.class", Text.class);
         final Class<?> valueInClass = config.getClass("mapred.mapoutput.value.class", valueOutClass);
