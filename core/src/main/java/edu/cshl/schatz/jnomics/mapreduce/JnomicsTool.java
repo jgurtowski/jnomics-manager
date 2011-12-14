@@ -417,7 +417,8 @@ public abstract class JnomicsTool extends Configured implements Tool {
         if (!excludeSet.contains("conf")) {
             options.addOption(optionBuilder
                 .withArgName("configuration file")
-                .hasArg()
+                .hasArgs()
+                .withValueSeparator(',')
                 .withDescription("Specify an application configuration file")
                 .withWeight(-10)
                 .create("conf"));
@@ -435,8 +436,9 @@ public abstract class JnomicsTool extends Configured implements Tool {
         if (!excludeSet.contains("libjars")) {
             options.addOption(optionBuilder
                 .withArgName("paths")
-                .hasArg()
-                .withDescription("Comma separated jar files to include in the classpath.")
+                .hasArgs()
+                .withValueSeparator(',')
+                .withDescription("Comma-separated jar files to include in the classpath.")
                 .withWeight(-10)
                 .create("libjars"));
         }
@@ -444,8 +446,9 @@ public abstract class JnomicsTool extends Configured implements Tool {
         if (!excludeSet.contains("files")) {
             options.addOption(optionBuilder
                 .withArgName("paths")
-                .hasArg()
-                .withDescription("Comma separated files to be copied to the " +
+                .hasArgs()
+                .withValueSeparator(',')
+                .withDescription("Comma-separated files to be copied to the " +
                         "map reduce cluster")
                 .withWeight(-10)
                 .create("files"));
@@ -455,7 +458,8 @@ public abstract class JnomicsTool extends Configured implements Tool {
             options.addOption(optionBuilder
                 .withArgName("paths")
                 .hasArg()
-                .withDescription("Comma separated archives to be unarchived" +
+                .withValueSeparator(',')
+                .withDescription("Comma-separated archives to be unarchived" +
                         " on the compute machines.")
                 .withWeight(-10)
                 .create("archives"));
