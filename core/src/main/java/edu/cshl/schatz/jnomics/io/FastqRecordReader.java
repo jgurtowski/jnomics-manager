@@ -23,6 +23,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;
 import org.apache.hadoop.util.LineReader;
 
+import edu.cshl.schatz.jnomics.ob.header.HeaderData;
 import edu.cshl.schatz.jnomics.ob.writable.QueryTemplate;
 import edu.cshl.schatz.jnomics.ob.writable.SequencingRead;
 
@@ -34,12 +35,15 @@ import edu.cshl.schatz.jnomics.ob.writable.SequencingRead;
  */
 public class FastqRecordReader extends JnomicsFileRecordReader {
     private static final Pattern COMMENT_PATTERN = Pattern.compile("^\\+.*$");
+
     private static final Pattern ID_PATTERN = Pattern.compile("^@\\S+(\\s\\S*)*$");
+
     private static final Log LOG = LogFactory.getLog(LineRecordReader.class);
 
     private static final Pattern SEQUENCE_PATTERN = Pattern.compile("^[ACTGURYSKWMBDHVN\\-\\.]+$");
 
     private CompressionCodecFactory compressionCodecs = null;
+
     private Text linesText[] = null;
     private int maxLineLength;
 
@@ -243,8 +247,7 @@ public class FastqRecordReader extends JnomicsFileRecordReader {
                     break;
                 }
 
-                value.getTemplateName().set(
-                    linesText[IDX_NAME].getBytes(), 1, sequenceIdLength - 3);
+                value.getTemplateName().set(linesText[IDX_NAME].getBytes(), 1, sequenceIdLength - 3);
             } else {
                 // Probably an unpaired read
                 value.getTemplateName().set(
@@ -265,6 +268,20 @@ public class FastqRecordReader extends JnomicsFileRecordReader {
 
             return true;
         }
+    }
+
+    /*
+     * @see
+     * edu.cshl.schatz.jnomics.io.JnomicsFileRecordReader#readHeaderData(org
+     * .apache.hadoop.fs.Path, org.apache.hadoop.conf.Configuration)
+     */
+    @Override
+    public HeaderData readHeaderData(Path path, Configuration conf) throws IOException {
+        HeaderData hd = new HeaderData();
+        
+        hd.addComment("Original path: " + path.toString());
+        
+        return hd;
     }
 
     /**
