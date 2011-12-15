@@ -3,6 +3,11 @@
 # Jnomics command script.
 # Author: Matthew Titmus
 
+# The path to the Jnomics tools jar. If set here or in the user
+# shell, the specified jar will be used.
+JNOMICS_JAR=$JNOMICS_JAR
+
+
 # First things first. Is Hadoop around, and can we find it?
 if [ -z "$(which hadoop)" ]
 then
@@ -13,35 +18,41 @@ fi
 JNOMICS_BIN=$(dirname "$0")
 JNOMICS_BIN=$(cd "$JNOMICS_BIN"; pwd)
 
-JNOMICS_ROOT=$(dirname "$JNOMICS_BIN")
-JNOMICS_CONF=$JNOMICS_ROOT/conf
+export JNOMICS_ROOT=$(dirname "$JNOMICS_BIN")
+export JNOMICS_CONF=$JNOMICS_ROOT/conf
 
-if [ -z "$JNOMICS_JAR" ]
+# First look for the jnomics tools jar in the Jnomics root directory.
+if [ -z "$JNOMICS_JAR" ] || [ ! -e "$JNOMICS_JAR" ]
 then
-	JNOMICS_JAR=$(find .. | grep '/jnomics-tools.*\.jar$' | tail -n 1)
+	JNOMICS_JAR=$((/bin/ls -1 $JNOMICS_ROOT/jnomics-tools*.jar 2> /dev/null) | tail -n 1)
 fi
 
-if [ -z "$JNOMICS_JAR" ]
+# If it wasn't there, see if we previously stored the jar path in $HOME/.jnomics_jar
+if [ -z "$JNOMICS_JAR" ] || [ ! -e "$JNOMICS_JAR" ]
+then
+	JNOMICS_JAR=$(cat $HOME/.jnomics_jar 2> /dev/null)
+fi
+
+# If we STILL don't have it, search the user's home directory.
+if [ -z "$JNOMICS_JAR" ] || [ ! -e "$JNOMICS_JAR" ]
+then
+	echo "The Jnomics jar (jnomics-tools*.jar) was not found in its expected location."
+	echo "Searching the user directory and saving the result to \$HOME/.jnomics_jar"
+	JNOMICS_JAR=$((find .. 2> /dev/null) | grep '/jnomics-tools.*\.jar$' | tail -n 1)
+fi
+
+if [ -z "$JNOMICS_JAR" ] || [ ! -e "$JNOMICS_JAR" ]
 then
 	echo "Jnomics cannot find jnomics-tools.jar. Please set \$JNOMICS_JAR to indicate the jar path." 1>&2
 	exit 1
 else
 	JNOMICS_JAR=$(readlink -f $JNOMICS_JAR)
+	echo $JNOMICS_JAR > $HOME/.jnomics_jar
 fi
 
-if [ ! -e $JNOMICS_JAR ]
-then
-	echo "Cannot find the Jnomics tools jar (JNOMICS_JAR=$JNOMICS_JAR)." 1>&2
-	exit 1
-fi
-
-# TODO Figure out a nice way to use the configurations in $JNOMICS_CONF/jnomics_conf.xml.
-
-IFS=
-HADOOP_CONF_DIR=$JNOMICS_CONF
-for f in $JNOMICS_ROOT/jnomics-*.jar; do
-	CLASSPATH=${CLASSPATH}:$f;
-done
+# Export the config directory as $HADOOP_CLASSPATH, which makes the config files accessible 
+# to the classloader.
+export HADOOP_CLASSPATH=${JNOMICS_CONF}
 
 exec hadoop jar $JNOMICS_JAR $@
 

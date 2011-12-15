@@ -67,22 +67,6 @@ public class Driver {
             System.exit(1);
         }
 
-        // Try to dynamically add classes. Just used for development: since this
-        // scans the source directories directly, it'll fail anywhere else.
-        // Still, it's kind of cute, huh?
-
-        // try {
-        // String[] PACKAGES = new String[] {
-        // "edu.cshl.schatz.hydra.test",
-        // "edu.cshl.schatz.hydra.tools" };
-        //
-        // for (String pkg : PACKAGES) {
-        // addClasses(pkg, pgd);
-        // }
-        // } catch (Throwable e) {
-        // System.err.println("WARNING: " + e.getLocalizedMessage());
-        // }
-
         try {
             pgd.driver(argv);
         } catch (Throwable e) {
@@ -92,29 +76,6 @@ public class Driver {
 
         System.exit(0);
     }
-
-    // private static final void addClasses(String packageName, MyProgramDriver
-    // pgd) throws Throwable {
-    // String baseDirName = "src/" + packageName.replace('.', '/');
-    // File baseDir = new File(baseDirName);
-    //
-    // if (baseDir.exists()) {
-    // for (File classFile : baseDir.listFiles()) {
-    // String name = classFile.getName();
-    //
-    // if (name.endsWith(".java")) {
-    // Class<?> klass;
-    //
-    // name = name.replace(".java", "");
-    // klass = Class.forName(packageName + '.' + name);
-    //
-    // if (!pgd.added(klass)) {
-    // pgd.addClass("~" + name.toLowerCase(), klass, name);
-    // }
-    // }
-    // }
-    // }
-    // }
 
     @SuppressWarnings("rawtypes")
     static class MyProgramDriver extends ProgramDriver {

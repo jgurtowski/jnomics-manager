@@ -234,6 +234,16 @@ public class JnomicsJob extends Job {
     private void setDefaults() {
         Configuration conf = getConfiguration();
 
+        // This looks for the jnomics-conf.xml file on the classpath, and
+        // adds it as a resource if it finds it.
+        ClassLoader cL = Thread.currentThread().getContextClassLoader();
+        if (cL == null) {
+            cL = Configuration.class.getClassLoader();
+        }
+        if (cL.getResource("jnomics-conf.xml") != null) {
+            conf.addResource("jnomics-conf.xml");
+        }
+
         conf.setBoolean("jnomics.job", true);
         conf.set(P_READ_FORMAT_OUT, "sam");
 

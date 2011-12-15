@@ -417,7 +417,7 @@ public abstract class JnomicsTool extends Configured implements Tool {
         if (!excludeSet.contains("conf")) {
             options.addOption(optionBuilder
                 .withArgName("configuration file")
-                .hasArgs()
+                .hasArg()
                 .withValueSeparator(',')
                 .withDescription("Specify an application configuration file")
                 .withWeight(-10)
@@ -436,7 +436,7 @@ public abstract class JnomicsTool extends Configured implements Tool {
         if (!excludeSet.contains("libjars")) {
             options.addOption(optionBuilder
                 .withArgName("paths")
-                .hasArgs()
+                .hasArg()
                 .withValueSeparator(',')
                 .withDescription("Comma-separated jar files to include in the classpath.")
                 .withWeight(-10)
@@ -446,7 +446,7 @@ public abstract class JnomicsTool extends Configured implements Tool {
         if (!excludeSet.contains("files")) {
             options.addOption(optionBuilder
                 .withArgName("paths")
-                .hasArgs()
+                .hasArg()
                 .withValueSeparator(',')
                 .withDescription("Comma-separated files to be copied to the " +
                         "map reduce cluster")
@@ -596,7 +596,8 @@ public abstract class JnomicsTool extends Configured implements Tool {
         }
 
         if (line.hasOption("conf")) {
-            String[] values = line.getOptionValues("conf");
+            String[] values = line.getOptionValue("conf").split(",");
+
             for (String value : values) {
                 conf.addResource(new Path(value));
             }
@@ -605,8 +606,10 @@ public abstract class JnomicsTool extends Configured implements Tool {
         try {
             if (line.hasOption("libjars")) {
                 conf.set("tmpjars", validateFiles(line.getOptionValue("libjars"), conf));
+
                 // setting libjars in client classpath
                 URL[] libjars = GenericOptionsParser.getLibJars(conf);
+
                 if ((libjars != null) && (libjars.length > 0)) {
                     conf.setClassLoader(new URLClassLoader(libjars, conf.getClassLoader()));
                     Thread.currentThread().setContextClassLoader(
