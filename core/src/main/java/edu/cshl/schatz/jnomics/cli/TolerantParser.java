@@ -87,6 +87,10 @@ public class TolerantParser extends GnuParser {
     public CommandLine parse(Options options, String[] arguments, Properties properties,
         boolean stopAtNonOption) throws ParseException {
 
+        if (options == null) {
+            options = new Options();
+        }
+        
         CommandLine cli = super.parse(options, arguments, properties, stopAtNonOption);
 
         List commandLineArgs = cli.getArgList();
