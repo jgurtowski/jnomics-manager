@@ -68,4 +68,22 @@ public class TextUtil {
 
         return false;
     }
+
+    /**
+     * Joins an array of strings with delim
+     * @param arr array of strings
+     * @param delim delimiter (set to null for no delimiter)
+     * @return string of joined array elements
+     */
+
+    public static String join(String[] arr, String delim){
+        StringBuilder builder = new StringBuilder();
+        for(String s: arr){
+            builder.append(s);
+            if(delim != null)
+                builder.append(delim);
+        }
+        return builder.toString();
+    }
+    
 }

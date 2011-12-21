@@ -58,6 +58,10 @@ public class Driver {
 
             pgd.addClass(ReadStats.CMD_NAME, ReadStats.class, ReadStats.CMD_DESCRIPTION);
 
+            pgd.addClass("bowtie2", Bowtie2.class, "Align Reads Bowtie2");
+
+            pgd.addClass("bwajames", BWAJames.class, "BWA James");
+            
             pgd.addClass("svsim", SVSimulator.class, "Generate simulated structural variations");
 
             pgd.addClass("version", Version.class, "Outputs the current version number");

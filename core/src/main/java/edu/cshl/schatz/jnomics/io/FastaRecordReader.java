@@ -80,11 +80,12 @@ public class FastaRecordReader extends JnomicsFileRecordReader {
 	 */
 	private boolean readEntry() throws IOException{
 		strBuffer.reset();
-		pos.set(Long.toString(fsin.getPos()));
+		//pos.set(Long.toString(fsin.getPos()));
 		while((buffer = fsin.readByte()) != -1 
 				&& buffer != newline ){
 			strBuffer.write(buffer);
 		}
+		pos.set(strBuffer.toString()); //set key to name so templates are grouped
 		fastaRecord.setTemplateName(strBuffer.toString());
 		strBuffer.reset();
 		while((buffer = fsin.readByte()) != -1
@@ -103,7 +104,7 @@ public class FastaRecordReader extends JnomicsFileRecordReader {
 		
 	
 	private boolean seekToEntry() throws IOException{
-		while((buffer=(byte) fsin.readByte()) != -1 && fsin.getPos() <= splitEnd){
+		while((buffer=fsin.readByte()) != -1 && fsin.getPos() <= splitEnd){
 			if(buffer == recordDelimiter)
 				return true;
 		}

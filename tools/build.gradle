@@ -12,6 +12,7 @@ jar {
     from {
     	 jnomicsCore.fileTree(jnomicsCore.getProperties()["sourceSets"]["main"].getOutput().getClassesDir())
    }
+
    from {
      jnomicsCore.file('lib').listFiles().findAll{
   	    it.name.endsWith('.jar')}.collect{ zipTree(it) }

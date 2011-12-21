@@ -332,7 +332,6 @@ public abstract class JnomicsTool extends Configured implements Tool {
     /*
      * @see org.apache.hadoop.util.Tool#run(java.lang.String[])
      */
-    @Override
     public int run(String[] args) throws Exception {
         return STATUS_OK;
     }
@@ -792,7 +791,8 @@ public abstract class JnomicsTool extends Configured implements Tool {
      *         converted to valid URIs.
      */
     private String validateFiles(String files, Configuration conf) throws IOException {
-        if (files == null) {
+
+    	if (files == null) {
             return null;
         }
 
@@ -804,13 +804,14 @@ public abstract class JnomicsTool extends Configured implements Tool {
             String finalPath;
             Path path = new Path(tmp);
             URI pathURI = path.toUri();
+            
             FileSystem localFs = FileSystem.getLocal(conf);
-
+                
             if (pathURI.getScheme() == null) {
-                String name = path.toString();
+            	String name = path.toString();
                 int idx = name.lastIndexOf('#');
                 Path tmpPath = path;
-
+                
                 if (idx != -1) {
                     tmpPath = new Path(name.substring(0, idx));
                 }
@@ -822,14 +823,22 @@ public abstract class JnomicsTool extends Configured implements Tool {
                 }
 
                 finalPath = path.makeQualified(localFs).toString();
+                
             } else {
                 // check if the file exists in this file system
                 // we need to recreate this filesystem object to copy
                 // these files to the file system jobtracker is running
                 // on.
-                FileSystem fs = path.getFileSystem(conf);
-
-                if (!fs.exists(path)) {
+            	FileSystem fs = path.getFileSystem(conf);
+            	String name = path.toString();
+                int idx = name.lastIndexOf('#');
+                Path tmpPath = path;
+                
+                if (idx != -1) {
+                    tmpPath = new Path(name.substring(0, idx));
+                }           	
+            	
+                if (!fs.exists(tmpPath)) {
                     throw new FileNotFoundException("File " + tmp + " does not exist.");
                 }
 

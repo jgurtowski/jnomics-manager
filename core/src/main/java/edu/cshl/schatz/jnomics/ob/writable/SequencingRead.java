@@ -138,7 +138,6 @@ public class SequencingRead extends NucleotideSequenceWritable
      * 
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    @Override
     public int compareTo(SequencingRead o) {
         return getReadName().compareTo(o.getReadName());
     }
