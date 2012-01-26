@@ -1,78 +1,82 @@
 
 allprojects{
-	tasks.withType(Compile).all{ Compile compile->
+	tasks.withType(Compile).all{ compile->
 			compile.options.debug=true
 			compile.options.compilerArgs=['-Xlint:all']
-       }
+    }
 }
 
 subprojects{
 	
-	apply plugin: 'java'
-	apply plugin: 'eclipse'
+    apply plugin: 'java'
+    apply plugin: 'eclipse'
+    apply plugin: 'idea'
 
-	jar{
-		manifest.attributes provider: 'gradle'
-	}	
+    jar{
+        manifest.attributes provider: 'gradle'
+    }
 
-	repositories {
- 	  mavenCentral()
-	}	
- 
-        dependencies{
-	 compile 'org.apache.hadoop:hadoop-core:0.20.2'
-         compile 'org.apache.hadoop:hadoop-tools:0.20.2'
-	 compile 'commons-logging:commons-logging:1.1.1'
-	 compile 'commons-cli:commons-cli:1.2'
- 	}
-	
+    repositories {
+       // maven{
+       //     url "https://repository.cloudera.com/artifactory/cloudera-repos"
+       //}
+        mavenCentral()
+    }
+
+    dependencies{
+        compile 'org.apache.hadoop:hadoop-core:0.20.203.0'
+        compile 'org.apache.hadoop:hadoop-tools:0.20.203.0'
+        compile 'commons-logging:commons-logging:1.1.1'
+        compile 'commons-cli:commons-cli:1.2'
+    }
+
 }
 
-Project toolsProject = project(':tools')
+toolsProject = project(':tools')
 
 gradle.taskGraph.afterTask { task ->
-  if(task.getPath() == ':tools:build'){
-   copy{
-	from 'tools/build/libs/jnomics-tools.jar'
-	into '.'
-   }
-  }
+    if(task.getPath() == ':tools:build'){
+        copy{
+            from 'tools/build/libs/jnomics-tools.jar'
+            into '.'
+        }
+    }
 }
 
 gradle.taskGraph.afterTask { task ->
-  if(task.getPath() == ':examples:build'){
-   copy{
-	from 'examples/build/libs/jnomics-examples.jar'
-	into '.'
-   }
-  }
+    if(task.getPath() == ':examples:build'){
+        copy{
+            from 'examples/build/libs/jnomics-examples.jar'
+            into '.'
+        }
+    }
 }
 
 task wrapper(type: Wrapper){
-     gradleVersion = '1.0-milestone-5'
+    gradleVersion = '1.0-milestone-6'
 }
 
 gradle.taskGraph.afterTask { task ->
-  if(task.getPath() == ':tools:clean'){
-    delete 'jnomics-tools.jar'
-    delete 'jnomics-examples.jar'
-  }	
+    if(task.getPath() == ':tools:clean'){
+        delete 'jnomics-tools.jar'
+        delete 'jnomics-examples.jar'
+    }
 }
 
 task downloadExampleData {
-     outzip = "example-data.zip"
-     doFirst{
+    outzip = "example-data.zip"
+    doFirst{
         println "Downloading Jnomics Example Data"
         ant {
-          get src:"http://downloads.sourceforge.net/project/jnomics/example-data.zip?r=&ts=1320345336&use_mirror=garr",
-	  dest: outzip, verbose:"true"
+            get src:"http://downloads.sourceforge.net/project/jnomics/example-data.zip?r=&ts=1320345336&use_mirror=garr",
+                    dest: outzip, verbose:"true"
         }     
-     }
-     doLast{
-       println "Extracting Example Data to ./example-data"
-       ant {
-         unzip src:outzip, dest: "."
-       }
-       delete outzip
-     }
+    }
+    doLast{
+        println "Extracting Example Data to ./example-data"
+        ant {
+            unzip src:outzip, dest: "."
+        }
+        delete outzip
+    }
 }

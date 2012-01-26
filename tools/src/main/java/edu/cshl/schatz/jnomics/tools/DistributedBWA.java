@@ -662,7 +662,7 @@ public class DistributedBWA extends DistributedBinary {
                 FileSystem fsLocal = FileSystem.getLocal(conf);
                 Path sourcePath = new Path("dist/bwa");
 
-                Path cachePath = DistributedCache.getLocalCache(sourcePath.toUri(), //
+                /*Path cachePath = DistributedCache.getLocalCache(sourcePath.toUri(), //
                     conf, //
                     new Path(conf.get(OUT_DIR) + "/cache/"), //
                     fs.getFileStatus(sourcePath), //
@@ -677,7 +677,7 @@ public class DistributedBWA extends DistributedBinary {
                     "Local cache: %s (Exists=%s)%n", cachePath.toString(),
                     fsLocal.exists(cachePath)));
 
-                binaryPath = new File(cachePath.toUri()).getCanonicalPath();
+                binaryPath = new File(cachePath.toUri()).getCanonicalPath();*/
             }
 
             // These are REQUIRED to exist. If they don't, throw a

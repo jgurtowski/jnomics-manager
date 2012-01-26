@@ -65,6 +65,12 @@ public class Driver {
             pgd.addClass("svsim", SVSimulator.class, "Generate simulated structural variations");
 
             pgd.addClass("version", Version.class, "Outputs the current version number");
+
+            pgd.addClass("loader_pe", PairedEndLoader.class,"Loads paired end reads into hdfs");
+
+            pgd.addClass("samtools", Samtools.class,"samtools");
+
+
         } catch (Throwable e) {
             e.printStackTrace();
 
