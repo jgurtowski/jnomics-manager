@@ -28,6 +28,7 @@ subprojects{
         compile 'org.apache.hadoop:hadoop-tools:0.20.203.0'
         compile 'commons-logging:commons-logging:1.1.1'
         compile 'commons-cli:commons-cli:1.2'
+	compile 'junit:junit:4.10'	
     }
 
 }
