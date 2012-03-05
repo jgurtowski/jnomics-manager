@@ -33,7 +33,7 @@ import org.apache.hadoop.util.StringUtils;
 
 import edu.cshl.schatz.jnomics.cli.OptionBuilder;
 import edu.cshl.schatz.jnomics.io.FileFormatException;
-import edu.cshl.schatz.jnomics.mapreduce.JnomicsReducer;
+import edu.cshl.schatz.jnomics.mapreduce.JnomicsReducerO;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsTool;
 import edu.cshl.schatz.jnomics.ob.writable.QueryTemplate;
 import edu.cshl.schatz.jnomics.ob.writable.SequencingRead;
@@ -408,14 +408,14 @@ public class AlignmentProcessor extends JnomicsTool {
     @Override
     public int run(String[] args) throws Exception {
         getJob().setJarByClass(AlignmentProcessor.class);
-        getJob().setReducerClass(AlignmentReducer.class);
-        getJob().setCombinerClass(AlignmentReducer.class);
+        getJob().setReducerClass(AlignmentReducerO.class);
+        getJob().setCombinerClass(AlignmentReducerO.class);
 
         return getJob().waitForCompletion() ? 0 : 1;
     }
 
-    public static class AlignmentReducer
-            extends JnomicsReducer<Writable, QueryTemplate, Writable, QueryTemplate> {
+    public static class AlignmentReducerO
+            extends JnomicsReducerO<Writable, QueryTemplate, Writable, QueryTemplate> {
 
         static final int DEFAULT_FLAGS = 0;
         static final int DEFAULT_MIN_LENGTH = 0;

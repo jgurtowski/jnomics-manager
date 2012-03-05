@@ -250,8 +250,8 @@ public class JnomicsJob extends Job {
         // conf.setClass("fs.cache.impl", DistributedCacheFileSystem.class,
         // FileSystem.class);
 
-        setMapperClass(JnomicsMapper.class);
-        setReducerClass(JnomicsReducer.class);
+        setMapperClass(JnomicsMapperO.class);
+        setReducerClass(JnomicsReducerO.class);
 
         setInputFormatClass(SequencingReadInputFormat.class);
         setOutputFormatClass(JnomicsOutputFormat.class);

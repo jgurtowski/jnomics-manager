@@ -39,4 +39,5 @@ public class SAMRecordWritableTest extends junit.framework.TestCase {
             assertEquals(testHeader, samWritable.getTextHeader().toString());
         }
     }
+
 }

@@ -1,11 +1,11 @@
 package edu.cshl.schatz.jnomics.ob;
 
+import edu.cshl.schatz.jnomics.util.TextUtil;
 import net.sf.samtools.*;
 import net.sf.samtools.util.BufferedLineReader;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.util.StringUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInput;
@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
 
 /**
  *
@@ -69,7 +70,7 @@ public class SAMRecordWritable implements WritableComparable{
             tagStrings.add(encodedTag);
             attribute = attribute.getNext();
         }
-        tags.set(tagStrings.size() == 0 ? "" : StringUtils.join("\t", tagStrings));
+        tags.set(tagStrings.size() == 0 ? "" : TextUtil.join("\t",tagStrings));
     }
 
 
@@ -223,6 +224,6 @@ public class SAMRecordWritable implements WritableComparable{
         arr[8] = insertSize.toString();
         arr[9] = readString.toString();
         arr[10] = qualityString.toString();
-        return StringUtils.join("\t", arr);
+        return TextUtil.join("\t", arr);
     }
 }

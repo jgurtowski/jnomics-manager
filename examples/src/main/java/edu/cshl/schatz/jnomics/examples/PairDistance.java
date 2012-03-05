@@ -7,7 +7,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
-import edu.cshl.schatz.jnomics.mapreduce.JnomicsReducer;
+import edu.cshl.schatz.jnomics.mapreduce.JnomicsReducerO;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsTool;
 import edu.cshl.schatz.jnomics.ob.PositionRange;
 import edu.cshl.schatz.jnomics.ob.writable.QueryTemplate;
@@ -33,7 +33,7 @@ public class PairDistance extends JnomicsTool {
     public int run(String[] args) throws Exception {
         Job job = getJob();
 
-        job.setReducerClass(PairDistanceReducer.class);
+        job.setReducerClass(PairDistanceReducerO.class);
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(QueryTemplate.class);
         job.setOutputKeyClass(Text.class);
@@ -48,8 +48,8 @@ public class PairDistance extends JnomicsTool {
      * 
      * @author James
      */
-    public static class PairDistanceReducer
-            extends JnomicsReducer<Text, QueryTemplate, Text, IntWritable> {
+    public static class PairDistanceReducerO
+            extends JnomicsReducerO<Text, QueryTemplate, Text, IntWritable> {
 
         final IntWritable aliDist = new IntWritable();
         PositionRange range1, range2;

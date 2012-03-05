@@ -71,19 +71,41 @@ public class TextUtil {
 
     /**
      * Joins an array of strings with delim
-     * @param arr array of strings
      * @param delim delimiter (set to null for no delimiter)
+     * @param arr array of strings
      * @return string of joined array elements
      */
 
-    public static String join(String[] arr, String delim){
+    public static String join(String delim, Iterable<String> arr){
         StringBuilder builder = new StringBuilder();
+        boolean first =  true;
         for(String s: arr){
-            builder.append(s);
-            if(delim != null)
+            if(first){
+                first = false;
+            }else{
                 builder.append(delim);
+            }
+            builder.append(s);
         }
         return builder.toString();
     }
+
+    public static String join(String delim, String []arr){
+        StringBuilder builder = new StringBuilder();
+        boolean first =  true;
+        for(String s: arr){
+            if(first){
+                first = false;
+            }else{
+                builder.append(delim);
+            }
+            builder.append(s);
+        }
+        return builder.toString();
+    }
+    
+    
+    
+    
     
 }

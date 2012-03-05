@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import edu.cshl.schatz.jnomics.mapreduce.JnomicsReducerO;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -23,7 +24,6 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
@@ -34,7 +34,6 @@ import edu.cshl.schatz.jnomics.io.FastqRecordWriter;
 import edu.cshl.schatz.jnomics.io.SAMRecordReader.SAMLineReader;
 import edu.cshl.schatz.jnomics.mapreduce.DistributedBinary;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsJob;
-import edu.cshl.schatz.jnomics.mapreduce.JnomicsReducer;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsTool;
 import edu.cshl.schatz.jnomics.ob.writable.QueryTemplate;
 
@@ -413,7 +412,7 @@ public class DistributedBWA extends DistributedBinary {
      */
     @Override
     public int run(String[] args) throws Exception {
-        getJob().setReducerClass(DistributedBWAReducer.class);
+        getJob().setReducerClass(DistributedBWAReducerO.class);
 
         return getJob().waitForCompletion() ? 0 : 1;
     }
@@ -421,8 +420,8 @@ public class DistributedBWA extends DistributedBinary {
     /**
      * @author Matthew A. Titmus
      */
-    public static class DistributedBWAReducer
-            extends JnomicsReducer<Writable, QueryTemplate, Writable, QueryTemplate> {
+    public static class DistributedBWAReducerO
+            extends JnomicsReducerO<Writable, QueryTemplate, Writable, QueryTemplate> {
 
         private String binaryAlnArgs, binarySamxeArgs;
 

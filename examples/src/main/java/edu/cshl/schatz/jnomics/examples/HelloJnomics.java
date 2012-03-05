@@ -8,7 +8,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
-import edu.cshl.schatz.jnomics.mapreduce.JnomicsReducer;
+import edu.cshl.schatz.jnomics.mapreduce.JnomicsReducerO;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsTool;
 import edu.cshl.schatz.jnomics.ob.writable.QueryTemplate;
 
@@ -33,7 +33,7 @@ public class HelloJnomics extends JnomicsTool {
     public int run(String[] args) throws Exception {
         Job job = getJob();
 
-        job.setReducerClass(HelloJnomicsReducer.class);
+        job.setReducerClass(HelloJnomicsReducerO.class);
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(QueryTemplate.class);
         job.setOutputKeyClass(Text.class);
@@ -49,8 +49,8 @@ public class HelloJnomics extends JnomicsTool {
      * 
      * @author James
      */
-    public static class HelloJnomicsReducer
-            extends JnomicsReducer<Writable, QueryTemplate, Text, IntWritable> {
+    public static class HelloJnomicsReducerO
+            extends JnomicsReducerO<Writable, QueryTemplate, Text, IntWritable> {
     	
     	final IntWritable outCount = new IntWritable();
     	final Text outText = new Text();

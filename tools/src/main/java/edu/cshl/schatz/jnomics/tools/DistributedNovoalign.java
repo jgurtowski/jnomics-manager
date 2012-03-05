@@ -30,7 +30,7 @@ import edu.cshl.schatz.jnomics.cli.OptionBuilder;
 import edu.cshl.schatz.jnomics.io.FastqRecordWriter;
 import edu.cshl.schatz.jnomics.io.SAMRecordReader.SAMLineReader;
 import edu.cshl.schatz.jnomics.mapreduce.DistributedBinary;
-import edu.cshl.schatz.jnomics.mapreduce.JnomicsReducer;
+import edu.cshl.schatz.jnomics.mapreduce.JnomicsReducerO;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsTool;
 import edu.cshl.schatz.jnomics.ob.writable.QueryTemplate;
 
@@ -284,7 +284,7 @@ public class DistributedNovoalign extends DistributedBinary {
      */
     @Override
     public int run(String[] args) throws Exception {
-        getJob().setReducerClass(DistributedNovoalignReducer.class);
+        getJob().setReducerClass(DistributedNovoalignReducerO.class);
 
         return getJob().waitForCompletion() ? 0 : 1;
     }
@@ -292,8 +292,8 @@ public class DistributedNovoalign extends DistributedBinary {
     /**
      * @author Matthew Titmus
      */
-    public static class DistributedNovoalignReducer
-            extends JnomicsReducer<Writable, QueryTemplate, Writable, QueryTemplate> {
+    public static class DistributedNovoalignReducerO
+            extends JnomicsReducerO<Writable, QueryTemplate, Writable, QueryTemplate> {
 
         private String binaryDirName, referenceIndexName, binaryArgs;
         private File[] fastqFiles;

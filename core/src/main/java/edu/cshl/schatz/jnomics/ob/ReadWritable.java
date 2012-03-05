@@ -56,10 +56,10 @@ public class ReadWritable implements WritableComparable<ReadWritable>{
      * @return String with fastq view (has trailing newline)
      */
     public String getFastqString(){
-        return TextUtil.join(new String[]{name.toString(),
+        return TextUtil.join(System.getProperty("line.separator"),new String[]{name.toString(),
                 sequence.toString(),
                 description.toString(),
-                quality.toString()}, System.getProperty("line.separator"));
+                quality.toString()});
     }
 
     @Override
