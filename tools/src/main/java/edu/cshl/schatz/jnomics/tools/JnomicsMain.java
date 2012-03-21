@@ -28,6 +28,7 @@ public class JnomicsMain extends Configured implements Tool {
                     put("bwa_map", BWAMap.class);
                     put("samtools_map", SamtoolsMap.class);
                     put("kcounter_map", KCounterMap.class);
+                    put("split_map", SplitMap.class);
                 }
             };
 

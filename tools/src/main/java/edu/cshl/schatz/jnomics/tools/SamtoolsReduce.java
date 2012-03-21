@@ -14,16 +14,13 @@ import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.mapreduce.lib.partition.HashPartitioner;
 
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 
 public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMRecordWritable, Text, NullWritable> {
 
-    private String samtoolsCmd;
-    private String bcftoolsCmd;
-    private String samtoolsCvtCmd;
     private Throwable readerErr;
-    
+    private int reduceIt, binsize;
+
     private final JnomicsArgument samtools_bin_arg = new JnomicsArgument("samtools_bin","Samtools Binary",true);
     private final JnomicsArgument bcftools_bin_arg = new JnomicsArgument("bcftools_bin","bcftools Binary", true);
     private final JnomicsArgument reference_file_arg = new JnomicsArgument("reference_fa",
@@ -86,41 +83,69 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
+        String binsize_str = context.getConfiguration().get(SamtoolsMap.genome_binsize_arg.getName());
+        binsize = binsize_str == null ? SamtoolsMap.DEFAULT_GENOME_BINSIZE : Integer.parseInt(binsize_str);
+    }
+
+    @Override
+    protected void reduce(SamtoolsMap.SamtoolsKey key, final Iterable<SAMRecordWritable> values, final Context context)
+            throws IOException, InterruptedException {
+
+        /**Get Configuration **/
         Configuration conf = context.getConfiguration();
         String samtools_bin = conf.get(samtools_bin_arg.getName());
         String bcftools_bin = conf.get(bcftools_bin_arg.getName());
         String reference_file = conf.get(reference_file_arg.getName());
 
-        samtoolsCvtCmd = String.format("%s view -Su -", samtools_bin);
-        samtoolsCmd = String.format("%s mpileup -uf %s -", samtools_bin, reference_file);
-        bcftoolsCmd = String.format("%s view -vcg -", bcftools_bin);
-    }
+        /**Setup temp bam file**/
+        String taskAttemptId = context.getTaskAttemptID().toString();
+        File tmpBam = new File(taskAttemptId+"_"+(reduceIt++)+".bam");
 
-    @Override
-    protected void reduce(SamtoolsMap.SamtoolsKey key, final Iterable<SAMRecordWritable> values, final Context context) throws IOException, InterruptedException {
-
+        /**launch sam-to-bam conversion and write entries to process**/
+        String samtoolsCvtCmd = String.format("%s view -Sb - -o %s", samtools_bin, tmpBam.getAbsolutePath());
         final Process samtoolsCvtProcess = Runtime.getRuntime().exec(samtoolsCvtCmd);
-        final Process samtoolsProcess = Runtime.getRuntime().exec(samtoolsCmd);
-        final Process bcftoolsProcess = Runtime.getRuntime().exec(bcftoolsCmd);
-
-
-        Thread samcvtLink = new Thread(new ThreadedStreamConnector(
-                samtoolsCvtProcess.getInputStream(), samtoolsProcess.getOutputStream()));
-
-        Thread sambcfLink = new Thread(new ThreadedStreamConnector(
-                samtoolsProcess.getInputStream(), bcftoolsProcess.getOutputStream()));
-
-
-        samcvtLink.start();
-        sambcfLink.start();
 
         //reconnect error stream so we can debug process errors through hadoop
         Thread samtoolsCvtProcessErr = new Thread(new ThreadedStreamConnector(samtoolsCvtProcess.getErrorStream(),System.err));
+        samtoolsCvtProcessErr.start();
+        /**write the entries to the sam-bam convert process**/
+        boolean first =  true;
+        PrintWriter writer = new PrintWriter(samtoolsCvtProcess.getOutputStream());
+
+        for(SAMRecordWritable record: values){
+            if(first){
+                writer.println(record.getTextHeader());
+                first = false;
+            }
+            writer.println(record);
+        }
+        writer.close();
+
+        samtoolsCvtProcess.waitFor();
+        samtoolsCvtProcessErr.join();
+        
+        /** Index the temp bam**/
+        String samtoolsIdxCmd = String.format("%s index %s", samtools_bin, tmpBam.getAbsolutePath());
+        final Process samtoolsIdxProcess = Runtime.getRuntime().exec(samtoolsIdxCmd);
+        samtoolsIdxProcess.waitFor();
+
+        /** Run mpileup on indexed bam and pipe output to bcftools **/
+        int binstart = key.getBin().get() * binsize;
+        String samtoolsCmd = String.format("%s mpileup -r %s:%d-%d -uf %s %s",
+                samtools_bin, key.getRef().toString(), binstart, binstart+binsize-1, reference_file, tmpBam.getAbsolutePath());
+        String bcftoolsCmd = String.format("%s view -vcg -", bcftools_bin);
+        final Process samtoolsProcess = Runtime.getRuntime().exec(samtoolsCmd);
+        final Process bcftoolsProcess = Runtime.getRuntime().exec(bcftoolsCmd);
+
+        /**connect mpileup output to bcftools input **/
+        Thread sambcfLink = new Thread(new ThreadedStreamConnector(
+                samtoolsProcess.getInputStream(), bcftoolsProcess.getOutputStream()));
+
+        sambcfLink.start();
+
+        /**reconnect stderr for debugging **/
         Thread samtoolsProcessErr = new Thread(new ThreadedStreamConnector(samtoolsProcess.getErrorStream(),System.err));
         Thread bcftoolsProcessErr = new Thread(new ThreadedStreamConnector(bcftoolsProcess.getErrorStream(),System.err));
-
-
-        samtoolsCvtProcessErr.start();
         samtoolsProcessErr.start();
         bcftoolsProcessErr.start();
 
@@ -142,38 +167,18 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
 
         bcfThread.start();
 
-        Thread samWriter = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                boolean first=true;
-                PrintWriter writer = new PrintWriter(samtoolsCvtProcess.getOutputStream());
-                for(SAMRecordWritable record : values){
-                    if(first){
-                        writer.println(record.getTextHeader());
-                        first = false;
-                    }
-                    writer.println(record.toString());
-                }
-                writer.close();
-            }
-        });
-
-        samWriter.start();
-
         /*TODO Add check to see if any threads threw an exception*/
 
         bcfThread.join();
         if(readerErr != null)
             throw new IOException(readerErr);
-        samWriter.join();
-        samcvtLink.join();
-        sambcfLink.join();
-        samtoolsCvtProcessErr.join();
-        samtoolsProcessErr.join();
-        bcftoolsProcessErr.join();
         samtoolsProcess.waitFor();
         bcftoolsProcess.waitFor();
-        samtoolsCvtProcess.waitFor();
+        sambcfLink.join();
+        samtoolsProcessErr.join();
+        bcftoolsProcessErr.join();
+        File tmpBamIdx = new File(tmpBam.getAbsolutePath()+".bai");
+        tmpBam.delete();
+        tmpBamIdx.delete();
     }
-
 }

@@ -4,7 +4,7 @@ dependencies {
 	compile jnomicsCore
 }
 
-manifest.mainAttributes("Main-Class": "edu.cshl.schatz.jnomics.tools.Driver")
+manifest.mainAttributes("Main-Class": "edu.cshl.schatz.jnomics.tools.JnomicsMain")
 
 
 jar {

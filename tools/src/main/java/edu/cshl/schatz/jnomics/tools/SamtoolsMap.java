@@ -8,19 +8,20 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.mapreduce.Mapper;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 public class SamtoolsMap extends JnomicsMapper<SAMRecordWritable,NullWritable, SamtoolsMap.SamtoolsKey, SAMRecordWritable> {
 
+    public static final int DEFAULT_GENOME_BINSIZE = 1000000;
+    
     private final SamtoolsKey stkey = new SamtoolsKey();
     private int binsize;
 
-    private final JnomicsArgument genome_binsize_arg = new JnomicsArgument("genome_binsize",
+    public static final JnomicsArgument genome_binsize_arg = new JnomicsArgument("genome_binsize",
             "Bin Size to Break up the Genome", false);
+        
     
     @Override
     public Class getOutputKeyClass() {
@@ -103,7 +104,8 @@ public class SamtoolsMap extends JnomicsMapper<SAMRecordWritable,NullWritable, S
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
-        binsize = Integer.parseInt(conf.get(genome_binsize_arg.getName(),"1000000"));
+        String binsize_str = conf.get(genome_binsize_arg.getName());
+        binsize = binsize_str == null ? DEFAULT_GENOME_BINSIZE  : Integer.parseInt(binsize_str);
     }
 
     @Override
