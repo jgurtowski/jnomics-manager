@@ -2,7 +2,7 @@
 allprojects{
 	tasks.withType(Compile).all{ compile->
 			compile.options.debug=true
-			compile.options.compilerArgs=['-Xlint:all']
+			compile.options.compilerArgs=['-Xlint:all,-serial']
     }
 }
 

@@ -1,0 +1,13 @@
+<property><name>mapred.mapoutput.key.class</name><value>edu.cshl.schatz.jnomics.tools.SamtoolsMap$SamtoolsKey</value></property>
+<property><name>mapred.mapoutput.value.class</name><value>edu.cshl.schatz.jnomics.ob.SAMRecordWritable</value></property>
+<property><name>mapred.output.key.class</name><value>org.apache.hadoop.io.Text</value></property>
+<property><name>mapred.output.value.class</name><value>org.apache.hadoop.io.NullWritable</value></property>
+<property><name>mapreduce.inputformat.class</name><value>org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat</value></property>
+<property><name>mapreduce.outputformat.class</name><value>org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat</value></property>
+<property><name>mapreduce.map.class</name><value>edu.cshl.schatz.jnomics.tools.SamtoolsMap</value></property>
+<property><name>mapreduce.reduce.class</name><value>edu.cshl.schatz.jnomics.tools.SamtoolsReduce</value></property>
+<property><name>mapred.output.value.groupfn.class</name><value>edu.cshl.schatz.jnomics.tools.SamtoolsReduce$SamtoolsGrouper</value></property>
+<property><name>mapreduce.partitioner.class</name><value>edu.cshl.schatz.jnomics.tools.SamtoolsReduce$SamtoolsPartitioner</value></property>
+<property><name>mapred.mapper.new-api</name><value>true</value></property>
+<property><name>mapred.reducer.new-api</name><value>true</value></property>
+<property><name>mapred.used.genericoptionsparser</name><value>true</value></property>

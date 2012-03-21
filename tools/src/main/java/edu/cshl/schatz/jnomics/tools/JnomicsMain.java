@@ -18,6 +18,7 @@ import org.apache.hadoop.util.ToolRunner;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Arrays;
 
 public class JnomicsMain extends Configured implements Tool {
 
@@ -28,7 +29,6 @@ public class JnomicsMain extends Configured implements Tool {
                     put("bwa_map", BWAMap.class);
                     put("samtools_map", SamtoolsMap.class);
                     put("kcounter_map", KCounterMap.class);
-                    put("split_map", SplitMap.class);
                 }
             };
 
@@ -54,9 +54,10 @@ public class JnomicsMain extends Configured implements Tool {
         System.out.println("mapper-list\t:\tList available mappers");
         System.out.println("reducer-list\t:\tList available reducers");
         System.out.println("describe\t:\tDescribe a mapper or reducer");
-        System.out.println("helper-task-list\t:\tList all helper tasks");
-        System.out.println("helper-task\t:\tRun helper task");
-        System.out.println("job\t:\tsubmit a job");
+        //System.out.println("helper-task-list\t:\tList all helper tasks");
+        //System.out.println("helper-task\t:\tRun helper task");
+	System.out.println("loader-pe\t:\tLoad paired end sequencing file into hdfs");
+	System.out.println("job\t:\tsubmit a job");
     }
 
     public static void main(String []args) throws Exception {
@@ -75,7 +76,9 @@ public class JnomicsMain extends Configured implements Tool {
             for(Object t : reducerClasses.keySet()){
                 System.out.println(t);
             }
-        }else if(args[0].compareTo("helper-task-list") == 0){
+        }else if(args[0].compareTo("loader-pe") == 0){
+	    PairedEndLoader.main(Arrays.copyOfRange(args,1,args.length));
+	}else if(args[0].compareTo("helper-task-list") == 0){
             System.out.println("Available Helper Tasks:");
             for(Object t: helperClasses.keySet()){
                 System.out.println(t);

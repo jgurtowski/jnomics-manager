@@ -23,8 +23,11 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
 
     private final JnomicsArgument samtools_bin_arg = new JnomicsArgument("samtools_bin","Samtools Binary",true);
     private final JnomicsArgument bcftools_bin_arg = new JnomicsArgument("bcftools_bin","bcftools Binary", true);
+    private final JnomicsArgument samtools_opts_arg = new JnomicsArgument("samtools_opts","Samtools mpileup options", false);
+    private final JnomicsArgument bcftools_opts_arg = new JnomicsArgument("bcftools_opts","bcftools view options", false);
     private final JnomicsArgument reference_file_arg = new JnomicsArgument("reference_fa",
-            "Reference Fasta (must be indexed)", true);
+									   "Reference Fasta (must be indexed)", true);
+    
 
     @Override
     public Class getOutputKeyClass() {
@@ -37,18 +40,18 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
     }
 
     @Override
-    public Class getGrouperClass(){
+    public Class<? extends WritableComparator> getGrouperClass(){
         return SamtoolsReduce.SamtoolsGrouper.class;
     }
 
     @Override
-    public Class getPartitionerClass(){
+    public Class<? extends Partitioner> getPartitionerClass(){
         return SamtoolsReduce.SamtoolsPartitioner.class;
     }
 
     @Override
     public JnomicsArgument[] getArgs() {
-        return new JnomicsArgument[]{samtools_bin_arg,bcftools_bin_arg,reference_file_arg};
+        return new JnomicsArgument[]{samtools_bin_arg,bcftools_bin_arg,reference_file_arg,samtools_opts_arg,bcftools_opts_arg};
     }
 
     public static class SamtoolsGrouper extends WritableComparator {
@@ -60,6 +63,7 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
         @Override
         public int compare(WritableComparable a, WritableComparable b){
             SamtoolsMap.SamtoolsKey first = (SamtoolsMap.SamtoolsKey)a;
+
             SamtoolsMap.SamtoolsKey second = (SamtoolsMap.SamtoolsKey)b;
             int diff;
             if((diff=first.getRef().compareTo(second.getRef())) == 0)
@@ -91,12 +95,16 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
     protected void reduce(SamtoolsMap.SamtoolsKey key, final Iterable<SAMRecordWritable> values, final Context context)
             throws IOException, InterruptedException {
 
+	System.out.println("Begin Samtools Map");
         /**Get Configuration **/
         Configuration conf = context.getConfiguration();
         String samtools_bin = conf.get(samtools_bin_arg.getName());
         String bcftools_bin = conf.get(bcftools_bin_arg.getName());
         String reference_file = conf.get(reference_file_arg.getName());
+	String samtools_opts = conf.get(samtools_opts_arg.getName(),"");
+	String bcftools_opts = conf.get(bcftools_opts_arg.getName(),"");
 
+	System.out.println("Writing temp bam files");
         /**Setup temp bam file**/
         String taskAttemptId = context.getTaskAttemptID().toString();
         File tmpBam = new File(taskAttemptId+"_"+(reduceIt++)+".bam");
@@ -129,11 +137,13 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
         final Process samtoolsIdxProcess = Runtime.getRuntime().exec(samtoolsIdxCmd);
         samtoolsIdxProcess.waitFor();
 
+	System.out.println("Running mpileup/bcftools snp operation");
         /** Run mpileup on indexed bam and pipe output to bcftools **/
         int binstart = key.getBin().get() * binsize;
-        String samtoolsCmd = String.format("%s mpileup -r %s:%d-%d -uf %s %s",
-                samtools_bin, key.getRef().toString(), binstart, binstart+binsize-1, reference_file, tmpBam.getAbsolutePath());
-        String bcftoolsCmd = String.format("%s view -vcg -", bcftools_bin);
+        String samtoolsCmd = String.format("%s mpileup %s -r %s:%d-%d -uf %s %s",
+					   samtools_bin, samtools_opts, key.getRef().toString(), 
+					   binstart, binstart+binsize-1, reference_file, tmpBam.getAbsolutePath());
+        String bcftoolsCmd = String.format("%s view %s -vcg -", bcftools_bin, bcftools_opts);
         final Process samtoolsProcess = Runtime.getRuntime().exec(samtoolsCmd);
         final Process bcftoolsProcess = Runtime.getRuntime().exec(bcftoolsCmd);
 
@@ -180,5 +190,6 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
         File tmpBamIdx = new File(tmpBam.getAbsolutePath()+".bai");
         tmpBam.delete();
         tmpBamIdx.delete();
+	System.out.println("Complete, cleaning up");
     }
 }

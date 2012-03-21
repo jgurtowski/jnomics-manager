@@ -10,6 +10,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
 
@@ -42,7 +43,7 @@ public class KCounterMap extends JnomicsMapper<ReadCollectionWritable, NullWrita
     }
 
     @Override
-    public Class getCombinerClass(){
+    public Class<? extends Reducer> getCombinerClass(){
         return KCounterReduce.class;
     }
     

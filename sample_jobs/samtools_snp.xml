@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE document [ <!ENTITY  samtoolsconf SYSTEM   
+'file:./samtools_snp_base.xml'> ]>
+<configuration>
+  &samtoolsconf;
+
+  <property>
+    <name>mapred.input.dir</name>
+    <value>input</value>
+    <description>Input Directory (probably hdfs)</description>
+  </property>
+  <property>
+    <name>mapred.output.dir</name>
+    <value>output</value>
+    <description>Output directory in hdfs</description>
+  </property>
+  <property>
+    <name>mapred.cache.archives</name>
+    <value>archive.tar.gz#symlink</value>
+    <description>Archives to add to distributed cache</description>
+  </property>
+
+  <property>
+    <name>samtools_bin</name>
+    <value>symlink/samtools</value>
+    <description>Path to samtools binary (Probably in distributed cache)</description>
+  </property>
+  <property>
+    <name>bcftools_bin</name>
+    <value>symlink/bcftools</value>
+    <description>Path to bcftools binary (Path in distributed cache)</description>
+  </property>
+  <property>
+    <name>reference_fa</name>
+    <value>symlink/genome.fasta</value>
+    <description>Path to genome fasta file (.fai file must be present as well) (Path in distributed cache)</description>
+  </property>
+  <property>
+    <name>genome_binsize</name>
+    <value>1000000</value>
+    <description>Size of genome chunks on which to call SNPs (default 1000000)</description>
+  </property>
+  <!--
+  <property>
+    <name>bcftools_opts</name>
+    <value></value>
+    <description>Options to pass to bcftools view (Optional)</description>
+  </property>
+  <property>
+    <name>samtools_opts</name>
+    <value></value>
+    <description>Options to pass to samtools mpileup (Optional)</description>
+  </property>
+  -->
+  
+
+  <property>
+    <name>mapred.jar</name>
+    <value>file:///home/user/path/to/jnomics-tools.jar</value>
+    <description>Path to Jnomics Jar</description>
+  </property>
+
+  <property>
+    <name>mapred.reduce.tasks</name>
+    <value>96</value>
+    <description>Number of reducer tasks</description>
+  </property>
+  <property>
+    <name>mapred.job.name</name>
+    <value>samtools_snp</value>
+    <description>Name of the Job</description>
+  </property>
+  <property>
+    <name>mapred.create.symlink</name>
+    <value>yes</value>
+    <description>Create symlinks to files in distributed cache?</description>
+  </property>
+</configuration>

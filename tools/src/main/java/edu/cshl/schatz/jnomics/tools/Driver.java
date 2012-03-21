@@ -64,8 +64,6 @@ public class Driver {
 
             pgd.addClass("loader_pe", PairedEndLoader.class,"Loads paired end reads into hdfs");
 
-            pgd.addClass("globalSort", globalSort.class, "Global Sort");
-
 
         } catch (Throwable e) {
             e.printStackTrace();
