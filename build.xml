@@ -1,0 +1,77 @@
+<project name="jnomics-manager" default="build" xmlns:ivy="antlib:org.apache.ivy.ant">
+  <!-- some variables used -->
+  <property name="lib.dir" value="lib" />
+  <property name="build.dir" value="build" />
+  <property name="src.dir" value="src" />
+  <property name="example_data" value="example-data.zip" />
+
+  <!-- paths used for compilation and run  -->
+  <path id="lib.path.id">
+    <fileset dir="${lib.dir}" />
+  </path>
+
+  <!-- =================================
+       target: resolve
+       ================================= -->
+  <target name="resolve" description="--> retreive dependencies with ivy">
+    <ivy:retrieve/>
+  </target>
+
+  <!-- =================================
+       target: report
+       ================================= -->
+  <target name="report" depends="resolve" description="--> generates a report of dependencies">
+    <ivy:report todir="${build.dir}"/>
+  </target>
+
+  <!-- =================================
+       target: build
+       ================================= -->
+  <target name="build" depends="resolve" description="--> compile">
+    <mkdir dir="${build.dir}" />
+    <javac srcdir="${src.dir}" fork="true" destdir="${build.dir}" classpathref="lib.path.id" />
+  </target>
+
+  <!-- =================================
+       target: jar
+       ================================= -->
+  <target name="jar" depends="build" description="--> create jar">
+    <jar destfile="jnomics-tools.jar" basedir="${build.dir}">
+      <manifest>
+	<attribute name="Main-Class" value="edu.cshl.schatz.jnomics.tools.JnomicsMain" />
+      </manifest>
+      <zipgroupfileset dir="${lib.dir}" />
+    </jar>
+  </target>
+
+
+  <!-- =================================
+       target: get examples
+       ================================= -->
+
+  <target name="getexample" description="--> downloads and extracts example data">
+    <get src="http://downloads.sourceforge.net/project/jnomics/example-data.zip" dest="${example_data}" verbose="true"/>
+    <unzip src="${example_data}" dest="." />
+  </target>
+
+  <!-- =================================
+       target: clean
+       ================================= -->
+  <target name="clean" description="--> clean the project">
+    <delete includeemptydirs="true">
+      <fileset dir="${basedir}">
+        <exclude name="src/**" />
+        <exclude name="build.xml" />
+        <exclude name="ivy.xml" />
+	<exclude name="lib/**" />
+      </fileset>
+    </delete>
+  </target>
+
+  <!-- =================================
+       target: clean-cache
+       ================================= -->
+  <target name="clean-cache" description="--> clean the ivy cache">
+    <ivy:cleancache />
+  </target>
+</project>
