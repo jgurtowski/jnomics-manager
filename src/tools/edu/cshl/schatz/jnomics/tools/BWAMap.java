@@ -120,6 +120,7 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
             process.waitFor();
             fout.close();
             idx++;
+            context.progress();
         }
 
         System.out.println("running sampe");
@@ -137,10 +138,12 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
             @Override
             public void run() {
                 SAMFileReader reader = new SAMFileReader(sampe_process.getInputStream());
+                reader.setValidationStringency(SAMFileReader.ValidationStringency.LENIENT);
                 for(SAMRecord record: reader){
                     writableRecord.set(record);
                     try {
                         context.write(writableRecord,NullWritable.get());
+                        context.progress();
                     }catch(Exception e){
                         readerError = e;
                     }

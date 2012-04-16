@@ -6,34 +6,34 @@
 
   <property>
     <name>mapred.input.dir</name>
-    <value>ware/jerm2.pe</value>
+    <value>reads.pe</value>
     <description>Input Directory (probably hdfs)</description>
   </property>
   <property>
     <name>mapred.output.dir</name>
-    <value>ware/jerm2_align</value>
+    <value>reads_align</value>
     <description>Output directory in hdfs</description>
   </property>
   <property>
     <name>mapred.cache.archives</name>
-    <value>maize_bowtie.tar.gz#maize</value>
+    <value>motley_bowtie.tar.gz#motley</value>
     <description>Archives to add to distributed cache</description>
   </property>
 
   <property>
     <name>bowtie_binary</name>
-    <value>maize/bowtie2-align</value>
+    <value>motley/bowtie2-align</value>
     <description>Path to bowtie2-align binary (Probably in distributed cache)</description>
   </property>
   <property>
     <name>bowtie_idx</name>
-    <value>maize/maize</value>
+    <value>motley/motley</value>
     <description>Path to bowtie idx (Path in distributed cache)</description>
   </property>
 
   <property>
     <name>mapred.jar</name>
-    <value>file:///home/gurtowsk/jnomics-code/jnomics-tools.jar</value>
+    <value>file:///home/username/jnomics-tools.jar</value>
     <description>Path to Jnomics Jar</description>
   </property>
 

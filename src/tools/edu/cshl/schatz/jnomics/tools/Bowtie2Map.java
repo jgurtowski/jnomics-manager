@@ -112,10 +112,12 @@ public class Bowtie2Map extends JnomicsMapper<ReadCollectionWritable,NullWritabl
             @Override
             public void run() {
                 SAMFileReader reader = new SAMFileReader(bowtieProcess.getInputStream());
+                reader.setValidationStringency(SAMFileReader.ValidationStringency.LENIENT);
                 for(SAMRecord record: reader){
                     writableRecord.set(record);
                     try {
                         context.write(writableRecord,NullWritable.get());
+                        context.progress();
                     }catch(Exception e){
                         readerError = e;
                     }
@@ -133,7 +135,6 @@ public class Bowtie2Map extends JnomicsMapper<ReadCollectionWritable,NullWritabl
     @Override
     protected void cleanup(Context context) throws IOException,
             InterruptedException {
-        System.err.println("Cleaning UP");
         readerThread.join();
         if(readerError != null){
             System.err.println("Error Reading Bowtie Output with SAM Record Reader");
@@ -141,7 +142,7 @@ public class Bowtie2Map extends JnomicsMapper<ReadCollectionWritable,NullWritabl
         }
         bowtieProcess.waitFor();
         bowtieProcessErrThread.join();
-
+        System.err.println("Cleaning UP");
         for(File f: tmpFiles){
             f.delete();
         }

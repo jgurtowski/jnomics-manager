@@ -37,9 +37,9 @@
        ================================= -->
   <target name="jar" depends="build" description="--> create jar">
     <jar destfile="jnomics-tools.jar" basedir="${build.dir}">
-      <manifest>
+<!--      <manifest>
 	<attribute name="Main-Class" value="edu.cshl.schatz.jnomics.tools.JnomicsMain" />
-      </manifest>
+      </manifest>-->
       <zipgroupfileset dir="${lib.dir}" />
     </jar>
   </target>
