@@ -1,14 +1,15 @@
 package edu.cshl.schatz.jnomics.tools;
 
+import edu.cshl.schatz.jnomics.cli.JnomicsArgument;
 import edu.cshl.schatz.jnomics.io.ThreadedStreamConnector;
+import edu.cshl.schatz.jnomics.mapreduce.JnomicsCounter;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsMapper;
 import edu.cshl.schatz.jnomics.ob.ReadCollectionWritable;
 import edu.cshl.schatz.jnomics.ob.SAMRecordWritable;
-import edu.cshl.schatz.jnomics.cli.JnomicsArgument;
 import net.sf.samtools.SAMFileReader;
 import net.sf.samtools.SAMRecord;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Counter;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -113,8 +114,13 @@ public class Bowtie2Map extends JnomicsMapper<ReadCollectionWritable,NullWritabl
             public void run() {
                 SAMFileReader reader = new SAMFileReader(bowtieProcess.getInputStream());
                 reader.setValidationStringency(SAMFileReader.ValidationStringency.LENIENT);
+                Counter mapped_counter = context.getCounter(JnomicsCounter.Alignment.MAPPED);
+                Counter totalreads_counter = context.getCounter(JnomicsCounter.Alignment.TOTAL);
                 for(SAMRecord record: reader){
                     writableRecord.set(record);
+                    totalreads_counter.increment(1);
+                    if(writableRecord.getMappingQuality().get() != 0)
+                        mapped_counter.increment(1);
                     try {
                         context.write(writableRecord,NullWritable.get());
                         context.progress();

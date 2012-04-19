@@ -2,12 +2,14 @@ package edu.cshl.schatz.jnomics.tools;
 
 import edu.cshl.schatz.jnomics.cli.JnomicsArgument;
 import edu.cshl.schatz.jnomics.io.ThreadedStreamConnector;
+import edu.cshl.schatz.jnomics.mapreduce.JnomicsCounter;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsMapper;
 import edu.cshl.schatz.jnomics.ob.ReadCollectionWritable;
 import edu.cshl.schatz.jnomics.ob.SAMRecordWritable;
 import net.sf.samtools.SAMFileReader;
 import net.sf.samtools.SAMRecord;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.mapreduce.Counter;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -112,7 +114,24 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
             process = Runtime.getRuntime().exec(cmd);
             System.out.println(cmd);
             // Reattach stderr and write System.stdout to tmp file
-            connecterr = new Thread(new ThreadedStreamConnector(process.getErrorStream(), System.err));
+            //connecterr = new Thread(new ThreadedStreamConnector(process.getErrorStream(), System.err));
+            connecterr = new Thread(new Runnable(){
+                @Override
+                public void run() {
+                    byte[] data = new byte[1024];
+                    int len;
+                    try{
+                        while((len = process.getErrorStream().read(data)) != -1){
+                            System.err.write(data, 0, len);
+                            System.err.flush();
+                            context.progress();//or we will time out
+                        }
+                        System.err.flush();
+                    }catch(Exception e){
+                        System.err.println(e);
+                    }
+                }
+            });
             fout = new FileOutputStream(tmpFiles[idx]);
             connectout = new Thread(new ThreadedStreamConnector(process.getInputStream(),fout));
             connecterr.start();connectout.start();
@@ -139,8 +158,13 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
             public void run() {
                 SAMFileReader reader = new SAMFileReader(sampe_process.getInputStream());
                 reader.setValidationStringency(SAMFileReader.ValidationStringency.LENIENT);
+                Counter mapped_counter = context.getCounter(JnomicsCounter.Alignment.MAPPED);
+                Counter totalreads_counter = context.getCounter(JnomicsCounter.Alignment.TOTAL);
                 for(SAMRecord record: reader){
                     writableRecord.set(record);
+                    totalreads_counter.increment(1);
+                    if(writableRecord.getMappingQuality().get() != 0)
+                        mapped_counter.increment(1);
                     try {
                         context.write(writableRecord,NullWritable.get());
                         context.progress();

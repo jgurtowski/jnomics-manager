@@ -31,6 +31,7 @@ public class JnomicsMain extends Configured implements Tool {
                     put("kcounter_map", KCounterMap.class);
                     put("templatehist_map", TemplateHistMap.class);
                     put("peloader_map", PELoaderMap.class);
+                    put("readcount_map", CountReadsMap.class);
                 }
             };
 
@@ -41,6 +42,7 @@ public class JnomicsMain extends Configured implements Tool {
                     put("kcounter_reduce", KCounterReduce.class);
                     put("templatehist_reduce", TemplateHistReduce.class);
                     put("peloader_reduce",PELoaderReduce.class);
+                    put("readcount_reduce",CountReadsReduce.class);
                 }
             };
 

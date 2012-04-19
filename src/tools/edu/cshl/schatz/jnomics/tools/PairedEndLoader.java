@@ -4,7 +4,7 @@ import edu.cshl.schatz.jnomics.io.FastqParser;
 import edu.cshl.schatz.jnomics.manager.ManagerTask;
 import edu.cshl.schatz.jnomics.ob.ReadCollectionWritable;
 import edu.cshl.schatz.jnomics.ob.ReadWritable;
-import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
+import edu.cshl.schatz.jnomics.util.FileUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -14,20 +14,18 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.CompressionCodec;
-import org.apache.hadoop.io.compress.CompressionCodecFactory;
-import org.apache.hadoop.io.compress.GzipCodec;
-import org.apache.hadoop.io.compress.SnappyCodec;
+import org.apache.hadoop.util.ReflectionUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.InputStream;
 import java.util.Iterator;
-import java.util.zip.GZIPInputStream;
 
 /**
  * User: james
  */
 public class PairedEndLoader implements ManagerTask {
 
-    static final Log LOG = LogFactory.getLog(PairedEndLoader.class);
+    final Log LOG = LogFactory.getLog(PairedEndLoader.class);
 
     /**
      *
@@ -37,22 +35,21 @@ public class PairedEndLoader implements ManagerTask {
      * @param namenode set namenode for fs.default.name
      * @throws Exception
      */
-    public static void load(InputStream in1, InputStream in2, Path hdfsOut, String namenode) throws Exception {
+    public void load(InputStream in1, InputStream in2, Path hdfsOut, String namenode) throws Exception {
 
         FastqParser parser1 = new FastqParser(in1);
         FastqParser parser2 = new FastqParser(in2);
 
-        Configuration conf = new Configuration();
+        Configuration conf = getConf();
         if(namenode != null){
-            System.out.println(namenode);
-            conf.set("fs.default.name",namenode);
+            LOG.info(namenode);
+            conf.set("fs.default.name", namenode);
         }
         FileSystem fs = FileSystem.get(conf);
 
         if(fs.exists(hdfsOut)){
             throw new Exception("File already exists "+ hdfsOut);
         }
-
 
         NullWritable value = NullWritable.get();
         ReadCollectionWritable key = new ReadCollectionWritable();
@@ -68,9 +65,18 @@ public class PairedEndLoader implements ManagerTask {
         Iterator<FastqParser.FastqRecord> it2 = parser2.iterator();
 
         FastqParser.FastqRecord record1,record2;
-        SequenceFile.Writer writer = SequenceFile.createWriter(fs,conf,hdfsOut,key.getClass(),value.getClass(),
-                SequenceFile.CompressionType.BLOCK, new GzipCodec());
-        System.out.println("Compressed with:" + writer.getCompressionCodec() );
+        
+        SequenceFile.Writer writer;
+        if(conf.get("mapred.output.compress","").compareTo("true") == 0){
+            String codec_str = conf.get("mapred.output.compression.codec","org.apache.hadoop.io.compress.GzipCodec");
+            CompressionCodec codec = (CompressionCodec) ReflectionUtils.newInstance(Class.forName(codec_str), conf);
+            writer = SequenceFile.createWriter(fs,conf,hdfsOut,key.getClass(),value.getClass(),
+                    SequenceFile.CompressionType.BLOCK, codec);
+        }else{//no compression
+            writer = SequenceFile.createWriter(fs,conf,hdfsOut,key.getClass(),value.getClass());
+        }
+
+        LOG.info("Compressed with:" + writer.getCompressionCodec() );
         
         int counter = 1;
         while(it1.hasNext() && it2.hasNext()){
@@ -81,18 +87,35 @@ public class PairedEndLoader implements ManagerTask {
             r2.setAll(record2.getName(),record2.getSequence(),record2.getDescription(),record2.getQuality());
             writer.append(key,value);
             counter++;
-            if(counter % 100000 == 0)
-                System.err.println(counter);
-
+            if(counter % 100000 == 0){
+                LOG.info(counter);
+                progress();
+            }
         }
         parser1.close();
         parser2.close();
         writer.close();
     }
 
-    public static void load(InputStream in1, InputStream in2, Path hdfsOut) throws Exception {
-        load(in1,in2,hdfsOut,null);
+    public void load(InputStream in1, InputStream in2, Path out) throws Exception {
+        load(in1,in2,out,null);
     }
+    
+    /**
+     * Allows the task to report progess
+     * Override to implement own progress hook
+     */
+    protected void progress(){
+    }
+
+    /**
+     * Get a new configuration, or overload
+     * @return Configuration
+     */
+    protected Configuration getConf(){
+        return new Configuration();
+    }
+    
 
     public static void main(String[] args) throws Exception {
 
@@ -104,23 +127,13 @@ public class PairedEndLoader implements ManagerTask {
         File file2 = new File(args[1]);
         Path out = new Path(args[2]+".pe");
 
-        InputStream in1 = new FileInputStream(file1);
-        InputStream in2 = new FileInputStream(file2);
-
-        if(file1.getName().endsWith(".gz")){
-            in1 = new GZIPInputStream(in1);
-        }else if(file1.getName().endsWith(".bz2"))
-            in1 = new BZip2CompressorInputStream(in1);
-        if(file2.getName().endsWith(".gz"))
-            in2 = new GZIPInputStream(in2);
-        else if(file2.getName().endsWith(".bz2")){
-            in2 = new BZip2CompressorInputStream(in2);
-        }
+        InputStream in1 = FileUtil.getInputStreamFromExtension(file1);
+        InputStream in2 = FileUtil.getInputStreamFromExtension(file2);
 
         if(args.length == 3)
-            load(in1,in2,out);
+            new PairedEndLoader().load(in1,in2,out);
         else
-            load(in1,in2,out,args[3]);
+            new PairedEndLoader().load(in1,in2,out,args[3]);
     }
 
     @Override
