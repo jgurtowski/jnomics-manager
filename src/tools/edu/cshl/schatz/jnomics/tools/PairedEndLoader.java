@@ -17,6 +17,7 @@ import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.util.ReflectionUtils;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Iterator;
 
@@ -127,8 +128,10 @@ public class PairedEndLoader implements ManagerTask {
         File file2 = new File(args[1]);
         Path out = new Path(args[2]+".pe");
 
-        InputStream in1 = FileUtil.getInputStreamFromExtension(file1);
-        InputStream in2 = FileUtil.getInputStreamFromExtension(file2);
+        InputStream in1 = FileUtil.getInputStreamWrapperFromExtension(new FileInputStream(file1),
+                FileUtil.getExtension(file1.getName()));
+        InputStream in2 = FileUtil.getInputStreamWrapperFromExtension(new FileInputStream(file2),
+                FileUtil.getExtension(file2.getName()));
 
         if(args.length == 3)
             new PairedEndLoader().load(in1,in2,out);

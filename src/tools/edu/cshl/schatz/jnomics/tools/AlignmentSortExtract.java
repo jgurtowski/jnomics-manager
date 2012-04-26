@@ -1,8 +1,8 @@
 /**
  * 
- * @file	-	globalSortExt.java
+ * @file	-	AlignmentSortExtract.java
  * 
- * @purpose	-	Extracts output of globalSort to local
+ * @purpose	-	Extracts output of AlignmentSortMap to local
  * 
  * @author 	-	Piyush Kansal
  *
@@ -12,38 +12,22 @@
 
 package edu.cshl.schatz.jnomics.tools;
 
-import edu.cshl.schatz.jnomics.ob.ReadCollectionWritable;
-import edu.cshl.schatz.jnomics.ob.ReadWritable;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.*;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.LocalFileSystem;
-import org.apache.hadoop.fs.FileUtil;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.SequenceFile;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import edu.cshl.schatz.jnomics.ob.SAMRecordWritable;
-import net.sf.samtools.SAMFileReader;
-import net.sf.samtools.SAMRecord;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
  * 
- * @class	-	globalSortExt
+ * @class	-	AlignmentSortExtract
  * @purpose	-	To define a class to implement file extraction
  * @author 	-	Piyush Kansal
  *
  */
-public class globalSortExt {
+public class AlignmentSortExtract {
 
 	private static final String 			_SQ_TAG_			= "@SQ";
 	private static final String 			_SN_TAG_			= "SN:";
@@ -61,7 +45,7 @@ public class globalSortExt {
 	private static final char 				_SPACE_CHAR_		= ' ';
 
 	/*
-	 * Make sure that this name remains same in globalSort.java
+	 * Make sure that this name remains same in AlignmentSortMap.java
 	 */
 	private static final String 	_HEADER_FILE_		= "header.sam";
 	private static final String 	_UNMAPPED_			= "~~UNMAPPED";
@@ -85,7 +69,7 @@ public class globalSortExt {
 		 * Validate i/p parameters
 		 */
 		if( args.length != 2 ) {
-			System.err.println( "Usage: " + globalSortExt.class + " <ip-dir-on-hdfs> <op-filename-on-local-fs>" );
+			System.err.println( "Usage: " + AlignmentSortExtract.class + " <ip-dir-on-hdfs> <op-filename-on-local-fs>" );
 			System.exit( 1 );
 		}
 
@@ -107,8 +91,8 @@ public class globalSortExt {
          * Check if the i/p path is a directory
          */
         if( !ipFs.getFileStatus( ip ).isDir() ) {
-        	System.err.println( "First argument to " + globalSortExt.class + " should be a directory" );
-        	System.err.println( "Usage: " + globalSortExt.class + " <ip-dir-on-hdfs> <op-filename-on-local-fs>" );
+        	System.err.println( "First argument to " + AlignmentSortExtract.class + " should be a directory" );
+        	System.err.println( "Usage: " + AlignmentSortExtract.class + " <ip-dir-on-hdfs> <op-filename-on-local-fs>" );
             System.exit( 1 );
         }
 

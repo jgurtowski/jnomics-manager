@@ -16,20 +16,21 @@ import java.util.zip.GZIPInputStream;
 public class FileUtil {
     
     final static Log LOG = LogFactory.getLog(FileUtil.class);
-    
-    public static InputStream getInputStreamFromExtension(File file) throws IOException {
-        String ext = file.getName().substring(file.getName().lastIndexOf("."));
-        FileInputStream fis = new FileInputStream(file);
-        
-        if(ext.compareTo(".gz") == 0){
-            return new GZIPInputStream(fis);
-        }else if(ext.compareTo(".bz2") == 0){
-            return new BZip2CompressorInputStream(fis);
-        }else if(ext.compareTo(".txt") == 0){
-            return fis;
+
+    public static InputStream getInputStreamWrapperFromExtension(InputStream inStream, String extension) throws IOException {
+        if(extension.compareTo(".gz") == 0){
+            return new GZIPInputStream(inStream);
+        }else if(extension.compareTo(".bz2") == 0){
+            return new BZip2CompressorInputStream(inStream);
+        }else if(extension.compareTo(".txt") == 0){
+            return inStream;
         }
 
-        LOG.warn("Unknown Extension returning FileInputStream");
-        return fis;
+        LOG.warn("Unknown Extension returning original InputStream");
+        return inStream;
+    }
+    
+    public static String getExtension(String name){
+        return name.substring(name.lastIndexOf("."));
     }
 }

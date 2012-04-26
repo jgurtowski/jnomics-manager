@@ -32,6 +32,7 @@ public class JnomicsMain extends Configured implements Tool {
                     put("templatehist_map", TemplateHistMap.class);
                     put("peloader_map", PELoaderMap.class);
                     put("readcount_map", CountReadsMap.class);
+                    put("alignmentsort_map", AlignmentSortMap.class);
                 }
             };
 
@@ -43,6 +44,7 @@ public class JnomicsMain extends Configured implements Tool {
                     put("templatehist_reduce", TemplateHistReduce.class);
                     put("peloader_reduce",PELoaderReduce.class);
                     put("readcount_reduce",CountReadsReduce.class);
+                    put("alignmentsort_reduce", AlignmentSortReduce.class);
                 }
             };
 
