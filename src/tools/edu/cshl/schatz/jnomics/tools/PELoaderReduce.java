@@ -107,8 +107,6 @@ public class PELoaderReduce extends JnomicsReducer<IntWritable, StringArrayWrita
             InputStream in1 = FileUtil.getInputStreamFromExtension(s3p1_local);
             InputStream in2 = FileUtil.getInputStreamFromExtension(s3p2_local);
 
-
-
             System.out.println(s3p1.getName());
             System.out.println(s3p2.getName());
             */
@@ -120,6 +118,9 @@ public class PELoaderReduce extends JnomicsReducer<IntWritable, StringArrayWrita
 
             String outName = s3p1.getName() + ".pe";
             Path outPath = new Path(conf.get("mapred.output.dir","") +"/"+ outName);
+            if(fileSystem.exists(outPath)) //if process fails and is rescheduled, remove old broken files
+                fileSystem.delete(outPath,false);
+            
             try{
                 new PairedEndLoader(){
                     @Override

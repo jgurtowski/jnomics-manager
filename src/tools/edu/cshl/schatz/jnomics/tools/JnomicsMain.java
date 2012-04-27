@@ -32,6 +32,7 @@ public class JnomicsMain extends Configured implements Tool {
                     put("templatehist_map", TemplateHistMap.class);
                     put("peloader_map", PELoaderMap.class);
                     put("readcount_map", CountReadsMap.class);
+                    put("basecount_map", CountBasesMap.class);
                     put("alignmentsort_map", AlignmentSortMap.class);
                 }
             };
@@ -43,7 +44,7 @@ public class JnomicsMain extends Configured implements Tool {
                     put("kcounter_reduce", KCounterReduce.class);
                     put("templatehist_reduce", TemplateHistReduce.class);
                     put("peloader_reduce",PELoaderReduce.class);
-                    put("readcount_reduce",CountReadsReduce.class);
+                    put("longcount_reduce",CountLongReduce.class);
                     put("alignmentsort_reduce", AlignmentSortReduce.class);
                 }
             };
@@ -237,7 +238,11 @@ public class JnomicsMain extends Configured implements Tool {
             if (reduceInst.getPartitionerClass() != null)
                 job.setPartitionerClass(reduceInst.getPartitionerClass());
             job.setReducerClass(reducerClass);
-            job.setOutputKeyClass(reduceInst.getOutputKeyClass());
+            Class reduceOutClass =reduceInst.getOutputKeyClass();
+            if(null == reduceOutClass)
+                job.setOutputKeyClass(mapInst.getOutputKeyClass());
+            else
+                job.setOutputKeyClass(reduceOutClass);
             job.setOutputValueClass(reduceInst.getOutputValueClass());
         } else {
             job.setNumReduceTasks(0);
