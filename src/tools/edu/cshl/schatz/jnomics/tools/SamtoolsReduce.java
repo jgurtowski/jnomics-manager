@@ -95,16 +95,16 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
     protected void reduce(SamtoolsMap.SamtoolsKey key, final Iterable<SAMRecordWritable> values, final Context context)
             throws IOException, InterruptedException {
 
-	System.out.println("Begin Samtools Map");
+        System.out.println("Begin Samtools Reduce");
         /**Get Configuration **/
         Configuration conf = context.getConfiguration();
         String samtools_bin = conf.get(samtools_bin_arg.getName());
         String bcftools_bin = conf.get(bcftools_bin_arg.getName());
         String reference_file = conf.get(reference_file_arg.getName());
-	String samtools_opts = conf.get(samtools_opts_arg.getName(),"");
-	String bcftools_opts = conf.get(bcftools_opts_arg.getName(),"");
+        String samtools_opts = conf.get(samtools_opts_arg.getName(),"");
+        String bcftools_opts = conf.get(bcftools_opts_arg.getName(),"");
 
-	System.out.println("Writing temp bam files");
+        System.out.println("Writing temp bam files");
         /**Setup temp bam file**/
         String taskAttemptId = context.getTaskAttemptID().toString();
         File tmpBam = new File(taskAttemptId+"_"+(reduceIt++)+".bam");
@@ -125,6 +125,7 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
                 writer.println(record.getTextHeader());
                 first = false;
             }
+            context.progress();
             writer.println(record);
         }
         writer.close();
@@ -137,19 +138,26 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
         final Process samtoolsIdxProcess = Runtime.getRuntime().exec(samtoolsIdxCmd);
         samtoolsIdxProcess.waitFor();
 
-	System.out.println("Running mpileup/bcftools snp operation");
+        System.out.println("Running mpileup/bcftools snp operation");
         /** Run mpileup on indexed bam and pipe output to bcftools **/
         int binstart = key.getBin().get() * binsize;
+        System.out.println(String.format("Region: %s:%d-%d",key.getRef().toString(),binstart,binstart+binsize-1));
         String samtoolsCmd = String.format("%s mpileup %s -r %s:%d-%d -uf %s %s",
-					   samtools_bin, samtools_opts, key.getRef().toString(), 
-					   binstart, binstart+binsize-1, reference_file, tmpBam.getAbsolutePath());
+                samtools_bin, samtools_opts, key.getRef().toString(),
+                binstart, binstart+binsize-1, reference_file, tmpBam.getAbsolutePath());
         String bcftoolsCmd = String.format("%s view %s -vcg -", bcftools_bin, bcftools_opts);
         final Process samtoolsProcess = Runtime.getRuntime().exec(samtoolsCmd);
         final Process bcftoolsProcess = Runtime.getRuntime().exec(bcftoolsCmd);
 
         /**connect mpileup output to bcftools input **/
-        Thread sambcfLink = new Thread(new ThreadedStreamConnector(
-                samtoolsProcess.getInputStream(), bcftoolsProcess.getOutputStream()));
+        Thread sambcfLink = new Thread(
+                new ThreadedStreamConnector(samtoolsProcess.getInputStream(), bcftoolsProcess.getOutputStream()){
+                    @Override
+                    public void progress(){
+                        context.progress();
+                    }
+                }
+        );
 
         sambcfLink.start();
 
@@ -168,6 +176,7 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
                     line.set((String)data);
                     try{
                         context.write(line,NullWritable.get());
+                        context.progress();
                     }catch(Exception e){
                         readerErr = e;
                     }
@@ -190,6 +199,6 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
         File tmpBamIdx = new File(tmpBam.getAbsolutePath()+".bai");
         tmpBam.delete();
         tmpBamIdx.delete();
-	System.out.println("Complete, cleaning up");
+        System.out.println("Complete, cleaning up");
     }
 }

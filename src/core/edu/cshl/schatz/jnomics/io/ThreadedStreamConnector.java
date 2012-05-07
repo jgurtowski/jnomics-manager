@@ -27,13 +27,21 @@ public class ThreadedStreamConnector implements Runnable {
             while((len = in.read(data)) != -1){
                 out.write(data,0,len);
                 out.flush();
+                progress();
             }
             out.flush();
         }catch(Exception e){
             System.err.println(e);
         }
     }
-    
+
+    /**
+     * Report progress, override hook
+     */
+    public void progress(){
+
+    }
+
     public void closeOutputStream() throws IOException {
         out.close();
     }

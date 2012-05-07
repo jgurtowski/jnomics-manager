@@ -114,24 +114,13 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
             process = Runtime.getRuntime().exec(cmd);
             System.out.println(cmd);
             // Reattach stderr and write System.stdout to tmp file
-            //connecterr = new Thread(new ThreadedStreamConnector(process.getErrorStream(), System.err));
-            connecterr = new Thread(new Runnable(){
-                @Override
-                public void run() {
-                    byte[] data = new byte[1024];
-                    int len;
-                    try{
-                        while((len = process.getErrorStream().read(data)) != -1){
-                            System.err.write(data, 0, len);
-                            System.err.flush();
-                            context.progress();//or we will time out
+            connecterr = new Thread(
+                    new ThreadedStreamConnector(process.getErrorStream(), System.err){
+                        @Override
+                        public void progress() {
+                            context.progress();
                         }
-                        System.err.flush();
-                    }catch(Exception e){
-                        System.err.println(e);
-                    }
-                }
-            });
+                    });
             fout = new FileOutputStream(tmpFiles[idx]);
             connectout = new Thread(new ThreadedStreamConnector(process.getInputStream(),fout));
             connecterr.start();connectout.start();

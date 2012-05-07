@@ -3,6 +3,7 @@ package edu.cshl.schatz.jnomics.tools;
 import edu.cshl.schatz.jnomics.cli.JnomicsArgument;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsMapper;
 import edu.cshl.schatz.jnomics.ob.ReadCollectionWritable;
+import edu.cshl.schatz.jnomics.ob.ReadWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -40,6 +41,7 @@ public class CountReadsMap extends JnomicsMapper<ReadCollectionWritable,NullWrit
 
     @Override
     protected void map(ReadCollectionWritable key, NullWritable value, Context context) throws IOException, InterruptedException {
-        context.write(name,count);
+        for(ReadWritable r: key.getReads())
+            context.write(name,count);
     }
 }
