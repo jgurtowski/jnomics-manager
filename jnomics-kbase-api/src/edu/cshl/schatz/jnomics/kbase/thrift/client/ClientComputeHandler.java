@@ -60,7 +60,9 @@ public class ClientComputeHandler implements ClientHandler {
 
         Authentication auth = new Authentication(properties.getProperty("username"),properties.getProperty("password"));
 
-        BasicParser parser = new BasicParser();
+
+        System.out.println(client.alignBowtie("reads.pe","motley","reads_align",auth));
+        /*BasicParser parser = new BasicParser();
         CommandLine cli = parser.parse(opts,args);
         HelpFormatter formatter = new HelpFormatter();
         
@@ -78,6 +80,6 @@ public class ClientComputeHandler implements ClientHandler {
             for(String t: taskMap.keySet()){
                 System.out.println(t);
             }
-        }
+        } */
     }
 }

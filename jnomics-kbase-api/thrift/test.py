@@ -11,7 +11,7 @@ from thrift.transport import TSocket
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 
-transport = TSocket.TSocket("localhost",12344)
+transport = TSocket.TSocket("localhost",12343)
 transport.open()
 
 protocol = TBinaryProtocol.TBinaryProtocol(transport)

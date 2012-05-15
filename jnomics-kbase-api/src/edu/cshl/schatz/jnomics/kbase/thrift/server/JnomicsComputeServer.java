@@ -15,13 +15,11 @@ import java.util.Properties;
 public class JnomicsComputeServer {
 
 
-    private static int DEFAULTPORT = 43344;
-
     public static void main(String []args) throws TTransportException, IOException {
 
         Properties prop = JnomicsApiConfig.get();
 
-        int port = Integer.parseInt(prop.getProperty("compute-server-port",Integer.toString(DEFAULTPORT)));
+        int port = Integer.parseInt(prop.getProperty("compute-server-port"));
 
         JnomicsComputeHandler handler = new JnomicsComputeHandler(prop);
         JnomicsCompute.Processor processor = new JnomicsCompute.Processor(handler);
