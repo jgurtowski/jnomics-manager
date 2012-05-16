@@ -42,6 +42,11 @@ public class ClientJobStatusHandler extends ClientThriftHandler{
 
         closeTransport();
 
-        System.out.println(status);
+        System.out.printf("%30s %30s\n","ID:",status.getJob_id());
+        System.out.printf("%30s %30s\n","Username:",status.getUsername());
+        System.out.printf("%30s %30s\n","Complete:",status.isComplete());
+        System.out.printf("%30s %30s\n","Running State:",status.getRunning_state());
+        System.out.printf("%30s %30s\n","Map Progress:",status.getMapProgress());
+        System.out.printf("%30s %30s\n","Reduce Progress:",status.getReduceProgress());
     }
 }

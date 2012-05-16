@@ -12,9 +12,9 @@ import java.util.Properties;
  * User: james
  */
 
-public class ClientBowtieHandler extends ClientThriftHandler{
+public class ClientSnpHandler extends ClientThriftHandler{
 
-    public ClientBowtieHandler(Properties properties) {
+    public ClientSnpHandler(Properties properties) {
         super(properties);
     }
 
@@ -37,7 +37,7 @@ public class ClientBowtieHandler extends ClientThriftHandler{
             formatter.printHelp(e.toString(),options);
             return;
         }
-        JnomicsThriftJobID jobID = getThriftClient().alignBowtie(cli.getOptionValue("in"),
+        JnomicsThriftJobID jobID = getThriftClient().snpSamtools(cli.getOptionValue("in"),
                 cli.getOptionValue("organism"),
                 cli.getOptionValue("out"),
                 getAuth());

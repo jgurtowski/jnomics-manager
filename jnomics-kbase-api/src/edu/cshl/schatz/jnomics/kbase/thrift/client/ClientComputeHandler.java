@@ -15,6 +15,8 @@ public class ClientComputeHandler extends ClientHandler {
     private static final Map<String,Class<? extends ClientThriftHandler>> taskMap = new HashMap<String, Class<? extends ClientThriftHandler>>();
     static{
         taskMap.put("bowtie", ClientBowtieHandler.class);
+        taskMap.put("bwa", ClientBWAHandler.class);
+        taskMap.put("snp", ClientSnpHandler.class);
         taskMap.put("status", ClientJobStatusHandler.class);
         taskMap.put("listjobs", ClientJobListHandler.class);
     }
