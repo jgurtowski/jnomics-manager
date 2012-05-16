@@ -2,9 +2,12 @@ package edu.cshl.schatz.jnomics.kbase.thrift.client;
 
 import edu.cshl.schatz.jnomics.kbase.thrift.api.Authentication;
 import edu.cshl.schatz.jnomics.kbase.thrift.api.JnomicsData;
-import edu.cshl.schatz.jnomics.kbase.thrift.api.JnomicsFileStatus;
+import edu.cshl.schatz.jnomics.kbase.thrift.api.JnomicsThriftFileStatus;
 import edu.cshl.schatz.jnomics.kbase.thrift.api.JnomicsThriftHandle;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
@@ -12,14 +15,13 @@ import org.apache.thrift.transport.TTransport;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
 /**
   * User: james
  */
-public class ClientFSHandler implements ClientHandler{
+public class ClientFSHandler extends ClientHandler{
 
     private static final Options opts = new Options();
     private Properties properties;
@@ -36,15 +38,11 @@ public class ClientFSHandler implements ClientHandler{
         properties = prop;
     }
 
-    public void handle(String []args) throws Exception {
-
-        if(0 != args[0].compareTo("fs")){
-            throw new Exception("first argument must be fs");
-        }
+    public void handle(List<String> args) throws Exception {
 
         HelpFormatter f = new HelpFormatter();
         
-        if(1 == args.length){
+        if(0 == args.size()){
             f.printHelp("Help",opts);
             return;
         }
@@ -59,11 +57,8 @@ public class ClientFSHandler implements ClientHandler{
         String password = properties.getProperty("password");
         Authentication auth = new Authentication(username,password);
 
-        args = Arrays.copyOfRange(args,1,args.length); // remove first arg
-
         BasicParser parser = new BasicParser();
-        CommandLine cl = parser.parse(opts,args);
-        
+        CommandLine cl = parser.parse(opts,args.toArray(new String[0]));
 
         @SuppressWarnings("unchecked")
         List<String> arglist = cl.getArgList();
@@ -73,9 +68,9 @@ public class ClientFSHandler implements ClientHandler{
             if(1 == arglist.size()){
                 dest = arglist.get(0);
             }
-            List<JnomicsFileStatus> stats= client.listStatus(dest, auth);
+            List<JnomicsThriftFileStatus> stats= client.listStatus(dest, auth);
             System.out.println("Found "+ stats.size() + " items");
-            for(JnomicsFileStatus status: stats){
+            for(JnomicsThriftFileStatus status: stats){
                 System.out.printf("%s\t%2d\t%s\t%s\t%14d\t%s\n",
                         status.getPermission(),
                         status.getReplication(),
@@ -123,7 +118,7 @@ public class ClientFSHandler implements ClientHandler{
                 f.printHelp("fs -get <remoteFile> [localfile]",opts);
             }else{
                 String remoteFile = arglist.get(0);
-                List<JnomicsFileStatus> stats  = client.listStatus(remoteFile, auth);
+                List<JnomicsThriftFileStatus> stats  = client.listStatus(remoteFile, auth);
                 if(1 != stats.size())
                     throw new Exception("remote must be a single file");
 
@@ -169,11 +164,16 @@ public class ClientFSHandler implements ClientHandler{
                 }
             }
         }else{
-            f.printHelp("",opts);
+            f.printHelp("Unknown Option",opts);
         }
 
         transport.close();
 
+    }
+
+    @Override
+    protected JnomicsArgument[] getArguments() {
+        return new JnomicsArgument[0];
     }
 
 }

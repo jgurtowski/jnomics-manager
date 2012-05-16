@@ -2,7 +2,11 @@ package edu.cshl.schatz.jnomics.kbase.thrift.client;
 
 import edu.cshl.schatz.jnomics.kbase.thrift.common.JnomicsApiConfig;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Properties;
+
+import java.util.List;
 
 /**
  * User: james
@@ -40,6 +44,9 @@ public class JnomicsKbaseClient {
             printMainMenu();
             System.exit(-1);
         }
-        ch.handle(args);
+
+        ArrayList<String> newArgs = new ArrayList<String>(Arrays.asList(args));
+        newArgs.remove(args[0]);
+        ch.handle(newArgs);
     }
 }

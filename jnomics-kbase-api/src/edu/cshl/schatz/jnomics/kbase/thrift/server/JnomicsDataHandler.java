@@ -39,7 +39,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         return b;
     }
 
-    private FileSystem getFileSystem(String username) throws JnomicsDataException {
+    private FileSystem getFileSystem(String username) throws JnomicsThriftException {
         URI uri;
         String fsName = properties.getProperty("hdfs-default-name");
         try{
@@ -47,7 +47,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         }catch(Exception e){
             log.error("probleming initializing hdfs");
             e.printStackTrace();
-            throw new JnomicsDataException(e.toString());
+            throw new JnomicsThriftException(e.toString());
         }
         FileSystem fs = null;
         try{
@@ -55,25 +55,25 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         } catch(Exception e){
             log.error("Problem creating filesystem");
             e.printStackTrace();
-            throw new JnomicsDataException(e.toString());
+            throw new JnomicsThriftException(e.toString());
         }
 
         return fs;
     }
     
-    private void closeFileSystem(FileSystem fs) throws JnomicsDataException{
+    private void closeFileSystem(FileSystem fs) throws JnomicsThriftException{
         try{
             fs.close();
         }catch(Exception e){
             log.error("Problem closing fs");
             e.printStackTrace();
-            throw new JnomicsDataException(e.toString());
+            throw new JnomicsThriftException(e.toString());
         }
     }
     
     
     @Override
-    public JnomicsThriftHandle create(String path, Authentication auth) throws TException, JnomicsDataException {
+    public JnomicsThriftHandle create(String path, Authentication auth) throws TException, JnomicsThriftException {
         log.info("Creating file: " + path + " for user: "+ auth.getUsername());
 
         FileSystem fs = getFileSystem(auth.getUsername());
@@ -84,7 +84,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         } catch (IOException e) {
             log.error("Problem creating file " + path);
             e.printStackTrace();
-            throw new JnomicsDataException(e.toString());
+            throw new JnomicsThriftException(e.toString());
         }
         
         UUID nxtUUID = getUniqueUUID();
@@ -94,7 +94,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
     }
 
     @Override
-    public JnomicsThriftHandle open(String path, Authentication auth) throws JnomicsDataException, TException {
+    public JnomicsThriftHandle open(String path, Authentication auth) throws JnomicsThriftException, TException {
         log.info("Opening file: " + path + " for user: " + auth.getUsername());
         
         FileSystem fs = getFileSystem(auth.getUsername());
@@ -104,7 +104,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         }catch(Exception e){
             log.error("Problem opening file: " + path);
             e.printStackTrace();
-            throw new JnomicsDataException(e.toString());
+            throw new JnomicsThriftException(e.toString());
         }
 
         UUID nxtUUID = getUniqueUUID();
@@ -114,20 +114,20 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
 
 
     @Override
-    public void write(JnomicsThriftHandle handle, ByteBuffer data, Authentication auth) throws TException, JnomicsDataException {
+    public void write(JnomicsThriftHandle handle, ByteBuffer data, Authentication auth) throws TException, JnomicsThriftException {
         JnomicsFsHandle jhandle = handleMap.get(UUID.fromString(handle.getUuid()));
         try {
             jhandle.getOutStream().write(data.array());
         } catch (IOException e) {
             log.error("Problem writing to file");
             e.printStackTrace();
-            throw new JnomicsDataException(e.toString());
+            throw new JnomicsThriftException(e.toString());
         }
         jhandle.updateLastUsed();
     }
 
     @Override
-    public ByteBuffer read(JnomicsThriftHandle handle, Authentication auth) throws TException, JnomicsDataException {
+    public ByteBuffer read(JnomicsThriftHandle handle, Authentication auth) throws TException, JnomicsThriftException {
         JnomicsFsHandle jhandle = handleMap.get(UUID.fromString(handle.getUuid()));
 
         byte[] buf = (byte[]) bufferCache.get();
@@ -135,7 +135,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         try{
             bytesRead = jhandle.getInStream().read(buf);
         } catch (IOException e) {
-            throw new JnomicsDataException(e.toString());
+            throw new JnomicsThriftException(e.toString());
         }
         jhandle.updateLastUsed();
         if(-1 == bytesRead)
@@ -144,7 +144,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
     }
 
     @Override
-    public void close(JnomicsThriftHandle handle, Authentication auth) throws TException, JnomicsDataException {
+    public void close(JnomicsThriftHandle handle, Authentication auth) throws TException, JnomicsThriftException {
         UUID u = UUID.fromString(handle.getUuid());
         JnomicsFsHandle jhandle = handleMap.get(u);
 
@@ -155,7 +155,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
             } catch (IOException e) {
                 log.error("Problem closing file");
                 e.printStackTrace();
-                throw new JnomicsDataException(e.toString());
+                throw new JnomicsThriftException(e.toString());
             }
         }else if(jhandle.getInStream() != null){
             try {
@@ -163,7 +163,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
             } catch (IOException e) {
                 log.error("Problem closing file");
                 e.printStackTrace();
-                throw new JnomicsDataException(e.toString());
+                throw new JnomicsThriftException(e.toString());
             }
         }
 
@@ -175,7 +175,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
     }
 
     @Override
-    public List<JnomicsFileStatus> listStatus(String path, Authentication auth) throws TException, JnomicsDataException {
+    public List<JnomicsThriftFileStatus> listStatus(String path, Authentication auth) throws TException, JnomicsThriftException {
         FileSystem fs = getFileSystem(auth.getUsername());
         FileStatus[] stats;
         try{
@@ -183,19 +183,19 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         }catch(Exception e){
             log.error("Could not open filesystem in listStatus");
             e.printStackTrace();
-            throw new JnomicsDataException(e.toString());
+            throw new JnomicsThriftException(e.toString());
         }finally{
             closeFileSystem(fs);
         }
 
         if(null == stats)
-            return new ArrayList<JnomicsFileStatus>();
+            return new ArrayList<JnomicsThriftFileStatus>();
 
-        JnomicsFileStatus[] thriftStatuses = new JnomicsFileStatus[stats.length];
+        JnomicsThriftFileStatus[] thriftStatuses = new JnomicsThriftFileStatus[stats.length];
         FileStatus c;
         for(int i=0; i< stats.length; ++i){
             c = stats[i];
-            thriftStatuses[i] = new JnomicsFileStatus(c.isDir(),
+            thriftStatuses[i] = new JnomicsThriftFileStatus(c.isDir(),
                     c.getPath().getName(),
                     c.getOwner(),
                     c.getGroup(),
@@ -211,7 +211,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
     }
 
     @Override
-    public boolean remove(String path, boolean recursive, Authentication auth) throws JnomicsDataException, TException {
+    public boolean remove(String path, boolean recursive, Authentication auth) throws JnomicsThriftException, TException {
         FileSystem fs = getFileSystem(auth.getUsername());
         boolean state = false;
         try{
@@ -219,7 +219,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         }catch(Exception e){
             log.error("Problem deleting " + path + " for user: " + auth.getUsername());
             e.printStackTrace();
-            throw new JnomicsDataException(e.toString());
+            throw new JnomicsThriftException(e.toString());
         }finally{
             closeFileSystem(fs);
         }

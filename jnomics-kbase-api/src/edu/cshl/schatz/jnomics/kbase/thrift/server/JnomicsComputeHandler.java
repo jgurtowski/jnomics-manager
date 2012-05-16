@@ -1,18 +1,16 @@
 package edu.cshl.schatz.jnomics.kbase.thrift.server;
 
-import edu.cshl.schatz.jnomics.kbase.thrift.api.Authentication;
-import edu.cshl.schatz.jnomics.kbase.thrift.api.JnomicsCompute;
-import edu.cshl.schatz.jnomics.kbase.thrift.api.JnomicsJobID;
+import edu.cshl.schatz.jnomics.kbase.thrift.api.*;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.thrift.TException;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
+import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -56,9 +54,9 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 
 
     @Override
-    public JnomicsJobID alignBowtie(String inPath, String organism, String outPath, Authentication auth) throws TException {
+    public JnomicsThriftJobID alignBowtie(String inPath, String organism, String outPath, Authentication auth) throws TException, JnomicsThriftException {
         logger.info("Starting Bowtie2 process");
-        final Configuration conf = getAlignConf(inPath,outPath);
+        Configuration conf = getAlignConf(inPath,outPath);
         conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.Bowtie2Map");
         String fsDefault = properties.getProperty("hdfs-default-name");
         conf.set("mapred.cache.archives",fsDefault+"user/"+auth.getUsername()+"/"+organism+"_bowtie.tar.gz#btarchive");
@@ -71,41 +69,82 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 
 
     @Override
-    public JnomicsJobID alignBWA(String inPath, String organism, String outPath, Authentication auth) throws TException {
-        return new JnomicsJobID("id");
+    public JnomicsThriftJobID alignBWA(String inPath, String organism, String outPath, Authentication auth) throws TException, JnomicsThriftException {
+        logger.info("Starting Bwa process");
+        Configuration conf = getAlignConf(inPath,outPath);
+        conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.BWAMap");
+        String fsDefault = properties.getProperty("hdfs-default-name");
+        conf.set("mapred.cache.archives",fsDefault+"user/"+auth.getUsername()+"/"+organism+"_bwa.tar.gz#bwaarchive");
+        conf.set("bwa_binary","bwaarchive/bwa");
+        conf.set("bwa_index", "bwaarchive/"+organism);
+        conf.set("mapred.jar", "file:///Users/james/workspace/jnomics-code/jnomics-tools.jar");
+        conf.set("mapred.job.name",auth.getUsername()+"-bwa-"+inPath);
+        return launchJobAs(auth.getUsername(),conf);
     }
 
     @Override
-    public JnomicsJobID snpSamtools(String inPath, String outPath, Authentication auth) throws TException {
+    public JnomicsThriftJobID snpSamtools(String inPath, String outPath, Authentication auth) throws TException {
         System.out.println("Samtools");
         return null;
     }
 
-    public JnomicsJobID launchJobAs(String username,
-                                    final Configuration conf){
-        RunningJob runningJob = null;
-        final String jobTracker = properties.getProperty("mapreduce-jobtracker-host");
-        final int jobTrackerPort = Integer.parseInt(properties.getProperty("mapreduce-jobtracker-port"));
+    @Override
+    public JnomicsThriftJobStatus getJobStatus(final JnomicsThriftJobID jobID, final Authentication auth) throws TException, JnomicsThriftException {
+        JnomicsThriftJobStatus runningJob = new JobClientRunner<JnomicsThriftJobStatus>(auth.getUsername(),new Configuration(),properties){
+            @Override
+            public JnomicsThriftJobStatus jobClientTask() throws Exception {
 
-        try {
-            UserGroupInformation.createRemoteUser(username).doAs(new PrivilegedExceptionAction<Integer>() {
-                @Override
-                public Integer run() throws Exception {
-                    JobConf jConf = new JobConf(conf);
-                    JobClient jobClient = new JobClient(new InetSocketAddress(jobTracker,jobTrackerPort),jConf);
-                    //JobClient jobClient = new JobClient(conf);
-                    jobClient.submitJob(jConf);
-                    return new Integer(1);
-                }
-            });
-        }catch (Exception e){
-            logger.error("Failed to run Job");
-            e.printStackTrace();
-            return new JnomicsJobID(e.toString());
+                RunningJob job = getJobClient().getJob(JobID.forName(jobID.getJob_id()));
+                return new JnomicsThriftJobStatus(job.getID().toString(),
+                        auth.getUsername(),
+                        null,
+                        job.isComplete(),
+                        job.getJobState(),
+                        0,
+                        null,
+                        job.mapProgress(),
+                        job.reduceProgress());
+            }
+        }.run();
+        return runningJob;
+    }
+
+    @Override
+    public List<JnomicsThriftJobStatus> getAllJobs(Authentication auth) throws JnomicsThriftException, TException {
+        JobStatus[] statuses = new JobClientRunner<JobStatus[]>(auth.getUsername(),new Configuration(),properties){
+            @Override
+            public JobStatus[] jobClientTask() throws Exception {
+                logger.info("getting jobs");
+                return getJobClient().getAllJobs();
+            }
+        }.run();
+        logger.info("got jobs");
+        List<JnomicsThriftJobStatus> newStats = new ArrayList<JnomicsThriftJobStatus>();
+        for(JobStatus stat: statuses){
+            if(0 == auth.getUsername().compareTo(stat.getUsername()))
+                newStats.add(new JnomicsThriftJobStatus(stat.getJobID().toString(),
+                        stat.getUsername(),
+                        stat.getFailureInfo(),
+                        stat.isJobComplete(),
+                        stat.getRunState(),
+                        stat.getStartTime(),
+                        stat.getJobPriority().toString(),
+                        stat.mapProgress(),
+                        stat.reduceProgress()));
         }
+        return newStats;
+    }
 
+    public JnomicsThriftJobID launchJobAs(String username,
+                                    final Configuration conf) throws JnomicsThriftException {
+        RunningJob runningJob = new JobClientRunner<RunningJob>(username,conf,properties){
+            @Override
+            public RunningJob jobClientTask() throws Exception {
+                return getJobClient().submitJob(getJobConf());
+            }
+        }.run();
         String jobid = runningJob.getID().toString();
         logger.info("submitted job: " + conf.get("mapred.job.name") + " " + jobid);
-        return new JnomicsJobID(jobid);
+        return new JnomicsThriftJobID(jobid);
     }
 }

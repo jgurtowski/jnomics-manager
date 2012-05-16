@@ -1,85 +1,45 @@
 package edu.cshl.schatz.jnomics.kbase.thrift.client;
 
-import edu.cshl.schatz.jnomics.kbase.thrift.api.Authentication;
-import edu.cshl.schatz.jnomics.kbase.thrift.api.JnomicsCompute;
-import org.apache.commons.cli.BasicParser;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
-
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 /**
  * User: james
  */
-public class ClientComputeHandler implements ClientHandler {
+public class ClientComputeHandler extends ClientHandler {
 
     private Properties properties;
-    private static final Options opts = new Options();
-    private static final Map<String,ClientHandler> taskMap = new HashMap<String,ClientHandler>();
+    private static final Map<String,Class<? extends ClientThriftHandler>> taskMap = new HashMap<String, Class<? extends ClientThriftHandler>>();
     static{
-        opts.addOption("task",true,"list contents of directory");
-        
-        taskMap.put("alignBowtie",new ClientBowtieHandler());
+        taskMap.put("bowtie", ClientBowtieHandler.class);
+        taskMap.put("status", ClientJobStatusHandler.class);
+        taskMap.put("listjobs", ClientJobListHandler.class);
     }
 
     public ClientComputeHandler(Properties props){
         properties = props;
     }
 
-    public static class ClientBowtieHandler implements ClientHandler{
-
-        private static final Options opts = new Options();
-        static{
-            opts.addOption("in",true,"Input file");
-            opts.addOption("out",true,"Output directory");
-            opts.addOption("organism",true,"Organism for alignment index");
-        }
-        
-        @Override
-        public void handle(String[] args) throws Exception {
-            BasicParser parser = new BasicParser();
-
-        }
+    @Override
+    protected JnomicsArgument[] getArguments() {
+        return new JnomicsArgument[0];
     }
 
     @Override
-    public void handle(String[] args) throws Exception {
-        String thriftComputeHost = properties.getProperty("compute-server-host");
-        int thriftComputePort = Integer.parseInt(properties.getProperty("compute-server-port"));
-        TTransport transport = new TSocket(thriftComputeHost, thriftComputePort);
-        transport.open();
-        TProtocol protocol = new TBinaryProtocol(transport);
-        JnomicsCompute.Client client = new JnomicsCompute.Client(protocol);
-
-        Authentication auth = new Authentication(properties.getProperty("username"),properties.getProperty("password"));
-
-
-        System.out.println(client.alignBowtie("reads.pe","motley","reads_align",auth));
-        /*BasicParser parser = new BasicParser();
-        CommandLine cli = parser.parse(opts,args);
-        HelpFormatter formatter = new HelpFormatter();
-        
-        String val;
-        if(cli.hasOption("task")){
-            val = cli.getOptionValue("task");
-            if(taskMap.containsKey(val)){
-                taskMap.get(val).handle(args);
-            }else{
-                formatter.printHelp("Unknown task "+ val,opts);
-            }
+    public void handle(List<String> args) throws Exception {
+        if(args.size() >= 1 && taskMap.containsKey(args.get(0))){
+            Constructor ctor = taskMap.get(args.get(0)).getDeclaredConstructor(Properties.class);
+            ClientThriftHandler thriftHandler = (ClientThriftHandler)ctor.newInstance(properties);
+            args.remove(args.get(0));
+            thriftHandler.handle(args);
         }else{
-            formatter.printHelp("Specify a task",opts);
-            System.out.println("available tasks:");
-            for(String t: taskMap.keySet()){
-                System.out.println(t);
+            System.out.println("Available Tasks:");
+            for(String tStrings: taskMap.keySet()){
+                System.out.println(tStrings);
             }
-        } */
+        }
     }
 }
