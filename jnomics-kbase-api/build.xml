@@ -3,8 +3,9 @@
   <property name="lib.dir" value="lib" />
   <property name="build.dir" value="build" />
   <property name="src.dir" value="src" />
+  <property name="bin.dir" value="bin" />
   <property name="thrift.src.dir" value="thrift" />
-  <property name="output.jar" value="jnomics-kbase.jar" />
+  <property name="output.jar" value="${bin.dir}/jnomics-kbase.jar" />
   <property name="conf.dir" value="conf" />
   
   
@@ -47,7 +48,7 @@
   <!-- =================================
        target: build
        ================================= -->
-  <target name="build" depends="resolve" description="--> compile">
+  <target name="build" depends="resolve,thrift" description="--> compile">
     <mkdir dir="${build.dir}" />
     <javac srcdir="${src.dir}" fork="true" destdir="${build.dir}" classpathref="lib.path.id">
       <compilerarg value="-Xlint" />

@@ -7,7 +7,8 @@ TARGET ?= /kb/deployment
 
 JAVA_HOME:=/kb/runtime/java
 ANT_HOME:=/kb/runtime/ant
-PATH:=${JAVA_HOME}/bin:${ANT_HOME}/bin:${PATH}
+THRIFT_HOME:=/kb/runtime/thrift
+PATH:=${JAVA_HOME}/bin:${ANT_HOME}/bin:${THRIFT_HOME}/bin:${PATH}
 
 all:
 
@@ -21,13 +22,13 @@ build-jnomics:
 	ant jar
 
 deploy-jnomics: make-dest-dir build-jnomics
-	cp jnomics-tools.jar $(SERVICE_BIN_DIR)
+	cp bin/jnomics-tools.jar $(SERVICE_BIN_DIR)
 
 build-kbase-api:
-	cd jnomics-kbase-api
-	ant jar
+	cd jnomics-kbase-api && ant jar
 
 deploy-kbase-api: make-dest-dir build-kbase-api
-	cp jnomics-kbase-api/jnomics-kbase.jar $(SERVICE_BIN_DIR)
+	cp jnomics-kbase-api/bin/* $(SERVICE_BIN_DIR)
+	cp jnomics-kbase-api/conf/* $(SERVICE_CONF_DIR)	
 
 

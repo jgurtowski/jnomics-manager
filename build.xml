@@ -3,6 +3,7 @@
   <property name="lib.dir" value="lib" />
   <property name="build.dir" value="build" />
   <property name="src.dir" value="src" />
+  <property name="bin.dir" value="bin" />
   <property name="example_data" value="example-data.zip" />
 
   <!-- paths used for compilation and run  -->
@@ -39,7 +40,7 @@
     <copy todir="${build.dir}">
       <fileset dir="${src.dir}/core" includes="**/*.properties" />
     </copy>
-    <jar destfile="jnomics-tools.jar" basedir="${build.dir}">
+    <jar destfile="${bin.dir}/jnomics-tools.jar" basedir="${build.dir}">
       <manifest>
 	<attribute name="Main-Class" value="edu.cshl.schatz.jnomics.tools.JnomicsMain" />
       </manifest>
