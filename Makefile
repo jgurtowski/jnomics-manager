@@ -31,4 +31,3 @@ deploy-kbase-api: make-dest-dir build-kbase-api
 	cp jnomics-kbase-api/bin/* $(SERVICE_BIN_DIR)
 	cp jnomics-kbase-api/conf/* $(SERVICE_CONF_DIR)	
 	cp -r jnomics-kbase-api/docs $(SERVICE_DIR)
-
