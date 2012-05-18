@@ -1,0 +1,15 @@
+
+Look in "conf" dir for configuration and documentation of configuration
+
+The bin dir contains the scripts to start/stop and interact with the
+jnomics service. 
+
+Start service:
+  /**serves compute functions**/      
+  ./start-compute-server.sh
+
+  /**services data functions**/  
+  ./start-data-server.sh 
+
+Interact with service:
+  ./jkbase
