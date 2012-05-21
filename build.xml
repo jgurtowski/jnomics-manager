@@ -5,6 +5,8 @@
   <property name="src.dir" value="src" />
   <property name="bin.dir" value="bin" />
   <property name="example_data" value="example-data.zip" />
+  <property name="thrift.src.dir" value="thrift" />
+  <property name="thrift.out.dir" value="${src.dir}/manager" />
 
   <!-- paths used for compilation and run  -->
   <path id="lib.path.id">
@@ -18,6 +20,21 @@
     <ivy:retrieve/>
   </target>
 
+
+ <!-- =================================                                                             
+       target: build thrift api                                                                      
+       ================================= -->
+  <target name="thrift" description="thrift --> compile">
+    <echo message="Running thrift generator..." />
+    <exec executable="thrift">
+      <arg value="-out"/>
+      <arg value="${thrift.out.dir}" />
+      <arg value="--gen" />
+      <arg value="java" />
+      <arg file="${thrift.src.dir}/jnomics_kbase_api.thrift" />
+    </exec>
+  </target>
+
   <!-- =================================
        target: report
        ================================= -->
@@ -28,7 +45,7 @@
   <!-- =================================
        target: build
        ================================= -->
-  <target name="build" depends="resolve" description="--> compile">
+  <target name="build" depends="resolve,thrift" description="--> compile">
     <mkdir dir="${build.dir}" />
     <javac srcdir="${src.dir}" fork="true" destdir="${build.dir}" classpathref="lib.path.id" />
   </target>
@@ -40,15 +57,14 @@
     <copy todir="${build.dir}">
       <fileset dir="${src.dir}/core" includes="**/*.properties" />
     </copy>
-    <jar destfile="${bin.dir}/jnomics-tools.jar" basedir="${build.dir}">
+    <jar destfile="${bin.dir}/jnomics.jar" basedir="${build.dir}">
       <manifest>
 	<attribute name="Main-Class" value="edu.cshl.schatz.jnomics.tools.JnomicsMain" />
       </manifest>
       <zipgroupfileset dir="${lib.dir}" />
     </jar>
   </target>
-
-
+  
   <!-- =================================
        target: get examples
        ================================= -->
