@@ -1,9 +1,11 @@
 package edu.cshl.schatz.jnomics.manager.client;
 
+import edu.cshl.schatz.jnomics.io.FastqParser;
 import edu.cshl.schatz.jnomics.manager.api.Authentication;
 import edu.cshl.schatz.jnomics.manager.api.JnomicsData;
 import edu.cshl.schatz.jnomics.manager.api.JnomicsThriftFileStatus;
 import edu.cshl.schatz.jnomics.manager.api.JnomicsThriftHandle;
+import edu.cshl.schatz.jnomics.tools.PairedEndLoader;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
@@ -32,6 +34,7 @@ public class ClientFSHandler extends ClientHandler{
         opts.addOption("get",false,"download file");
         opts.addOption("rm", false, "remove file");
         opts.addOption("rmr", false, "remove recursive (directory)");
+        opts.addOption("put-pe",false,"upload paired end sequencing file");
     }
 
     public ClientFSHandler(Properties prop){
@@ -162,6 +165,20 @@ public class ClientFSHandler extends ClientHandler{
                     else
                         System.out.println("Failed Deleting: " + file);
                 }
+            }
+        }else if(cl.hasOption("put-pe")){ /*************************** put-pe *******************/
+            if(arglist.size() < 3){
+                f.printHelp("fs -put-pe <read.1.fq> <read.2.fq> <output.pe>",opts);
+            }else{
+                InputStream infile1 = new FileInputStream(arglist.get(0));
+                InputStream infile2 = new FileInputStream(arglist.get(1));
+                FastqParser parser1 = new FastqParser(infile1);
+                FastqParser parser2 = new FastqParser(infile2);
+                String outFile = arglist.get(2).concat(".pe");
+
+                JnomicsThriftHandle handle = client.create(outFile, auth);
+
+                client.close(handle,auth);
             }
         }else{
             f.printHelp("Unknown Option",opts);
