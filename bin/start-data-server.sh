@@ -1,3 +1,3 @@
 #!/bin/bash
 
-java -cp ../conf:jnomics.jar edu.cshl.schatz.jnomics.kbase.thrift.server.JnomicsDataServer
+java -cp ../conf:jnomics.jar edu.cshl.schatz.jnomics.manager.server.JnomicsDataServer
