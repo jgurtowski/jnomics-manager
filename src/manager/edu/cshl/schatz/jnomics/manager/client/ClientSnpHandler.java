@@ -46,4 +46,9 @@ public class ClientSnpHandler extends ClientThriftHandler{
 
         System.out.println("Submitted Job: " + jobID.getJob_id());
     }
+
+    @Override
+    public String getDescription() {
+        return "Call SNPs with Samtools";
+    }
 }

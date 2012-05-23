@@ -104,8 +104,7 @@ public class SamtoolsMap extends JnomicsMapper<SAMRecordWritable,NullWritable, S
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
-        String binsize_str = conf.get(genome_binsize_arg.getName());
-        binsize = binsize_str == null ? DEFAULT_GENOME_BINSIZE  : Integer.parseInt(binsize_str);
+        binsize = conf.getInt(genome_binsize_arg.getName(),DEFAULT_GENOME_BINSIZE);
     }
 
     @Override

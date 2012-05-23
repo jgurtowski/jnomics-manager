@@ -34,7 +34,7 @@ public class ClientFSHandler extends ClientHandler{
         opts.addOption("get",false,"download file");
         opts.addOption("rm", false, "remove file");
         opts.addOption("rmr", false, "remove recursive (directory)");
-        opts.addOption("put-pe",false,"upload paired end sequencing file");
+        opts.addOption("putpe",false,"upload paired end sequencing file");
     }
 
     public ClientFSHandler(Properties prop){

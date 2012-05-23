@@ -30,7 +30,7 @@ public class Bowtie2Map extends JnomicsMapper<ReadCollectionWritable,NullWritabl
     private Throwable readerError = null;
 
     private final JnomicsArgument bowtie_opts = new JnomicsArgument("bowtie_opts", "bowtie options",false);
-    private final JnomicsArgument bowtie_idx = new JnomicsArgument("bowtie_idx", "bowtie index",true);
+    private final JnomicsArgument bowtie_idx = new JnomicsArgument("bowtie_index", "bowtie index",true);
     private final JnomicsArgument bowtie_binary = new JnomicsArgument("bowtie_binary", "bowtie binary",true);
 
     @Override

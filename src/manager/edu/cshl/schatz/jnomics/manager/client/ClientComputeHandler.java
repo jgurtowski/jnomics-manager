@@ -19,6 +19,7 @@ public class ClientComputeHandler extends ClientHandler {
         taskMap.put("snp", ClientSnpHandler.class);
         taskMap.put("status", ClientJobStatusHandler.class);
         taskMap.put("listjobs", ClientJobListHandler.class);
+        taskMap.put("pair_reads", ClientPairReadsHandler.class);
     }
 
     public ClientComputeHandler(Properties props){

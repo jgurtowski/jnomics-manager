@@ -21,8 +21,8 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
     private Throwable readerErr;
     private int reduceIt, binsize;
 
-    private final JnomicsArgument samtools_bin_arg = new JnomicsArgument("samtools_bin","Samtools Binary",true);
-    private final JnomicsArgument bcftools_bin_arg = new JnomicsArgument("bcftools_bin","bcftools Binary", true);
+    private final JnomicsArgument samtools_bin_arg = new JnomicsArgument("samtools_binary","Samtools Binary",true);
+    private final JnomicsArgument bcftools_bin_arg = new JnomicsArgument("bcftools_binary","bcftools Binary", true);
     private final JnomicsArgument samtools_opts_arg = new JnomicsArgument("samtools_opts","Samtools mpileup options", false);
     private final JnomicsArgument bcftools_opts_arg = new JnomicsArgument("bcftools_opts","bcftools view options", false);
     private final JnomicsArgument reference_file_arg = new JnomicsArgument("reference_fa",

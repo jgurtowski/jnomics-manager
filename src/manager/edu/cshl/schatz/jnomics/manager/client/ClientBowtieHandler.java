@@ -46,4 +46,9 @@ public class ClientBowtieHandler extends ClientThriftHandler{
 
         System.out.println("Submitted Job: " + jobID.getJob_id());
     }
+
+    @Override
+    public String getDescription() {
+        return "Run Bowtie aligner";
+    }
 }

@@ -13,6 +13,10 @@ public abstract class ClientHandler {
 
     public abstract void handle(List<String> args) throws Exception;
 
+    public String getDescription(){
+        return "";
+    }
+    
     /**
      * Override to inject arguments
      */

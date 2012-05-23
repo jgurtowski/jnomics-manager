@@ -12,17 +12,17 @@ import java.util.Properties;
  * User: james
  */
 
-public class ClientBWAHandler extends ClientThriftHandler{
+public class ClientPairReadsHandler extends ClientThriftHandler{
 
-    public ClientBWAHandler(Properties properties) {
+    public ClientPairReadsHandler(Properties properties) {
         super(properties);
     }
 
     public JnomicsArgument[] getArguments(){
         return new JnomicsArgument[]{
-                new JnomicsArgument("in",true,true,"Input file"),
-                new JnomicsArgument("out",true,true,"Output dir"),
-                new JnomicsArgument("organism",true,true,"Organism for alignment index")
+                new JnomicsArgument("1",true,true,"First file in pair"),
+                new JnomicsArgument("2",true,true,"Second file in pair"),
+                new JnomicsArgument("out",true,true,"Converted File")
         };
     }
 
@@ -37,10 +37,8 @@ public class ClientBWAHandler extends ClientThriftHandler{
             formatter.printHelp(e.toString(),options);
             return;
         }
-        JnomicsThriftJobID jobID = getThriftClient().alignBWA(cli.getOptionValue("in"),
-                cli.getOptionValue("organism"),
-                cli.getOptionValue("out"),
-                getAuth());
+        JnomicsThriftJobID jobID = getThriftClient().pairReads(cli.getOptionValue("1"),
+                cli.getOptionValue("2"),cli.getOptionValue("out"),getAuth());
 
         closeTransport();
 
@@ -49,6 +47,6 @@ public class ClientBWAHandler extends ClientThriftHandler{
 
     @Override
     public String getDescription() {
-        return "Run BWA aligner";
+        return "Join paired end read files";
     }
 }

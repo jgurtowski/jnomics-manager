@@ -2,7 +2,7 @@ package edu.cshl.schatz.jnomics.tools;
 
 import edu.cshl.schatz.jnomics.cli.JnomicsArgument;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsReducer;
-import edu.cshl.schatz.jnomics.ob.writable.StringArrayWritable;
+import edu.cshl.schatz.jnomics.ob.writable.PEMetaInfo;
 import edu.cshl.schatz.jnomics.util.FileUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -19,7 +19,7 @@ import java.io.InputStream;
 /**
  * User: james
  */
-public class PELoaderReduce extends JnomicsReducer<IntWritable, StringArrayWritable, Text, NullWritable> {
+public class PELoaderReduce extends JnomicsReducer<IntWritable, PEMetaInfo, Text, NullWritable> {
 
     final Log LOG = LogFactory.getLog(PELoaderReduce.class);
 
@@ -39,17 +39,14 @@ public class PELoaderReduce extends JnomicsReducer<IntWritable, StringArrayWrita
     }
 
     @Override
-    protected void reduce(IntWritable key, Iterable<StringArrayWritable> values, final Context context) throws IOException,
+    protected void reduce(IntWritable key, Iterable<PEMetaInfo> values, final Context context) throws IOException,
             InterruptedException {
 
         Configuration conf = context.getConfiguration();
 
-        for (StringArrayWritable maniline : values) {
-
-            String[] data = maniline.toStrings();
-            context.write(new Text("data:" +  data),NullWritable.get());
-            Path s3p1 = new Path(data[0]);
-            Path s3p2 = new Path(data[1]);
+        for (PEMetaInfo peInfo : values) {
+            Path s3p1 = new Path(peInfo.getFirstFile());
+            Path s3p2 = new Path(peInfo.getSecondFile());
             context.write(new Text(s3p1.toString()),NullWritable.get());
             context.write(new Text(s3p2.toString()),NullWritable.get());
 
@@ -59,8 +56,7 @@ public class PELoaderReduce extends JnomicsReducer<IntWritable, StringArrayWrita
             InputStream in2 = FileUtil.getInputStreamWrapperFromExtension(fileSystem.open(s3p2),
                     FileUtil.getExtension(s3p2.getName()));
 
-            String outName = s3p1.getName() + ".pe";
-            Path outPath = new Path(conf.get("mapred.output.dir","") +"/"+ outName);
+            Path outPath = new Path(peInfo.getDestination());
             if(fileSystem.exists(outPath)) //if process fails and is rescheduled, remove old broken files
                 fileSystem.delete(outPath,false);
             

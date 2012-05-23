@@ -180,7 +180,7 @@ public class JnomicsMain extends Configured implements Tool {
             JnomicsArgument.printUsage("Map Options:", mapInst.getArgs(), System.out);
             return 1;
         }
-        //add all aguments to configuration
+        //add all arguments to configuration
         for (JnomicsArgument jarg : mapInst.getArgs()) {
             if (jarg.getValue() != null)
                 conf.set(jarg.getName(), jarg.getValue());
@@ -227,7 +227,7 @@ public class JnomicsMain extends Configured implements Tool {
         if (mapInst.getCombinerClass() != null)
             job.setCombinerClass(mapInst.getCombinerClass());
 
-        job.setInputFormatClass(SequenceFileInputFormat.class);
+        job.setInputFormatClass(mapInst.getInputFormat());
         job.setOutputFormatClass(SequenceFileOutputFormat.class);
         SequenceFileInputFormat.setInputPaths(job, in_arg.getValue());
         SequenceFileOutputFormat.setOutputPath(job, new Path(out_arg.getValue()));

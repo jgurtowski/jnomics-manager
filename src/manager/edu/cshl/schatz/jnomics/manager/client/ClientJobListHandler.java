@@ -23,4 +23,8 @@ public class ClientJobListHandler extends ClientThriftHandler {
         closeTransport();
     }
 
+    @Override
+    public String getDescription() {
+        return "List all Jobs";
+    }
 }

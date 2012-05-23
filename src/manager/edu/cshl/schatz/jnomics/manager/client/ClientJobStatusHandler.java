@@ -49,4 +49,9 @@ public class ClientJobStatusHandler extends ClientThriftHandler{
         System.out.printf("%30s %30s\n","Map Progress:",status.getMapProgress());
         System.out.printf("%30s %30s\n","Reduce Progress:",status.getReduceProgress());
     }
+
+    @Override
+    public String getDescription() {
+        return "Get status of a job using its handle";
+    }
 }
