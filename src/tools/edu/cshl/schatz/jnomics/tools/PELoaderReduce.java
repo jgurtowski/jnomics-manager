@@ -61,16 +61,21 @@ public class PELoaderReduce extends JnomicsReducer<IntWritable, PEMetaInfo, Text
 
             Path p1 = new Path(seInfo.getFirstFile());
             Path p2 = new Path(seInfo.getSecondFile());
-
+            LOG.info(seInfo.getFirstFile());
+            LOG.info(seInfo.getSecondFile());
+            System.out.println(seInfo.getFirstFile());
+            System.out.println(seInfo.getSecondFile());
             context.write(new Text(p1.toString()),NullWritable.get());
             context.write(new Text(p2.toString()),NullWritable.get());
 
+            LOG.info("Opening File Streams");
             FileSystem fileSystem = FileSystem.get(p1.toUri(),conf);
             InputStream in1 = FileUtil.getInputStreamWrapperFromExtension(fileSystem.open(p1),
                     FileUtil.getExtension(p1.getName()));
             InputStream in2 = FileUtil.getInputStreamWrapperFromExtension(fileSystem.open(p2),
                     FileUtil.getExtension(p2.getName()));
 
+            LOG.info("Opening outfile path, removing if exists");
             Path outPath = new Path(seInfo.getDestination());
             if(fileSystem.exists(outPath)) //if process fails and is rescheduled, remove old broken files
                 fileSystem.delete(outPath,false);
@@ -85,6 +90,8 @@ public class PELoaderReduce extends JnomicsReducer<IntWritable, PEMetaInfo, Text
             Text keyName = new Text();
             sfKey.setName(keyName);
 
+
+            
             SequenceFile.Writer writer = null;
             if(conf.get("mapred.output.compress","").compareTo("true") == 0){
                 String codec_str = conf.get("mapred.output.compression.codec",
@@ -107,6 +114,7 @@ public class PELoaderReduce extends JnomicsReducer<IntWritable, PEMetaInfo, Text
             Iterator<FastqParser.FastqRecord> i1 = parser1.iterator();
             Iterator<FastqParser.FastqRecord> i2 = parser2.iterator();
 
+            LOG.info("Writing to SequenceFile");
             FastqParser.FastqRecord record1,record2;
             long count=0;
             while(i1.hasNext() && i2.hasNext()){
@@ -116,13 +124,19 @@ public class PELoaderReduce extends JnomicsReducer<IntWritable, PEMetaInfo, Text
                 r2.setAll(record2.getName(),record2.getSequence(),record2.getDescription(),record2.getQuality());
                 keyName.set(record1.getName());
                 writer.append(sfKey, sfValue);
-                if(0 == count++ % 1000000)
+                if(0 == ++count % 1000000){
                     context.write(new Text(Long.toString(count)),NullWritable.get());
+                    System.out.println(count);
+                    context.progress();
+                }
             }
+            LOG.info("Done writing");
 
             parser1.close();
             parser2.close();
             writer.close();
+
+            LOG.info("Cleaning up");
         }
     }
 }

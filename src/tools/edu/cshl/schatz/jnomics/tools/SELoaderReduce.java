@@ -59,6 +59,7 @@ public class SELoaderReduce extends JnomicsReducer<IntWritable, SEMetaInfo, Text
 
         for (SEMetaInfo seInfo : values) {
             LOG.info("Working on : " + seInfo.getFile());
+            System.out.println(seInfo.getFile());
             Path p1 = new Path(seInfo.getFile());
 
             context.write(new Text(p1.toString()),NullWritable.get());
@@ -106,8 +107,11 @@ public class SELoaderReduce extends JnomicsReducer<IntWritable, SEMetaInfo, Text
                 r1.setAll(record.getName(),record.getSequence(),record.getDescription(),record.getQuality());
                 keyName.set(record.getName());
                 writer.append(sfKey,sfValue);
-                if(0 == count++ % 100000)
+                if(0 == ++count % 100000){
                     context.write(new Text(Long.toString(count)),NullWritable.get());
+                    context.progress();
+                    System.out.println(count);
+                }            
             }
             
             LOG.info("Done Writing, cleaning up");

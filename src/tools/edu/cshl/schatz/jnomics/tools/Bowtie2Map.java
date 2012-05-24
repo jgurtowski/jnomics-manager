@@ -26,7 +26,7 @@ public class Bowtie2Map extends JnomicsMapper<ReadCollectionWritable,NullWritabl
     private File[] tmpFiles;
     private Thread readerThread, bowtieProcessErrThread;
     private Process bowtieProcess;
-    private String cmd;
+    private String cmdPairedEnd,cmdSingleEnd;
     private Throwable readerError = null;
 
     private final JnomicsArgument bowtie_opts = new JnomicsArgument("bowtie_opts", "bowtie options",false);
@@ -72,12 +72,17 @@ public class Bowtie2Map extends JnomicsMapper<ReadCollectionWritable,NullWritabl
             f.deleteOnExit();
         }
 
-        cmd = String.format(
+        cmdPairedEnd = String.format(
                 "%s %s --mm -x %s -1 %s -2 %s",
                 bowtie_binary_str, bowtie_opts_str, bowtie_idx_str,
                 tmpFiles[0],
                 tmpFiles[1]);
 
+        cmdSingleEnd = String.format("%s %s --mm -x %s -U %s",
+                bowtie_binary_str,
+                bowtie_opts_str,
+                bowtie_idx_str,
+                tmpFiles[0]);
     }
 
     @Override
@@ -90,18 +95,32 @@ public class Bowtie2Map extends JnomicsMapper<ReadCollectionWritable,NullWritabl
         BufferedOutputStream tmpWriter1 = new BufferedOutputStream(new FileOutputStream(tmpFiles[0]));
         BufferedOutputStream tmpWriter2 = new BufferedOutputStream(new FileOutputStream(tmpFiles[1]));
         ReadCollectionWritable readCollection;
+        boolean first = true;
+        boolean pairedEnd = true;
         while(context.nextKeyValue()){
             readCollection = context.getCurrentKey();
-            tmpWriter1.write(readCollection.getRead(0).getFastqString().getBytes());
-            tmpWriter1.write("\n".getBytes());
-            tmpWriter2.write(readCollection.getRead(1).getFastqString().getBytes());
-            tmpWriter2.write("\n".getBytes());
+            if(first && 1 == readCollection.getReads().size()){
+                first=false;
+                pairedEnd = false;
+            }
+            if(pairedEnd){
+                tmpWriter1.write(readCollection.getRead(0).getFastqString().getBytes());
+                tmpWriter1.write("\n".getBytes());
+                tmpWriter2.write(readCollection.getRead(1).getFastqString().getBytes());
+                tmpWriter2.write("\n".getBytes());
+            }else{
+                tmpWriter1.write(readCollection.getRead(0).getFastqString().getBytes());
+                tmpWriter1.write("\n".getBytes());
+            }
         }
         tmpWriter1.close();
         tmpWriter2.close();
 
         System.err.println("Starting bowtie2 Process");
-        bowtieProcess = Runtime.getRuntime().exec(cmd);
+        if(pairedEnd)
+            bowtieProcess = Runtime.getRuntime().exec(cmdPairedEnd);
+        else
+            bowtieProcess = Runtime.getRuntime().exec(cmdSingleEnd);
         bowtieProcessErrThread = new Thread(new ThreadedStreamConnector(bowtieProcess.getErrorStream(), System.err));
         bowtieProcessErrThread.start();
 
