@@ -5,6 +5,9 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.io.WritableComparator;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public abstract class JnomicsReducer<KEYIN,VALUEIN,KEYOUT,VALUEOUT>
         extends Reducer<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
 
@@ -12,8 +15,10 @@ public abstract class JnomicsReducer<KEYIN,VALUEIN,KEYOUT,VALUEOUT>
 
     public abstract Class getOutputKeyClass();
     public abstract Class getOutputValueClass();
-    public abstract JnomicsArgument[] getArgs();
+    public JnomicsArgument[] getArgs(){return new JnomicsArgument[0];}
     
     public Class<? extends Partitioner> getPartitionerClass(){return null;}
     public Class<? extends WritableComparator> getGrouperClass(){return null;}
+
+    public Map<String,String> getConfModifiers(){return new HashMap<String, String>();}
 }

@@ -212,7 +212,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         conf.set("mapreduce.inputformat.class","org.apache.hadoop.mapreduce.lib.input.TextInputFormat");
         conf.set("mapreduce.outputformat.class","org.apache.hadoop.mapreduce.lib.output.TextOutputFormat");
         conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.PELoaderMap");
-        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.PELoaderReduce");
+        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.SELoaderReduce");
         conf.setInt("mapred.reduce.tasks",1);
         String username = auth.getUsername();
         JnomicsThriftJobID id = launchJobAs(username,conf);

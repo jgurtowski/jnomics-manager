@@ -4,7 +4,7 @@ import edu.cshl.schatz.jnomics.io.FastqParser;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsReducer;
 import edu.cshl.schatz.jnomics.ob.ReadCollectionWritable;
 import edu.cshl.schatz.jnomics.ob.ReadWritable;
-import edu.cshl.schatz.jnomics.ob.writable.PEMetaInfo;
+import edu.cshl.schatz.jnomics.ob.writable.SEMetaInfo;
 import edu.cshl.schatz.jnomics.util.FileUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -21,15 +21,14 @@ import org.apache.hadoop.util.ReflectionUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
  * User: james
  */
-public class PELoaderReduce extends JnomicsReducer<IntWritable, PEMetaInfo, Text, NullWritable> {
+public class SELoaderReduce extends JnomicsReducer<IntWritable, SEMetaInfo, Text, NullWritable> {
 
-    final Log LOG = LogFactory.getLog(PELoaderReduce.class);
+    final Log LOG = LogFactory.getLog(SELoaderReduce.class);
 
     @Override
     public Class getOutputKeyClass() {
@@ -51,40 +50,38 @@ public class PELoaderReduce extends JnomicsReducer<IntWritable, PEMetaInfo, Text
         };
     }
 
+
     @Override
-    protected void reduce(IntWritable key, Iterable<PEMetaInfo> values, final Context context) throws IOException,
+    protected void reduce(IntWritable key, Iterable<SEMetaInfo> values, final Context context) throws IOException,
             InterruptedException {
 
         Configuration conf = context.getConfiguration();
 
-        for (PEMetaInfo seInfo : values) {
-
-            Path p1 = new Path(seInfo.getFirstFile());
-            Path p2 = new Path(seInfo.getSecondFile());
+        for (SEMetaInfo seInfo : values) {
+            LOG.info("Working on : " + seInfo.getFile());
+            Path p1 = new Path(seInfo.getFile());
 
             context.write(new Text(p1.toString()),NullWritable.get());
-            context.write(new Text(p2.toString()),NullWritable.get());
 
             FileSystem fileSystem = FileSystem.get(p1.toUri(),conf);
-            InputStream in1 = FileUtil.getInputStreamWrapperFromExtension(fileSystem.open(p1),
-                    FileUtil.getExtension(p1.getName()));
-            InputStream in2 = FileUtil.getInputStreamWrapperFromExtension(fileSystem.open(p2),
-                    FileUtil.getExtension(p2.getName()));
-
             Path outPath = new Path(seInfo.getDestination());
+            LOG.info("Checking if "+outPath+" exists");
             if(fileSystem.exists(outPath)) //if process fails and is rescheduled, remove old broken files
                 fileSystem.delete(outPath,false);
+
+            LOG.info("Opening input stream for file "+ p1);
+            InputStream in1 = FileUtil.getInputStreamWrapperFromExtension(fileSystem.open(p1),
+                    FileUtil.getExtension(p1.getName()));
 
             NullWritable sfValue = NullWritable.get();
             ReadCollectionWritable sfKey  = new ReadCollectionWritable();
 
             ReadWritable r1= new ReadWritable();
-            ReadWritable r2= new ReadWritable();
             sfKey.addRead(r1);
-            sfKey.addRead(r2);
             Text keyName = new Text();
             sfKey.setName(keyName);
 
+            LOG.info("Building a SequenceFile writer");
             SequenceFile.Writer writer = null;
             if(conf.get("mapred.output.compress","").compareTo("true") == 0){
                 String codec_str = conf.get("mapred.output.compression.codec",
@@ -100,29 +97,26 @@ public class PELoaderReduce extends JnomicsReducer<IntWritable, PEMetaInfo, Text
             }else{//no compression
                 writer = SequenceFile.createWriter(fileSystem,conf,outPath,sfKey.getClass(),sfValue.getClass());
             }
-
-            FastqParser parser1 = new FastqParser(in1);
-            FastqParser parser2 = new FastqParser(in2);
-
-            Iterator<FastqParser.FastqRecord> i1 = parser1.iterator();
-            Iterator<FastqParser.FastqRecord> i2 = parser2.iterator();
-
-            FastqParser.FastqRecord record1,record2;
-            long count=0;
-            while(i1.hasNext() && i2.hasNext()){
-                record1 = i1.next();
-                record2 = i2.next();
-                r1.setAll(record1.getName(),record1.getSequence(),record1.getDescription(),record1.getQuality());
-                r2.setAll(record2.getName(),record2.getSequence(),record2.getDescription(),record2.getQuality());
-                keyName.set(record1.getName());
-                writer.append(sfKey, sfValue);
-                if(0 == count++ % 1000000)
+            
+            FastqParser parser = new FastqParser(in1);
+            
+            LOG.info("Writing fastq records to SequenceFile");
+            long count = 0;
+            for(FastqParser.FastqRecord record: parser){
+                r1.setAll(record.getName(),record.getSequence(),record.getDescription(),record.getQuality());
+                keyName.set(record.getName());
+                writer.append(sfKey,sfValue);
+                if(0 == count++ % 100000)
                     context.write(new Text(Long.toString(count)),NullWritable.get());
             }
-
-            parser1.close();
-            parser2.close();
+            
+            LOG.info("Done Writing, cleaning up");
+            
+            parser.close();
+            in1.close();
             writer.close();
+
+            LOG.info("Done Cleaning up");
         }
     }
 }

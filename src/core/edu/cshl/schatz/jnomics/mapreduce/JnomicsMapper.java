@@ -6,6 +6,9 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 public abstract class JnomicsMapper<KEYIN,VALUEIN,KEYOUT,VALUEOUT>
         extends Mapper<KEYIN,VALUEIN,KEYOUT,VALUEOUT> {
@@ -14,11 +17,15 @@ public abstract class JnomicsMapper<KEYIN,VALUEIN,KEYOUT,VALUEOUT>
 
     public abstract Class getOutputKeyClass();
     public abstract Class getOutputValueClass();
-    public abstract JnomicsArgument[] getArgs();
+
+    public Map<String,String> getConfModifiers(){return new HashMap<String, String>();}
+
+    public JnomicsArgument[] getArgs(){return new JnomicsArgument[0];}
     
     public Class<? extends Reducer> getCombinerClass(){return null;}
     
     public Class<? extends InputFormat> getInputFormat(){return SequenceFileInputFormat.class;}
+
 
 }                
 

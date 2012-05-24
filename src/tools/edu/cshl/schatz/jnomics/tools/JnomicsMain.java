@@ -19,6 +19,7 @@ import org.apache.hadoop.util.ToolRunner;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class JnomicsMain extends Configured implements Tool {
 
@@ -34,6 +35,8 @@ public class JnomicsMain extends Configured implements Tool {
                     put("readcount_map", CountReadsMap.class);
                     put("basecount_map", CountBasesMap.class);
                     put("alignmentsort_map", AlignmentSortMap.class);
+                    put("cufflinks_map",CufflinksMap.class);
+                    put("seloader_map",SELoaderMap.class);
                 }
             };
 
@@ -46,6 +49,8 @@ public class JnomicsMain extends Configured implements Tool {
                     put("peloader_reduce",PELoaderReduce.class);
                     put("longcount_reduce",CountLongReduce.class);
                     put("alignmentsort_reduce", AlignmentSortReduce.class);
+                    put("cufflinks_reduce",CufflinksReduce.class);
+                    put("seloader_reduce",SELoaderReduce.class);
                 }
             };
 
@@ -185,6 +190,13 @@ public class JnomicsMain extends Configured implements Tool {
             if (jarg.getValue() != null)
                 conf.set(jarg.getName(), jarg.getValue());
         }
+        
+        Map.Entry<String,String> entry = null;
+        for(Object entryO: mapInst.getConfModifiers().entrySet()){
+            entry = (Map.Entry<String,String>)entryO;
+            conf.set(entry.getKey(),entry.getValue());
+        }
+
 
         /** get more cli params **/
         JnomicsReducer reduceInst = null;
@@ -205,6 +217,12 @@ public class JnomicsMain extends Configured implements Tool {
                 if (jarg.getValue() != null)
                     conf.set(jarg.getName(), jarg.getValue());
             }
+            
+            for(Object entryO: reduceInst.getConfModifiers().entrySet()){
+                entry = (Map.Entry<String,String>)entryO;
+                conf.set(entry.getKey(),entry.getValue());
+            }
+            
         }
 
         /** Build the Job **/
