@@ -44,7 +44,6 @@ public class SELoaderReduce extends JnomicsReducer<IntWritable, SEMetaInfo, Text
     public Map<String,String> getConfModifiers(){
         return new HashMap<String, String>(){
             {
-                put("mapred.map.tasks.speculative.execution","false");
                 put("mapred.reduce.tasks.speculative.execution","false");
             }
         };

@@ -10,10 +10,11 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.mapreduce.Partitioner;
+import org.apache.hadoop.thirdparty.guava.common.io.Files;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * User: james
@@ -22,6 +23,10 @@ public class CufflinksReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey,SAMR
     
     private final JnomicsArgument cuff_binary_arg = new JnomicsArgument("cufflinks_binary","Cufflinks Binary",true);
 
+    private FileSystem fs;
+    
+    private File tmpFile,tmpOutputDir;
+    
     private String cufflinks_cmd;
     
     @Override
@@ -50,51 +55,72 @@ public class CufflinksReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey,SAMR
     }
 
     @Override
+    public Map<String,String> getConfModifiers(){
+        return new HashMap<String, String>(){
+            {
+                put("mapred.reduce.tasks.speculative.execution","false");
+            }
+        };
+    }
+
+    @Override
     protected void setup(Context context) throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
         String cuff_binary_str = conf.get(cuff_binary_arg.getName());
         if(!new File(cuff_binary_str).exists())
             throw new IOException("Cannot find Cufflinks binary");
 
-        cufflinks_cmd = String.format("%s /dev/stdin", cuff_binary_str);
+        String taskID = context.getTaskAttemptID().toString();
+        tmpFile = new File(taskID+".sam");
+        tmpOutputDir = new File(taskID+"-out");
+        cufflinks_cmd = String.format("%s -o %s %s", cuff_binary_str, tmpOutputDir, tmpFile);
+        fs = FileSystem.get(conf);
     }
 
     @Override
-    protected void reduce(SamtoolsMap.SamtoolsKey key, Iterable<SAMRecordWritable> values, Context context)
+    protected void reduce(SamtoolsMap.SamtoolsKey key, Iterable<SAMRecordWritable> values, final Context context)
             throws IOException, InterruptedException {
+
+        BufferedOutputStream tmpWriter = new BufferedOutputStream(new FileOutputStream(tmpFile));
+
+        long count = 0;
+        for(SAMRecordWritable read: values){
+            tmpWriter.write(read.toString().getBytes());
+            tmpWriter.write("\n".getBytes());
+            if(0 == ++count % 1000){
+                context.progress();
+                context.write(NullWritable.get(),NullWritable.get());
+            }
+        }
+        tmpWriter.close();
+
         Process process = Runtime.getRuntime().exec(cufflinks_cmd);
 
         Thread connectout = new Thread(new ThreadedStreamConnector(process.getInputStream(),System.out));
-        Thread connecterr = new Thread(new ThreadedStreamConnector(process.getErrorStream(),System.err));
+        Thread connecterr = new Thread(new ThreadedStreamConnector(process.getErrorStream(),System.err){
+            @Override
+            public void progress() {
+                context.progress();
+            }
+        });
         connectout.start();
         connecterr.start();
-
-        boolean first = true;
-        PrintWriter writer = new PrintWriter(process.getOutputStream());
-        for(SAMRecordWritable read: values){
-            if(first)
-                writer.println(read.getTextHeader());
-            writer.println(read);
-        }
-        writer.close();
-
         connectout.join();
         connecterr.join();
         process.waitFor();
-        
+
         Configuration conf = context.getConfiguration();
         String outdir = conf.get("mapred.output.dir");
-        FileSystem fs = FileSystem.get(conf);
-        Path chrOut = new Path(outdir+"-"+key.getRef());
-        fs.mkdirs(chrOut);
-        
+
         String[] localFiles = new String[]{"transcripts.gtf","skipped.gtf",
                 "isoforms.fpkm_tracking","genes.fpkm_tracking"};
 
         for(String fileStr : localFiles){
-            fs.copyFromLocalFile(new Path("fileStr"),new Path(chrOut+"/"+fileStr));
+            fs.copyFromLocalFile(new Path(tmpOutputDir+"/"+fileStr),new Path(outdir+"/"+key.getRef()+"-"+fileStr));
         }
 
-        fs.close();
+        //cleanup
+        tmpFile.delete();
+        Files.deleteRecursively(tmpOutputDir);
     }
 }
