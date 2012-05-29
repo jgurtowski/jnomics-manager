@@ -20,6 +20,7 @@ public class ClientComputeHandler extends ClientHandler {
         taskMap.put("status", ClientJobStatusHandler.class);
         taskMap.put("listjobs", ClientJobListHandler.class);
         taskMap.put("pair_reads", ClientPairReadsHandler.class);
+        taskMap.put("single_reads", ClientSingleReadsHandler.class);
     }
 
     public ClientComputeHandler(Properties props){
@@ -41,7 +42,7 @@ public class ClientComputeHandler extends ClientHandler {
         }else{
             System.out.println("Available Tasks:");
             for(String tStrings: taskMap.keySet()){
-                System.out.println(tStrings);
+                System.out.println(tStrings+"\t"+taskMap.get(tStrings).newInstance().getDescription());
             }
         }
     }

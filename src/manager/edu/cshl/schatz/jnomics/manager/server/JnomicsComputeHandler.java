@@ -1,6 +1,7 @@
 package edu.cshl.schatz.jnomics.manager.server;
 
 import edu.cshl.schatz.jnomics.manager.api.*;
+import edu.cshl.schatz.jnomics.util.TextUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -11,6 +12,7 @@ import org.apache.hadoop.mapred.RunningJob;
 import org.apache.thrift.TException;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -159,14 +161,22 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         return newStats;
     }
 
-    @Override
-    public JnomicsThriftJobID pairReads(String file1, String file2, String outFile, Authentication auth)
-            throws JnomicsThriftException, TException {
+
+    /**
+     * Writes a manifest file in a directory called manifests in home directory
+     *
+     * @param filename filename to use as prefix for manifest file
+     * @param data data to write to manifest file, each string in the array is aline
+     * @param username username to perform fs operations as
+     * @return Path of the created manfiest file
+     * @throws JnomicsThriftException
+     */
+    private Path writeManifest(String filename, String []data, String username) throws JnomicsThriftException{
         //write manifest file and run job
         FileSystem fs = null;
         try {
             fs = FileSystem.get(new URI(properties.getProperty("hdfs-default-name")),
-                    new Configuration(),auth.getUsername());
+                    new Configuration(),username);
             if(!fs.exists(new Path("manifests"))){
                 fs.mkdirs(new Path("manifests"));
             }
@@ -182,10 +192,12 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         Path manifest,f1;
         FSDataOutputStream outStream = null;
         try{
-            f1 = new Path(file1);
+            f1 = new Path(filename);
             manifest = new Path("manifests/"+f1.getName()+"-"+UUID.randomUUID().toString()+".manifest");
             outStream = fs.create(manifest);
-            outStream.write(new String(file1+"\t"+file2+"\t"+outFile+"\n").getBytes());
+            for(String line: data){
+                outStream.write((data + "\n").getBytes());
+            }
         }catch(Exception e){
             throw new JnomicsThriftException(e.toString());
         }finally{
@@ -201,10 +213,20 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
                 }
             }
         }
-        
-        Path manifestlog = new Path(manifest.toString()+".log");
+        return manifest;
+    }
+
+
+    @Override
+    public JnomicsThriftJobID pairReads(String file1, String file2, String outFile, Authentication auth)
+            throws JnomicsThriftException, TException {
+
+        String data = TextUtil.join("\t",new String[]{file1,file2,outFile});
+        Path manifest = writeManifest(new File(file1).getName(), new String[]{data}, auth.getUsername());
+
+        Path manifestlog = new Path(manifest +".log");
         Configuration conf = getGenericConf(manifest.toString(),manifestlog.toString());
-        conf.set("mapred.job.name",f1.getName()+"-pe-conversion");
+        conf.set("mapred.job.name",new File(file1).getName()+"-pe-conversion");
         conf.set("mapred.mapoutput.key.class","org.apache.hadoop.io.IntWritable");
         conf.set("mapred.mapoutput.value.class","edu.cshl.schatz.jnomics.ob.writable.PEMetaInfo");
         conf.set("mapred.output.key.class","org.apache.hadoop.io.Text");
@@ -212,12 +234,41 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         conf.set("mapreduce.inputformat.class","org.apache.hadoop.mapreduce.lib.input.TextInputFormat");
         conf.set("mapreduce.outputformat.class","org.apache.hadoop.mapreduce.lib.output.TextOutputFormat");
         conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.PELoaderMap");
-        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.SELoaderReduce");
+        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.PELoaderReduce");
         conf.setInt("mapred.reduce.tasks",1);
         String username = auth.getUsername();
         JnomicsThriftJobID id = launchJobAs(username,conf);
         logger.info("submitted job: " + conf.get("mapred.job.name") + " " + id);
         return new JnomicsThriftJobID(id);
+    }
+
+    @Override
+    public JnomicsThriftJobID singleReads(String file, String outFile, Authentication auth)
+            throws JnomicsThriftException, TException {
+
+        String fileBase = new File(file).getName();
+        String username = auth.getUsername();
+
+        String data = TextUtil.join("\t",new String[]{file,outFile});
+        Path manifest = writeManifest(fileBase,new String[]{data},username);
+        
+        Path manifestlog = new Path(manifest + ".log");
+
+        Configuration conf = getGenericConf(manifest.toString(),manifestlog.toString());
+        conf.set("mapred.job.name",fileBase+"-pe-conversion");
+        conf.set("mapred.mapoutput.key.class","org.apache.hadoop.io.IntWritable");
+        conf.set("mapred.mapoutput.value.class","edu.cshl.schatz.jnomics.ob.writable.SEMetaInfo");
+        conf.set("mapred.output.key.class","org.apache.hadoop.io.Text");
+        conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
+        conf.set("mapreduce.inputformat.class","org.apache.hadoop.mapreduce.lib.input.TextInputFormat");
+        conf.set("mapreduce.outputformat.class","org.apache.hadoop.mapreduce.lib.output.TextOutputFormat");
+        conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.SELoaderMap");
+        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.SELoaderReduce");
+        conf.setInt("mapred.reduce.tasks",1);
+        JnomicsThriftJobID id = launchJobAs(username,conf);
+        logger.info("submitted job: " + conf.get("mapred.job.name") + " " + id);
+        return new JnomicsThriftJobID(id);        
+        
     }
 
     public JnomicsThriftJobID launchJobAs(String username, final Configuration conf)

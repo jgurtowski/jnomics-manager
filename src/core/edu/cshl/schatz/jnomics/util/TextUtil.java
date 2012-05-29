@@ -103,9 +103,5 @@ public class TextUtil {
         }
         return builder.toString();
     }
-    
-    
-    
-    
-    
+
 }
