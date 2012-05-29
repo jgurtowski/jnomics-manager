@@ -5,6 +5,7 @@ import edu.cshl.schatz.jnomics.io.ThreadedStreamConnector;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsCounter;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsMapper;
 import edu.cshl.schatz.jnomics.ob.ReadCollectionWritable;
+import edu.cshl.schatz.jnomics.ob.ReadWritable;
 import edu.cshl.schatz.jnomics.ob.SAMRecordWritable;
 import net.sf.samtools.SAMFileReader;
 import net.sf.samtools.SAMRecord;
@@ -15,13 +16,14 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
 
 
 public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SAMRecordWritable,NullWritable> {
 
     private File[] tmpFiles;
-    private String[] aln_cmds;
-    private String sampe_cmd;
+    private String[] aln_cmds_pair,aln_cmds_single;
+    private String sampe_cmd, samse_cmd;
     private Process process;
 
     private Throwable readerError = null;
@@ -30,6 +32,8 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
             "Alignment options for BWA Align", false);
     private final JnomicsArgument bwa_sampe_opts_arg = new JnomicsArgument("bwa_sampe_opts",
             "Alignment options for BWA Sampe", false);
+    private final JnomicsArgument bwa_samse_opts_arg = new JnomicsArgument("bwa_samse_opts",
+            "Alignment options for BWA Samse", false);
     private final JnomicsArgument bwa_idx_arg = new JnomicsArgument("bwa_index", "bwa index location", true);
     private final JnomicsArgument bwa_binary_arg = new JnomicsArgument("bwa_binary", "bwa binary location", true);
 
@@ -37,10 +41,9 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
     @Override
     protected void setup(final Context context) throws IOException,InterruptedException {
 
-        String bwa_aln_opts = context.getConfiguration().get(bwa_aln_opts_arg.getName());
-        String bwa_sampe_opts = context.getConfiguration().get(bwa_sampe_opts_arg.getName());
-        bwa_aln_opts = bwa_aln_opts == null ? "" : bwa_aln_opts;
-        bwa_sampe_opts = bwa_sampe_opts == null ? "" : bwa_sampe_opts;
+        String bwa_aln_opts = context.getConfiguration().get(bwa_aln_opts_arg.getName(),"");
+        String bwa_sampe_opts = context.getConfiguration().get(bwa_sampe_opts_arg.getName(), "");
+        String bwa_samse_opts = context.getConfiguration().get(bwa_samse_opts_arg.getName(),"");
         String bwa_idx = context.getConfiguration().get(bwa_idx_arg.getName());
         String bwa_binary = context.getConfiguration().get(bwa_binary_arg.getName());
         if(!new File(bwa_binary).exists())
@@ -60,7 +63,7 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
             file.deleteOnExit();
         }
         System.out.println("BWA index--->"+bwa_idx);
-        aln_cmds = new String[]{
+        aln_cmds_pair = new String[]{
                 String.format(
                         "%s aln %s %s %s",
                         bwa_binary, bwa_aln_opts, bwa_idx, tmpFiles[2]),
@@ -71,12 +74,19 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
 
         };
 
+        aln_cmds_single = new String[]{aln_cmds_pair[0]};
+        
         sampe_cmd = String.format(
                 "%s sampe %s %s %s %s %s %s",
                 bwa_binary, bwa_sampe_opts, bwa_idx, tmpFiles[0], tmpFiles[1],
-                tmpFiles[2], tmpFiles[3]);
+                tmpFiles[2], tmpFiles[3]
+        );
 
-        
+        samse_cmd = String.format(
+                "%s samse %s %s %s %s",
+                bwa_binary, bwa_samse_opts, bwa_idx, tmpFiles[0],  tmpFiles[2]
+        );
+
     }
 
 
@@ -91,13 +101,18 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
         System.out.println(tmpFiles[2]);
         System.out.println(tmpFiles[3]);
         System.out.println("-----<");
-        ReadCollectionWritable readCollection;
+        List<ReadWritable> reads;
+        boolean first=true, paired=false;
         while(context.nextKeyValue()){
-            readCollection = context.getCurrentKey();
-            tmpWriter1.write(readCollection.getRead(0).getFastqString().getBytes());
+            reads = context.getCurrentKey().getReads();
+            tmpWriter1.write(reads.get(0).getFastqString().getBytes());
             tmpWriter1.write("\n".getBytes());
-            tmpWriter2.write(readCollection.getRead(1).getFastqString().getBytes());
-            tmpWriter2.write("\n".getBytes());
+            if(reads.size() == 2){
+                if(first)
+                    paired=true;
+                tmpWriter2.write(reads.get(1).getFastqString().getBytes());
+                tmpWriter2.write("\n".getBytes());
+            }
         }
         tmpWriter1.close();
         tmpWriter2.close();
@@ -110,7 +125,8 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
         /**Launch Processes **/
         int idx = 0;
         FileOutputStream fout;
-        for(String cmd: aln_cmds){
+
+        for(String cmd: paired ? aln_cmds_pair : aln_cmds_single){
             process = Runtime.getRuntime().exec(cmd);
             System.out.println(cmd);
             // Reattach stderr and write System.stdout to tmp file
@@ -131,12 +147,12 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
             context.progress();
         }
 
-        System.out.println("running sampe");
+        System.out.println("running sampe/samse");
         
         /**Launch sampe command*/
-        final Process sampe_process = Runtime.getRuntime().exec(sampe_cmd);
+        final Process sam_process = Runtime.getRuntime().exec(paired ? sampe_cmd : samse_cmd);
 
-        connecterr = new Thread(new ThreadedStreamConnector(sampe_process.getErrorStream(), System.err));
+        connecterr = new Thread(new ThreadedStreamConnector(sam_process.getErrorStream(), System.err));
         connecterr.start();
         /** setup reader thread - reads lines from bwa stdout and print them to context **/
         Thread readerThread = new Thread( new Runnable() {
@@ -145,7 +161,7 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
 
             @Override
             public void run() {
-                SAMFileReader reader = new SAMFileReader(sampe_process.getInputStream());
+                SAMFileReader reader = new SAMFileReader(sam_process.getInputStream());
                 reader.setValidationStringency(SAMFileReader.ValidationStringency.LENIENT);
                 Counter mapped_counter = context.getCounter(JnomicsCounter.Alignment.MAPPED);
                 Counter totalreads_counter = context.getCounter(JnomicsCounter.Alignment.TOTAL);
@@ -167,16 +183,15 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
 
         readerThread.start();
         readerThread.join();
-        sampe_process.waitFor();
+        sam_process.waitFor();
         connecterr.join();
-        
 
         System.out.println("deleteing tmp files");
         for(File file: tmpFiles)
             file.delete();
 
         if(readerError != null){
-            System.err.println("Error Reading BWA sampe Output with SAM Record Reader");
+            System.err.println("Error Reading BWA sampe/samse Output with SAM Record Reader");
             throw new IOException(readerError);
         }
     }
@@ -194,6 +209,6 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
 
     @Override
     public JnomicsArgument[] getArgs() {
-        return new JnomicsArgument[]{bwa_aln_opts_arg,bwa_binary_arg,bwa_idx_arg,bwa_sampe_opts_arg};
+        return new JnomicsArgument[]{bwa_aln_opts_arg,bwa_binary_arg,bwa_idx_arg,bwa_sampe_opts_arg,bwa_samse_opts_arg};
     }
 }
