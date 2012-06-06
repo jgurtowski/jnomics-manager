@@ -38,7 +38,9 @@ public class CufflinksMap extends JnomicsMapper<SAMRecordWritable, NullWritable,
 
     public void map( SAMRecordWritable key, NullWritable value, Context context )
             throws IOException, InterruptedException {
-
+        
+        if(0 == key.getMappingQuality().get()) //remove unmapped reads
+            return;
         int alignmentStart = key.getAlignmentStart().get();
         stkey.setPosition( alignmentStart );
         stkey.setRef( key.getReferenceName() );

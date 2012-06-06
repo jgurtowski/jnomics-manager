@@ -2,7 +2,7 @@ package edu.cshl.schatz.jnomics.tools;
 
 import edu.cshl.schatz.jnomics.cli.JnomicsArgument;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsReducer;
-import edu.cshl.schatz.jnomics.ob.writable.StringArrayWritable;
+import edu.cshl.schatz.jnomics.ob.writable.SEMetaInfo;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethod;
@@ -20,9 +20,9 @@ import java.io.OutputStream;
 /**
  * User: james
  */
-public class HttpLoadReduce extends JnomicsReducer<IntWritable, StringArrayWritable, Text, NullWritable> {
+public class HttpLoadReduce extends JnomicsReducer<IntWritable, SEMetaInfo, Text, NullWritable> {
 
-    private byte []buffer = new byte[1024];
+    private byte []buffer = new byte[10240];
     private FileSystem fs;
     @Override
     public Class getOutputKeyClass() {
@@ -45,24 +45,28 @@ public class HttpLoadReduce extends JnomicsReducer<IntWritable, StringArrayWrita
     }
 
     @Override
-    protected void reduce(IntWritable key, Iterable<StringArrayWritable> values, Context context) throws IOException, InterruptedException {
+    protected void reduce(IntWritable key, Iterable<SEMetaInfo> values, Context context) throws IOException, InterruptedException {
 
         HttpClient client = new HttpClient();
-        HttpMethod method = new GetMethod("http://www.google.com");
-        InputStream iStream = method.getResponseBodyAsStream();
-        OutputStream outputStream = null;
-        try {
-            outputStream = fs.create(new Path("googleout"),false);
-            client.executeMethod(method);
-            int read;
-            while((read = iStream.read(buffer)) > 0){
-                outputStream.write(buffer,0,read);
+        
+        for(SEMetaInfo info: values){
+            HttpMethod method = new GetMethod(info.getFile());
+            InputStream iStream = method.getResponseBodyAsStream();
+            OutputStream outputStream = null;
+            try {
+                outputStream = fs.create(new Path(info.getDestination()),false);
+                client.executeMethod(method);
+                int read;
+                while((read = iStream.read(buffer)) > 0){
+                    outputStream.write(buffer,0,read);
+                }
+                context.write(new Text("Successfully fetched :" + info.getFile()),NullWritable.get());
+            }catch (HttpException e) {
+                context.write(new Text("Failed to fetch :" + info.getFile()),NullWritable.get());
+            }finally{
+                iStream.close();
+                outputStream.close();
             }
-        }catch (HttpException e) {
-            context.write(new Text("Failed to fetch"),NullWritable.get());
-        }finally{
-            iStream.close();
-            outputStream.close();
         }
     }
 

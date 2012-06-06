@@ -39,5 +39,13 @@ public class SAMRecordWritableTest extends junit.framework.TestCase {
             assertEquals(testHeader, samWritable.getTextHeader().toString());
         }
     }
-
+    
+    public void testSequenceHeaderGetter(){
+        SAMFileReader samReader = new SAMFileReader(new ByteArrayInputStream(testString.getBytes()));
+        SAMRecordWritable samWritable = new SAMRecordWritable();
+        for(SAMRecord samRecord: samReader){
+            samWritable.set(samRecord);
+        }
+        System.out.println(samWritable.getHeaderSequence("chr1").getLength());
+    }
 }

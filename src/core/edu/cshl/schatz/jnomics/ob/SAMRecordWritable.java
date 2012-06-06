@@ -11,6 +11,7 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ public class SAMRecordWritable implements WritableComparable{
     private Text readString = new Text();
     private Text qualityString = new Text();
     private Text tags = new Text();
+    private Map<String,SAMHeaderSequence> headerSequences;
     
     //Turn back into SAMRecord
     private SAMTextHeaderCodec headerCodec;
@@ -120,6 +122,18 @@ public class SAMRecordWritable implements WritableComparable{
 
     public Text getTextHeader(){
         return header;
+    }
+    
+    public void setTags(String t){
+        tags.set(t);
+    }
+
+    public void setTags(Text t){
+        tags.set(t);
+    }
+    
+    public Text getTags(){
+        return tags;
     }
     
     public Text getReadName(){
@@ -225,5 +239,30 @@ public class SAMRecordWritable implements WritableComparable{
         arr[9] = readString.toString();
         arr[10] = qualityString.toString();
         return TextUtil.join("\t", arr);
+    }
+
+    public void parseHeader(){
+        String header_str = header.toString();
+        headerSequences = new HashMap<String, SAMHeaderSequence>();
+        String name;
+        int len;
+        for(String line:header_str.split("\n")){
+            if(line.startsWith("@SQ")){
+                String []cols = line.split("\t");
+                if(cols.length < 2 )
+                    continue;
+                if(!cols[1].startsWith("SN:") || !cols[2].startsWith("LN:"))
+                    continue;
+                name = cols[1].substring(cols[1].indexOf("SN:")+3);
+                len = Integer.parseInt(cols[2].substring(cols[2].indexOf("LN:")+3));
+                headerSequences.put(name, new SAMHeaderSequence(name,len));
+            }
+        }
+    }
+
+    public SAMHeaderSequence getHeaderSequence(String name){
+        if(null == headerSequences)
+            parseHeader();
+        return headerSequences.get(name);
     }
 }

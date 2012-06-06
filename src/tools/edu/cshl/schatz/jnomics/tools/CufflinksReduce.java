@@ -116,7 +116,8 @@ public class CufflinksReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey,SAMR
                 "isoforms.fpkm_tracking","genes.fpkm_tracking"};
 
         for(String fileStr : localFiles){
-            fs.copyFromLocalFile(new Path(tmpOutputDir+"/"+fileStr),new Path(outdir+"/"+key.getRef()+"-"+fileStr));
+            fs.copyFromLocalFile(new Path(tmpOutputDir+"/"+fileStr),
+                    new Path(outdir+"/"+key.getRef()+"-"+fileStr));
         }
 
         //cleanup

@@ -12,14 +12,12 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
-import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class JnomicsMain extends Configured implements Tool {
 
@@ -51,6 +49,9 @@ public class JnomicsMain extends Configured implements Tool {
                     put("alignmentsort_reduce", AlignmentSortReduce.class);
                     put("cufflinks_reduce",CufflinksReduce.class);
                     put("seloader_reduce",SELoaderReduce.class);
+                    put("gatk_realign_reduce", GATKRealignReduce.class);
+                    put("gatk_call_reduce", GATKCallVarReduce.class);
+                    put("gatk_recalibrate_reduce", GATKRecalibrateReduce.class);
                 }
             };
 
@@ -179,7 +180,8 @@ public class JnomicsMain extends Configured implements Tool {
         Configuration conf = getConf();
 
         /** get more cli params **/
-        JnomicsMapper mapInst = ReflectionUtils.newInstance(mapperClass, conf);
+        JnomicsMapper mapInst = mapperClass.newInstance();
+        
         try {
             JnomicsArgument.parse(mapInst.getArgs(), args);
         } catch (MissingOptionException e) {
@@ -203,10 +205,13 @@ public class JnomicsMain extends Configured implements Tool {
 
         /** get more cli params **/
         JnomicsReducer reduceInst = null;
-        if (reducerClass != null)
-            reduceInst = ReflectionUtils.newInstance(reducerClass, conf);
-        if (reduceInst != null) {
+        if (null != reducerClass)
+            reduceInst = reducerClass.newInstance();
+        if (null != reduceInst){
             try {
+                for(JnomicsArgument j: reduceInst.getArgs()){
+                    System.out.println(j.getName());
+                }
                 JnomicsArgument.parse(reduceInst.getArgs(), args);
             } catch (MissingOptionException e) {
                 System.out.println("Error missing options:" + e.getMissingOptions());
