@@ -4,8 +4,9 @@ import edu.cshl.schatz.jnomics.cli.JnomicsArgument;
 import edu.cshl.schatz.jnomics.io.ThreadedStreamConnector;
 import edu.cshl.schatz.jnomics.ob.SAMRecordWritable;
 import edu.cshl.schatz.jnomics.util.ProcessUtil;
-import net.sf.samtools.SAMFileReader;
-import net.sf.samtools.SAMRecord;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.mapreduce.Partitioner;
@@ -17,17 +18,17 @@ import java.io.OutputStreamWriter;
 
 /**
  * User: james
- **/
-public class GATKRecalibrateReduce extends GATKBaseReduce<SamtoolsMap.SamtoolsKey, SAMRecordWritable, SAMRecordWritable, NullWritable> {
+ */
+public class GATKCountCovariatesReduce extends GATKBaseReduce<SamtoolsMap.SamtoolsKey,SAMRecordWritable,NullWritable,NullWritable> {
 
-    private final JnomicsArgument recal_covar_arg = new JnomicsArgument("recal_file","<recal.covar> recalibration file", true);
-    private final SAMRecordWritable recordWritable = new SAMRecordWritable(); 
+    private JnomicsArgument vcf_mask_arg = new JnomicsArgument("vcf_mask","VCF file to mask known snps/indels",true);
+    private File vcf_mask;
     
-    private File recal;
+    private FileSystem fs;
     
     @Override
     public Class getOutputKeyClass() {
-        return SAMRecordWritable.class;
+        return NullWritable.class;
     }
 
     @Override
@@ -49,24 +50,20 @@ public class GATKRecalibrateReduce extends GATKBaseReduce<SamtoolsMap.SamtoolsKe
     public JnomicsArgument[] getArgs() {
         JnomicsArgument[] args = super.getArgs();
         JnomicsArgument[] newArgs = new JnomicsArgument[args.length+1];
-        newArgs[0] = recal_covar_arg;
+        newArgs[0] = vcf_mask_arg;
         System.arraycopy(args,0,newArgs,1,args.length);
         return newArgs;
     }
-    
-    @Override
-    protected void setup(Context context) throws IOException, InterruptedException {
-        super.setup(context);
-        recal = binaries.get(recal_covar_arg.getName());
-    }
+
+
 
     @Override
-    protected void reduce(SamtoolsMap.SamtoolsKey key, Iterable<SAMRecordWritable> values, Context context)
+    protected void reduce(SamtoolsMap.SamtoolsKey key, Iterable<SAMRecordWritable> alignments, Context context)
             throws IOException, InterruptedException {
 
-        File tmpBam = new File(context.getTaskAttemptID()+".tmp.bam");
+        File tmp_bam = new File(context.getTaskAttemptID()+".tmp.bam");
         /**Write bam to temp file**/
-        String samtools_convert_cmd = String.format("%s view -Sb -o %s -", samtools_binary, tmpBam);
+        String samtools_convert_cmd = String.format("%s view -Sb -o %s -", samtools_binary, tmp_bam);
         System.out.println(samtools_convert_cmd);
         Process samtools_convert = Runtime.getRuntime().exec(samtools_convert_cmd);
 
@@ -76,13 +73,14 @@ public class GATKRecalibrateReduce extends GATKBaseReduce<SamtoolsMap.SamtoolsKe
 
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(samtools_convert.getOutputStream()));
         long count = 0;
-        for(SAMRecordWritable record: values){
+        for(SAMRecordWritable record: alignments){
             if(0 == count){
                 writer.write(record.getTextHeader()+"\n");
             }
             writer.write(record+"\n");
             if(0 == ++count % 1000 ){
                 context.progress();
+                context.write(NullWritable.get(),NullWritable.get());
             }
         }
         writer.close();
@@ -90,23 +88,19 @@ public class GATKRecalibrateReduce extends GATKBaseReduce<SamtoolsMap.SamtoolsKe
         outConn.join();errConn.join();
 
         /**Index Bam**/
-        String samtools_idx_cmd = String.format("%s index %s", samtools_binary, tmpBam);
+        String samtools_idx_cmd = String.format("%s index %s", samtools_binary, tmp_bam);
         ProcessUtil.exceptionOnError(ProcessUtil.execAndReconnect(samtools_idx_cmd));
 
-        File recalibratedBam = new File(context.getTaskAttemptID()+".recal.bam");
+        /** Count Covars **/
+        File recal_out = new File(key.getRef()+"-"+key.getBin()+".covar");
+        String countCovars = String.format("java -Xmx4g -jar %s -T CountCovariates -R %s -I %s -knownSites %s -cov ReadGroupCovariate -cov QualityScoreCovariate -cov CycleCovariate -cov DinucCovariate -recalFile %s",
+                gatk_binary,reference_fa,tmp_bam,vcf_mask,recal_out);
+        ProcessUtil.exceptionOnError(ProcessUtil.execAndReconnect(countCovars));
 
-        String recal_cmd = String.format("java -Xmx4g -jar %s -T TableRecalibration -R %s -I %s -recalFile %s -o %s",
-                gatk_binary, reference_fa,tmpBam,recal,recalibratedBam);
-        ProcessUtil.exceptionOnError(ProcessUtil.execAndReconnect(recal_cmd));
-        tmpBam.delete();
+        Configuration conf = context.getConfiguration();
+        fs.copyFromLocalFile(new Path(recal_out.toString()),new Path(conf.get("mapred.output.dir")));
 
-        SAMFileReader reader = new SAMFileReader(recalibratedBam,true);
-        reader.setValidationStringency(SAMFileReader.ValidationStringency.LENIENT);
-        for(SAMRecord record: reader){
-            recordWritable.set(record);
-            context.write(recordWritable,NullWritable.get());
-        }
 
-        recalibratedBam.delete();
+
     }
 }

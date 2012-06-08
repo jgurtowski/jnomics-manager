@@ -79,6 +79,7 @@ public class GATKCallVarReduce extends GATKBaseReduce<SamtoolsMap.SamtoolsKey,SA
         /**Call Variations**/
         File recal_vcf = new File(key.getRef()+"-"+key.getBin()+".vcf");
         recal_vcf.createNewFile();
+
         String variation_cmd = String.format("java -Xmx6g -jar %s -T UnifiedGenotyper -R %s -I %s -o %s -stand_call_conf 50 -stand_emit_conf 10.0 -minIndelCnt 5 -indelHeterozygosity 0.0001 -nt 5",
                 gatk_binary,reference_fa,tmpBam,recal_vcf);
         ProcessUtil.exceptionOnError(ProcessUtil.execAndReconnect(variation_cmd));

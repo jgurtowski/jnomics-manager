@@ -21,8 +21,7 @@ public class SamtoolsMap extends JnomicsMapper<SAMRecordWritable,NullWritable, S
 
     public static final JnomicsArgument genome_binsize_arg = new JnomicsArgument("genome_binsize",
             "Bin Size to Break up the Genome", false);
-        
-    
+
     @Override
     public Class getOutputKeyClass() {
         return SamtoolsMap.SamtoolsKey.class;
