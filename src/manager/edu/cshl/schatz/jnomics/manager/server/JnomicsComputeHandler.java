@@ -1,6 +1,8 @@
 package edu.cshl.schatz.jnomics.manager.server;
 
 import edu.cshl.schatz.jnomics.manager.api.*;
+import edu.cshl.schatz.jnomics.tools.CovariateMerge;
+import edu.cshl.schatz.jnomics.tools.VCFMerge;
 import edu.cshl.schatz.jnomics.util.TextUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -282,5 +284,94 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         String jobid = runningJob.getID().toString();
         logger.info("submitted job: " + conf.get("mapred.job.name") + " " + jobid);
         return new JnomicsThriftJobID(jobid);
+    }
+
+    @Override
+    public boolean mergeVCF(String inDir, String outVCF, Authentication auth) throws JnomicsThriftException, TException {
+
+        try {
+            VCFMerge.main(new String[]{inDir,outVCF});
+            return true;
+        } catch (Exception e) {
+            throw new JnomicsThriftException(e.toString());
+        }finally{
+            return false;
+        }
+    }
+
+    @Override
+    public boolean mergeCovariate(String inDir, String outCov, Authentication auth) throws JnomicsThriftException, TException {
+        try{
+            CovariateMerge.main(new String[]{inDir,outCov});
+            return true;
+        }catch(Exception e){
+            throw new JnomicsThriftException(e.toString());
+        }finally{
+            return false;
+        }
+    }
+
+    private Configuration getGATKConf(String inPath, String outPath, String organism){
+        Configuration conf = getGenericConf(inPath,outPath);
+        conf.set("mapred.mapoutput.key.class","edu.cshl.schatz.jnomics.tools.SamtoolsMap$SamtoolsKey");
+        conf.set("mapred.mapoutput.value.class","edu.cshl.schatz.jnomics.ob.SAMRecordWritable");
+        conf.set("mapreduce.inputformat.class","org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat");
+        conf.set("mapreduce.outputformat.class","org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat");
+        conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.SamtoolsMap");
+        conf.set("mapred.output.value.groupfn.class","edu.cshl.schatz.jnomics.tools.SamtoolsReduce$SamtoolsGrouper");
+        conf.set("mapreduce.partitioner.class","edu.cshl.schatz.jnomics.tools.SamtoolsReduce$SamtoolsPartitioner");
+        conf.set("mapred.cache.archives",properties.getProperty("hdfs-index-repo")+"/"+organism+"_gatk.tar.gz#gatk");
+        conf.set("samtools_binary","gatk/samtools");
+        conf.set("reference_fa","gatk/"+organism+".fa");
+        conf.set("gatk_jar", "gatk/GenomeAnalysisTK.jar");
+        conf.set("genome_binsize","1000000");
+        conf.setInt("mapred.reduce.tasks",96);
+        return conf;
+    }
+    
+    @Override
+    public JnomicsThriftJobID gatkRealign(String inPath, String organism, String outPath, Authentication auth)
+            throws JnomicsThriftException, TException {
+        Configuration conf = getGATKConf(inPath,outPath,organism);
+        conf.set("mapred.output.key.class","edu.cshl.schatz.jnomics.ob.SAMRecordWritable");
+        conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
+        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.GATKRealignReduce");
+        conf.set("mapred.job.name",auth.getUsername()+"-gatk-realign-"+inPath);
+        return launchJobAs(auth.getUsername(), conf);
+    }
+
+    @Override
+    public JnomicsThriftJobID gatkCallVariants(String inPath, String organism, String outPath, Authentication auth)
+            throws JnomicsThriftException, TException {
+        Configuration conf = getGATKConf(inPath,outPath,organism);
+        conf.set("mapred.output.key.class","org.apache.hadoop.io.NullWritable");
+        conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
+        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.GATKCAllVarReduce");
+        conf.set("mapred.job.name",auth.getUsername()+"-gatk-realign-"+inPath);
+        return launchJobAs(auth.getUsername(), conf);
+    }
+
+    @Override
+    public JnomicsThriftJobID gatkCountCovariates(String inPath, String organism, String vcfMask, String outPath, Authentication auth)
+            throws JnomicsThriftException, TException {
+        Configuration conf = getGATKConf(inPath,outPath,organism);
+        conf.set("mapred.output.key.class","org.apache.hadoop.io.NullWritable");
+        conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
+        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.GATKCountCovariatesReduce");
+        conf.set("vcf_mask",vcfMask);
+        conf.set("mapred.job.name",auth.getUsername()+"-gatk-count-covariates-"+inPath);
+        return launchJobAs(auth.getUsername(),conf);
+    }
+
+    @Override
+    public JnomicsThriftJobID gatkRecalibrate(String inPath, String organism, String recalFile, String outPath, Authentication auth)
+            throws JnomicsThriftException, TException {
+        Configuration conf = getGATKConf(inPath,outPath,organism);
+        conf.set("mapred.output.key.class","edu.cshl.schatz.jnomics.ob.SAMRecordWritable");
+        conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
+        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.GATKRecalibrateReduce");
+        conf.set("recal_file",recalFile);
+        conf.set("mapred.job.name",auth.getUsername()+"-gatk-recalibrate-"+inPath);
+        return launchJobAs(auth.getUsername(),conf);
     }
 }

@@ -1,5 +1,7 @@
 package edu.cshl.schatz.jnomics.manager.client;
 
+import edu.cshl.schatz.jnomics.manager.api.Authentication;
+import edu.cshl.schatz.jnomics.manager.api.JnomicsCompute;
 import edu.cshl.schatz.jnomics.manager.api.JnomicsThriftJobID;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
@@ -12,10 +14,11 @@ import java.util.Properties;
  * User: james
  */
 
-public class ClientSingleReadsHandler extends ClientThriftHandler{
+public class ClientSingleReadsHandler extends ClientHandler{
 
-    public ClientSingleReadsHandler(Properties properties) {
-        super(properties);
+
+    public ClientSingleReadsHandler(){
+
     }
 
     public JnomicsArgument[] getArguments(){
@@ -36,10 +39,12 @@ public class ClientSingleReadsHandler extends ClientThriftHandler{
             formatter.printHelp(e.toString(),options);
             return;
         }
-        JnomicsThriftJobID jobID = getThriftClient().singleReads(cli.getOptionValue("file"),
-                cli.getOptionValue("out"),getAuth());
 
-        closeTransport();
+        JnomicsCompute.Client client = JnomicsThriftClient.getComputeClient();
+        Authentication auth = JnomicsThriftClient.getAuthentication();
+
+        JnomicsThriftJobID jobID = client.singleReads(cli.getOptionValue("file"),
+                cli.getOptionValue("out"),auth);
 
         System.out.println("Submitted Job: " + jobID.getJob_id());
     }

@@ -18,7 +18,6 @@ import java.util.Map;
 
 
 /**
- *
  * User: james
  */
 public class SAMRecordWritable implements WritableComparable{
@@ -37,15 +36,12 @@ public class SAMRecordWritable implements WritableComparable{
     private Text qualityString = new Text();
     private Text tags = new Text();
     private Map<String,SAMHeaderSequence> headerSequences;
-    
-    //Turn back into SAMRecord
-    private SAMTextHeaderCodec headerCodec;
-    private final TextTagCodec tagCodec = new TextTagCodec();
-    private final SAMTagUtil tagUtil = new SAMTagUtil();
-    
+    private final JnomicsTextTagCodec tagCodec = new JnomicsTextTagCodec();
+    private final JnomicsSAMTextHeaderCodec headerCodec = new JnomicsSAMTextHeaderCodec();
+
     public SAMRecordWritable(){
     }
-    
+
     public void set(SAMRecord samRecord){
         header.set(samRecord.getHeader().getTextHeader().trim());
         readName.set(samRecord.getReadName());
@@ -60,21 +56,14 @@ public class SAMRecordWritable implements WritableComparable{
         insertSize.set(samRecord.getInferredInsertSize());
         readString.set(samRecord.getReadString());
         qualityString.set(samRecord.getBaseQualityString());
-        SAMBinaryTagAndValue attribute = samRecord.getBinaryAttributes();
-        String encodedTag;
+
         List<String> tagStrings = new LinkedList<String>();
-        while(attribute != null){
-            if(attribute.isUnsignedArray()){
-                encodedTag = tagCodec.encodeUnsignedArray(tagUtil.makeStringTag(attribute.tag), attribute.value);
-            }else{
-                encodedTag = tagCodec.encode(tagUtil.makeStringTag(attribute.tag), attribute.value);
-            }
-            tagStrings.add(encodedTag);
-            attribute = attribute.getNext();
+
+        for(SAMRecord.SAMTagAndValue tagAndValue: samRecord.getAttributes()){
+            tagStrings.add(tagCodec.encode(tagAndValue.tag, tagAndValue.value));
         }
         tags.set(tagStrings.size() == 0 ? "" : TextUtil.join("\t",tagStrings));
     }
-
 
     @Override
     public int compareTo(Object o) {
@@ -180,8 +169,6 @@ public class SAMRecordWritable implements WritableComparable{
     }
 
     public SAMRecord getSAMRecord(){
-        if(headerCodec == null)
-            headerCodec = new SAMTextHeaderCodec();
         SAMFileHeader samHeader = headerCodec.decode(new BufferedLineReader( new ByteArrayInputStream(header.getBytes())), null);
         SAMRecordFactory factory = new DefaultSAMRecordFactory();
         SAMRecord record = factory.createSAMRecord(samHeader);
@@ -203,8 +190,8 @@ public class SAMRecordWritable implements WritableComparable{
         for(String tagString : tags.toString().split("\t")){
             entry = tagCodec.decode(tagString);
             if(entry != null){
-                if(entry.getValue() instanceof TagValueAndUnsignedArrayFlag){
-                    final TagValueAndUnsignedArrayFlag valueAndFlag = (TagValueAndUnsignedArrayFlag) entry.getValue();
+                if(entry.getValue() instanceof JnomicsTagValueAndUnsignedArrayFlag){
+                    final JnomicsTagValueAndUnsignedArrayFlag valueAndFlag = (JnomicsTagValueAndUnsignedArrayFlag) entry.getValue();
                     if(valueAndFlag.isUnsignedArray){
                         record.setUnsignedArrayAttribute(entry.getKey(),valueAndFlag.value);
                     }else{
@@ -215,7 +202,6 @@ public class SAMRecordWritable implements WritableComparable{
                 }
             }
         }
-
         return record;
     }
 

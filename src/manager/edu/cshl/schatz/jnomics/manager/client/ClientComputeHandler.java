@@ -11,8 +11,9 @@ import java.util.Properties;
  */
 public class ClientComputeHandler extends ClientHandler {
 
+
     private Properties properties;
-    private static final Map<String,Class<? extends ClientThriftHandler>> taskMap = new HashMap<String, Class<? extends ClientThriftHandler>>();
+    private static final Map<String,Class<? extends ClientHandler>> taskMap = new HashMap<String, Class<? extends ClientHandler>>();
     static{
         taskMap.put("bowtie", ClientBowtieHandler.class);
         taskMap.put("bwa", ClientBWAHandler.class);
@@ -21,6 +22,7 @@ public class ClientComputeHandler extends ClientHandler {
         taskMap.put("listjobs", ClientJobListHandler.class);
         taskMap.put("pair_reads", ClientPairReadsHandler.class);
         taskMap.put("single_reads", ClientSingleReadsHandler.class);
+        taskMap.put("gatk", ClientGatkHandler.class);
     }
 
     public ClientComputeHandler(Properties props){
@@ -35,10 +37,10 @@ public class ClientComputeHandler extends ClientHandler {
     @Override
     public void handle(List<String> args) throws Exception {
         if(args.size() >= 1 && taskMap.containsKey(args.get(0))){
-            Constructor ctor = taskMap.get(args.get(0)).getDeclaredConstructor(Properties.class);
-            ClientThriftHandler thriftHandler = (ClientThriftHandler)ctor.newInstance(properties);
+            Constructor ctor = taskMap.get(args.get(0)).getDeclaredConstructor();
+            ClientHandler handler = (ClientHandler)ctor.newInstance();
             args.remove(args.get(0));
-            thriftHandler.handle(args);
+            handler.handle(args);
         }else{
             System.out.println("Available Tasks:");
             for(String tStrings: taskMap.keySet()){

@@ -48,7 +48,13 @@ service JnomicsCompute{
 	JnomicsThriftJobStatus getJobStatus(1: JnomicsThriftJobID jobID, 3: Authentication auth) throws (1: JnomicsThriftException je),
 	list<JnomicsThriftJobStatus> getAllJobs(1: Authentication auth) throws (1: JnomicsThriftException je),
         JnomicsThriftJobID pairReads(1: string file1, 2: string file2, 3: string outFile, 4: Authentication auth) throws (1: JnomicsThriftException je),
-        JnomicsThriftJobID singleReads(1: string file, 2: string outFile, 3: Authentication auth) throws (1: JnomicsThriftException je)
+        JnomicsThriftJobID singleReads(1: string file, 2: string outFile, 3: Authentication auth) throws (1: JnomicsThriftException je),
+        bool mergeVCF(1: string inDir, 2: string outVCF, 3: Authentication auth) throws (1: JnomicsThriftException je),
+        bool mergeCovariate(1: string inDir, 2: string outCov, 3: Authentication auth) throws (1: JnomicsThriftException je),
+        JnomicsThriftJobID gatkRealign (1: string inPath, 2: string organism, 3: string outPath, 4: Authentication auth) throws (1: JnomicsThriftException je),
+        JnomicsThriftJobID gatkCallVariants (1: string inPath, 2: string organism, 3: string outPath, 4: Authentication auth) throws (1:JnomicsThriftException je),
+        JnomicsThriftJobID gatkCountCovariates (1: string inPath, 2: string organism, 3: string vcfMask, 4: string outPath, 5: Authentication auth) throws (1:JnomicsThriftException je),
+        JnomicsThriftJobID gatkRecalibrate (1: string inPath, 2: string organism, 3: string recalFile, 4: string outPath, 5: Authentication auth) throws (1: JnomicsThriftException je)
 }
 
 service JnomicsData{
@@ -58,6 +64,7 @@ service JnomicsData{
         binary read (1: JnomicsThriftHandle handle, 2: Authentication auth) throws (1: JnomicsThriftException je),
         void close(1: JnomicsThriftHandle handle, 2: Authentication auth) throws (1: JnomicsThriftException je),
         list<JnomicsThriftFileStatus> listStatus(1: string path, 2:Authentication auth) throws (1: JnomicsThriftException je),
-        bool remove(1: string path, 2: bool recursive, 3: Authentication auth) throws (1: JnomicsThriftException je)
+        bool remove(1: string path, 2: bool recursive, 3: Authentication auth) throws (1: JnomicsThriftException je),
+        bool mkdir(1: string path, 2: Authentication auth) throws (1: JnomicsThriftException je)
 }
 

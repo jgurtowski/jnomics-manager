@@ -226,4 +226,20 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         return state;
     }
 
+
+    @Override
+    public boolean mkdir(String path, Authentication auth) throws JnomicsThriftException, TException {
+        FileSystem fs = getFileSystem(auth.getUsername());
+        boolean state = false;
+        try{
+            state = fs.mkdirs(new Path(path));
+        }catch(Exception e){
+            log.error("Problem making directory "+ path + " for user: " + auth.getUsername());
+            e.printStackTrace();
+            throw new JnomicsThriftException(e.toString());
+        }finally{
+            closeFileSystem(fs);
+        }
+        return state;
+    }
 }

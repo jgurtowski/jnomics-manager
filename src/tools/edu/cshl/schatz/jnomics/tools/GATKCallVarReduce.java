@@ -3,6 +3,7 @@ package edu.cshl.schatz.jnomics.tools;
 import edu.cshl.schatz.jnomics.io.ThreadedStreamConnector;
 import edu.cshl.schatz.jnomics.ob.SAMRecordWritable;
 import edu.cshl.schatz.jnomics.util.ProcessUtil;
+import net.sf.samtools.SAMSequenceRecord;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -45,7 +46,6 @@ public class GATKCallVarReduce extends GATKBaseReduce<SamtoolsMap.SamtoolsKey,SA
     protected void reduce(SamtoolsMap.SamtoolsKey key, Iterable<SAMRecordWritable> values, Context context)
             throws IOException, InterruptedException {
 
-
         File tmpBam = new File(context.getTaskAttemptID()+".tmp.bam");
         /**Write bam to temp file**/
         String samtools_convert_cmd = String.format("%s view -Sb -o %s -", samtools_binary, tmpBam);
@@ -57,10 +57,16 @@ public class GATKCallVarReduce extends GATKBaseReduce<SamtoolsMap.SamtoolsKey,SA
         outConn.start();errConn.start();
 
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(samtools_convert.getOutputStream()));
+        int ref_len=-1;
         long count = 0;
         for(SAMRecordWritable record: values){
             if(0 == count){
                 writer.write(record.getTextHeader()+"\n");
+                SAMSequenceRecord headerSequence = record.getSAMRecord().getHeader().getSequence(key.getRef().toString());
+                if(null != headerSequence)
+                    ref_len = headerSequence.getSequenceLength();
+                if(ref_len < 0)
+                    throw new IOException("Could not get Reference Length from header");
             }
             writer.write(record.toString()+"\n");
             if(0 == ++count % 1000 ){
@@ -68,6 +74,12 @@ public class GATKCallVarReduce extends GATKBaseReduce<SamtoolsMap.SamtoolsKey,SA
                 context.write(NullWritable.get(),NullWritable.get());
             }
         }
+
+        long startRange = key.getPosition().get();
+        long endRange = key.getPosition().get() + binsize;
+        endRange = endRange > ref_len ? ref_len : endRange;
+        System.out.println("Working on Region:" + key.getRef() + ":" + startRange + "-" + endRange);
+
         writer.close();
         samtools_convert.waitFor();
         outConn.join();errConn.join();
@@ -80,8 +92,8 @@ public class GATKCallVarReduce extends GATKBaseReduce<SamtoolsMap.SamtoolsKey,SA
         File recal_vcf = new File(key.getRef()+"-"+key.getBin()+".vcf");
         recal_vcf.createNewFile();
 
-        String variation_cmd = String.format("java -Xmx6g -jar %s -T UnifiedGenotyper -R %s -I %s -o %s -stand_call_conf 50 -stand_emit_conf 10.0 -minIndelCnt 5 -indelHeterozygosity 0.0001 -nt 5",
-                gatk_binary,reference_fa,tmpBam,recal_vcf);
+        String variation_cmd = String.format("java -Xmx3g -jar %s -T UnifiedGenotyper -L %s:%d-%d -R %s -I %s -o %s -stand_call_conf 50 -stand_emit_conf 10.0 -minIndelCnt 5 -indelHeterozygosity 0.0001 -nt 5",
+                gatk_binary,key.getRef(),startRange,endRange,reference_fa,tmpBam,recal_vcf);
         ProcessUtil.exceptionOnError(ProcessUtil.execAndReconnect(variation_cmd));
 
         Configuration conf = context.getConfiguration();

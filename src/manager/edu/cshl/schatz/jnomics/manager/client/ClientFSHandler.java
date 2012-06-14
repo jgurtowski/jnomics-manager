@@ -35,6 +35,7 @@ public class ClientFSHandler extends ClientHandler{
         opts.addOption("rm", false, "remove file");
         opts.addOption("rmr", false, "remove recursive (directory)");
         opts.addOption("putpe",false,"upload paired end sequencing file");
+        opts.addOption("mkdir", false, "make a directory");
     }
 
     public ClientFSHandler(Properties prop){
@@ -179,6 +180,10 @@ public class ClientFSHandler extends ClientHandler{
                 JnomicsThriftHandle handle = client.create(outFile, auth);
 
                 client.close(handle,auth);
+            }
+        }else if(cl.hasOption("mkdir")){ /******************************mkdir **********************/
+            if(arglist.size() < 1){
+                f.printHelp("fs -mkdir <directory>", opts);
             }
         }else{
             f.printHelp("Unknown Option",opts);

@@ -24,6 +24,8 @@ public abstract class GATKBaseReduce<KEYIN,KEYOUT,VALIN,VALOUT> extends JnomicsR
 
     protected File samtools_binary, reference_fa, gatk_binary;
 
+    protected long binsize;
+    
     @Override
     public Map<String,String> getConfModifiers(){
         return new HashMap<String, String>(){
@@ -33,7 +35,6 @@ public abstract class GATKBaseReduce<KEYIN,KEYOUT,VALIN,VALOUT> extends JnomicsR
         };
     }
 
-    
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
@@ -42,13 +43,24 @@ public abstract class GATKBaseReduce<KEYIN,KEYOUT,VALIN,VALOUT> extends JnomicsR
         for(JnomicsArgument binary_arg : getArgs()){
             f =  new File(conf.get(binary_arg.getName(),""));
             if(!f.exists())
-                throw new IOException("Missing : " + binary_arg.getName());
+                throw new IOException("Missing : " + binary_arg.getName() + ":have:" + f);
             binaries.put(binary_arg.getName(),f);
         }
 
         samtools_binary = binaries.get(samtools_bin_arg.getName());
         reference_fa = binaries.get(reference_fa_arg.getName());
         gatk_binary = binaries.get(gatk_jar_arg.getName());
+
+        binsize =context.getConfiguration().getLong(SamtoolsMap.genome_binsize_arg.getName(),
+                SamtoolsMap.DEFAULT_GENOME_BINSIZE);
+
+        /**Symlink reference_fa to local dir, GATK has locking issues on the .dict file**/
+        File local_reference_fa = new File(reference_fa.getName());
+        Process p = Runtime.getRuntime().exec("ln -s " + reference_fa + " " + local_reference_fa);
+        p.waitFor();
+        p = Runtime.getRuntime().exec("ln -s "+reference_fa+".fai"+" "+local_reference_fa);
+        p.waitFor();
+        reference_fa = local_reference_fa;
     }
 
     @Override

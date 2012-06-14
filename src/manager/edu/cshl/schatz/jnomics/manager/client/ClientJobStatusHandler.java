@@ -1,5 +1,7 @@
 package edu.cshl.schatz.jnomics.manager.client;
 
+import edu.cshl.schatz.jnomics.manager.api.Authentication;
+import edu.cshl.schatz.jnomics.manager.api.JnomicsCompute;
 import edu.cshl.schatz.jnomics.manager.api.JnomicsThriftJobID;
 import edu.cshl.schatz.jnomics.manager.api.JnomicsThriftJobStatus;
 import org.apache.commons.cli.CommandLine;
@@ -7,16 +9,15 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 
 import java.util.List;
-import java.util.Properties;
 
 /**
  * User: james
  */
 
-public class ClientJobStatusHandler extends ClientThriftHandler{
+public class ClientJobStatusHandler extends ClientHandler{
 
-    public ClientJobStatusHandler(Properties properties) {
-        super(properties);
+    public ClientJobStatusHandler(){
+
     }
 
     public JnomicsArgument[] getArguments(){
@@ -36,11 +37,13 @@ public class ClientJobStatusHandler extends ClientThriftHandler{
             formatter.printHelp(e.toString(),options);
             return;
         }
-        JnomicsThriftJobStatus status = getThriftClient().getJobStatus(
-                new JnomicsThriftJobID(cli.getOptionValue("job")),
-                getAuth());
 
-        closeTransport();
+        JnomicsCompute.Client client = JnomicsThriftClient.getComputeClient();
+        Authentication auth = JnomicsThriftClient.getAuthentication();
+
+        JnomicsThriftJobStatus status = client.getJobStatus(
+                new JnomicsThriftJobID(cli.getOptionValue("job")),
+                auth);
 
         System.out.printf("%30s %30s\n","ID:",status.getJob_id());
         System.out.printf("%30s %30s\n","Username:",status.getUsername());

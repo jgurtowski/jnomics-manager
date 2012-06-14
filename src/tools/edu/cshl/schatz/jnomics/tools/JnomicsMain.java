@@ -75,7 +75,8 @@ public class JnomicsMain extends Configured implements Tool {
         System.out.println("loader-pe\t:\tLoad paired end sequencing file into hdfs");
         System.out.println("alignment-extract\t:\textract alignments");
         System.out.println("manifest-loader\t:\tLoad manifest file into hdfs");
-        System.out.println("vcfmerge\t:\tMerge vcf files");
+        System.out.println("vcf_merge\t:\tMerge vcf files");
+        System.out.println("covariate_merge\t:\tMerge GATK Covariate files");
         System.out.println("job\t:\tsubmit a job");
     }
 
@@ -101,8 +102,10 @@ public class JnomicsMain extends Configured implements Tool {
             AlignmentSortExtract.main(Arrays.copyOfRange(args,1,args.length));
         }else if (args[0].compareTo("manifest-loader") == 0){
             ManifestLoader.main(Arrays.copyOfRange(args,1,args.length));
-        }else if(args[0].compareTo("vcfmerge") == 0){
+        }else if(args[0].compareTo("vcf_merge") == 0){
             VCFMerge.main(Arrays.copyOfRange(args,1,args.length));
+        }else if(args[0].compareTo("covariate_merge") == 0){
+            CovariateMerge.main(Arrays.copyOfRange(args,1,args.length));
         }else if (args[0].compareTo("helper-task-list") == 0) {
             System.out.println("Available Helper Tasks:");
             for (Object t : helperClasses.keySet()) {
