@@ -196,7 +196,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         for(int i=0; i< stats.length; ++i){
             c = stats[i];
             thriftStatuses[i] = new JnomicsThriftFileStatus(c.isDir(),
-                    c.getPath().getName(),
+                    c.getPath().toString(),
                     c.getOwner(),
                     c.getGroup(),
                     c.getPermission().toString(),

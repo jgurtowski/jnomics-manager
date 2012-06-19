@@ -1,12 +1,13 @@
 package edu.cshl.schatz.jnomics.tools;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
+import org.apache.hadoop.fs.FileSystem;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -14,26 +15,18 @@ import java.util.Map;
  */
 public class CovariateMerge {
 
-    public static void main(String []args) throws IOException {
+    private static Log log = LogFactory.getLog(CovariateMerge.class);
+    
+    public static void merge(Path inDir, Path out, Configuration conf) throws Exception{
 
-        if(!(2==args.length)){
-            System.out.println("CovariateMerge <incov_dir> <out.covar>");
-            System.exit(0);
-        }
-
-        Configuration conf = new Configuration();
-
-        Path in = new Path(args[0]);
-        Path out = new Path(args[1]);
-        
         FileSystem fs = FileSystem.get(conf);
 
         /** Put covariate data into map**/
         Map<String,int[]> data = new HashMap<String,int[]>();
         String header = null;
-        for(FileStatus stat : fs.listStatus(in)){
+        for(FileStatus stat : fs.listStatus(inDir)){
             if(stat.getPath().getName().endsWith(".covar")){
-                System.out.println("Processing: "+ stat.getPath());
+                log.info("Processing: "+ stat.getPath());
                 FSDataInputStream stream = fs.open(stat.getPath());
                 BufferedReader reader = new BufferedReader(new InputStreamReader((InputStream)stream));
                 String line;
@@ -57,8 +50,8 @@ public class CovariateMerge {
                 reader.close();
             }
         }
-        
-        System.out.println("Writing output file: "+ out);
+
+        log.info("Writing output file: "+ out);
         /**Write to output file **/
         FSDataOutputStream outStream = fs.create(out);
         PrintWriter writer = new PrintWriter((OutputStream)outStream);
@@ -78,5 +71,20 @@ public class CovariateMerge {
         }
         writer.println("EOF");
         writer.close();
+    }
+    
+    public static void main(String []args) throws Exception {
+
+        if(!(2==args.length)){
+            System.out.println("CovariateMerge <incov_dir> <out.covar>");
+            System.exit(0);
+        }
+
+        Configuration conf = new Configuration();
+
+        Path in = new Path(args[0]);
+        Path out = new Path(args[1]);
+        
+        merge(in,out,new Configuration());
     }
 }

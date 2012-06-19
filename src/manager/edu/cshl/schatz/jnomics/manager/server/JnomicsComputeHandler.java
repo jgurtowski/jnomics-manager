@@ -287,32 +287,32 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
     }
 
     @Override
-    public boolean mergeVCF(String inDir, String outVCF, Authentication auth) throws JnomicsThriftException, TException {
-
+    public boolean mergeVCF(String inDir, String inAlignments, String outVCF, Authentication auth) throws JnomicsThriftException, TException {
+        Configuration conf = getGenericConf(inDir,outVCF);
+        logger.info("Merging VCF: " + inDir + ":" + inAlignments + ":" + outVCF);
         try {
-            VCFMerge.main(new String[]{inDir,outVCF});
-            return true;
-        } catch (Exception e) {
+            VCFMerge.merge(new Path(inDir),new Path(inAlignments),new Path(outVCF),conf);
+        }catch (Exception e) {
             throw new JnomicsThriftException(e.toString());
-        }finally{
-            return false;
         }
+        return true;
     }
 
     @Override
     public boolean mergeCovariate(String inDir, String outCov, Authentication auth) throws JnomicsThriftException, TException {
+        Configuration conf = getGenericConf(inDir,outCov);
         try{
-            CovariateMerge.main(new String[]{inDir,outCov});
-            return true;
+            CovariateMerge.merge(new Path(inDir), new Path(outCov), conf);
         }catch(Exception e){
             throw new JnomicsThriftException(e.toString());
-        }finally{
-            return false;
         }
+        return true;
     }
 
     private Configuration getGATKConf(String inPath, String outPath, String organism){
         Configuration conf = getGenericConf(inPath,outPath);
+        conf.set("mapred.create.symlink","yes");
+        conf.set("mapreduce.job.cache.archives.visibilities","true");
         conf.set("mapred.mapoutput.key.class","edu.cshl.schatz.jnomics.tools.SamtoolsMap$SamtoolsKey");
         conf.set("mapred.mapoutput.value.class","edu.cshl.schatz.jnomics.ob.SAMRecordWritable");
         conf.set("mapreduce.inputformat.class","org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat");
@@ -346,8 +346,8 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         Configuration conf = getGATKConf(inPath,outPath,organism);
         conf.set("mapred.output.key.class","org.apache.hadoop.io.NullWritable");
         conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
-        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.GATKCAllVarReduce");
-        conf.set("mapred.job.name",auth.getUsername()+"-gatk-realign-"+inPath);
+        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.GATKCallVarReduce");
+        conf.set("mapred.job.name",auth.getUsername()+"-gatk-call-variants");
         return launchJobAs(auth.getUsername(), conf);
     }
 
@@ -358,8 +358,11 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         conf.set("mapred.output.key.class","org.apache.hadoop.io.NullWritable");
         conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
         conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.GATKCountCovariatesReduce");
-        conf.set("vcf_mask",vcfMask);
-        conf.set("mapred.job.name",auth.getUsername()+"-gatk-count-covariates-"+inPath);
+        Path vcfMaskPath = new Path(vcfMask);
+        conf.set("mared.cache.files",vcfMaskPath.toString()+"#"+vcfMaskPath.getName());
+        conf.set("tmpfiles",vcfMaskPath.toString()+"#"+vcfMaskPath.getName());
+        conf.set("vcf_mask",vcfMaskPath.getName());
+        conf.set("mapred.job.name",auth.getUsername()+"-gatk-count-covariates");
         return launchJobAs(auth.getUsername(),conf);
     }
 
@@ -370,8 +373,11 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         conf.set("mapred.output.key.class","edu.cshl.schatz.jnomics.ob.SAMRecordWritable");
         conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
         conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.GATKRecalibrateReduce");
-        conf.set("recal_file",recalFile);
-        conf.set("mapred.job.name",auth.getUsername()+"-gatk-recalibrate-"+inPath);
+        Path recalFilePath = new Path(recalFile);
+        conf.set("mapred.cache.files", recalFilePath.toString()+"#"+recalFilePath.getName());
+        conf.set("tmpfiles", recalFilePath.toString()+"#"+recalFilePath.getName());
+        conf.set("recal_file",recalFilePath.getName());
+        conf.set("mapred.job.name",auth.getUsername()+"-gatk-recalibrate");
         return launchJobAs(auth.getUsername(),conf);
     }
 }

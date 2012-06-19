@@ -49,7 +49,7 @@ service JnomicsCompute{
 	list<JnomicsThriftJobStatus> getAllJobs(1: Authentication auth) throws (1: JnomicsThriftException je),
         JnomicsThriftJobID pairReads(1: string file1, 2: string file2, 3: string outFile, 4: Authentication auth) throws (1: JnomicsThriftException je),
         JnomicsThriftJobID singleReads(1: string file, 2: string outFile, 3: Authentication auth) throws (1: JnomicsThriftException je),
-        bool mergeVCF(1: string inDir, 2: string outVCF, 3: Authentication auth) throws (1: JnomicsThriftException je),
+        bool mergeVCF(1: string inDir, 2: string inAlignments, 3: string outVCF, 4: Authentication auth) throws (1: JnomicsThriftException je),
         bool mergeCovariate(1: string inDir, 2: string outCov, 3: Authentication auth) throws (1: JnomicsThriftException je),
         JnomicsThriftJobID gatkRealign (1: string inPath, 2: string organism, 3: string outPath, 4: Authentication auth) throws (1: JnomicsThriftException je),
         JnomicsThriftJobID gatkCallVariants (1: string inPath, 2: string organism, 3: string outPath, 4: Authentication auth) throws (1:JnomicsThriftException je),

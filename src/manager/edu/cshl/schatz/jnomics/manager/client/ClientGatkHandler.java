@@ -3,9 +3,11 @@ package edu.cshl.schatz.jnomics.manager.client;
 import edu.cshl.schatz.jnomics.manager.api.Authentication;
 import edu.cshl.schatz.jnomics.manager.api.JnomicsCompute;
 import edu.cshl.schatz.jnomics.manager.api.JnomicsData;
+import edu.cshl.schatz.jnomics.manager.api.JnomicsThriftFileStatus;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.hadoop.fs.Path;
 
 import java.util.List;
 
@@ -72,12 +74,14 @@ public class ClientGatkHandler extends ClientHandler{
 
         System.out.println("Merging Variant Calls");
         String variants_vcf_one = out+"/variants_one.vcf";
-        computeClient.mergeVCF(variants_one,variants_vcf_one,auth);
+        computeClient.mergeVCF(variants_one,realignDir,variants_vcf_one,auth);
+
+        JnomicsThriftFileStatus variantOneStat = dataClient.listStatus(variants_vcf_one,auth).get(0);
 
         System.out.println("Counting Covariates");
         String covariatesDir = out+"/covariates";
         JnomicsThriftPoller.pollForCompletion(
-                computeClient.gatkCountCovariates(realignDir, organism, variants_vcf_one, covariatesDir, auth),
+                computeClient.gatkCountCovariates(realignDir, organism, variantOneStat.getPath(), covariatesDir, auth),
                 auth,
                 computeClient
         );
@@ -85,11 +89,13 @@ public class ClientGatkHandler extends ClientHandler{
         System.out.println("Merging Covariates");
         String covariatesMerge = out+"/covariates.cov";
         computeClient.mergeCovariate(covariatesDir,covariatesMerge,auth);
+
+        JnomicsThriftFileStatus covariateStat = dataClient.listStatus(covariatesMerge,auth).get(0);
         
         System.out.println("Recalibrating");
         String recalDir = out+"/recalibrate";
         JnomicsThriftPoller.pollForCompletion(
-                computeClient.gatkRecalibrate(realignDir,organism, covariatesMerge,recalDir,auth),
+                computeClient.gatkRecalibrate(realignDir,organism, covariateStat.getPath(),recalDir,auth),
                 auth,
                 computeClient
         );
@@ -104,7 +110,9 @@ public class ClientGatkHandler extends ClientHandler{
         
         System.out.println("Merging Final Variant Class");
         String variants_vcf_final = out+"/variants_final.vcf";
-        computeClient.mergeVCF(variants_final,variants_vcf_final,auth);
+        computeClient.mergeVCF(variants_final,recalDir,variants_vcf_final,auth);
+
+        System.out.println("Final Output: " + variants_vcf_final);
     }
 
     @Override

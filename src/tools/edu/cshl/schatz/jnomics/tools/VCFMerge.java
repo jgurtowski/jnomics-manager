@@ -1,6 +1,8 @@
 package edu.cshl.schatz.jnomics.tools;
 
 import edu.cshl.schatz.jnomics.ob.SAMRecordWritable;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.io.SequenceFile;
@@ -15,18 +17,10 @@ import java.util.*;
  */
 public class VCFMerge {
 
-    public static void main(String []args) throws Exception {
+    private static final Log log = LogFactory.getLog(VCFMerge.class);
 
-        if(3 != args.length){
-            System.out.println("VCFMerge <indir_vcfs> <indir_alignments> <out.vcf>");
-            System.exit(-1);
-        }        
-        Path in = new Path(args[0]);
-        Path alignments = new Path(args[1]);
-        Path out = new Path(args[2]);
+    public static void merge(Path in, Path alignments, Path out, Configuration conf) throws Exception{
 
-        Configuration conf = new Configuration();
-        
         FileSystem fs = FileSystem.get(conf);
 
         /** Get reference order from header of alignments **/
@@ -34,7 +28,7 @@ public class VCFMerge {
         boolean found = false;
         SAMRecordWritable samRecordWritable = new SAMRecordWritable();
         for(FileStatus stat: fs.listStatus(alignments)){
-            if(stat.getPath().getName().startsWith("part-m")){
+            if(stat.getPath().getName().startsWith("part-m") || stat.getPath().getName().startsWith("part-r")){
 
                 SequenceFile.Reader reader = new SequenceFile.Reader(fs,stat.getPath(),conf);
                 if(reader.getKeyClass() != SAMRecordWritable.class)
@@ -55,9 +49,9 @@ public class VCFMerge {
         if(!found)
             throw new Exception("Alignment directory does not look good");
 
-        
-        System.out.println("Found References : " + alignmentOrder);
-        
+
+        log.info("Found References : " + alignmentOrder);
+
         /** Take inventory of VCF files **/
         FileStatus[] stats = fs.listStatus(in);
         Path cur;
@@ -100,11 +94,26 @@ public class VCFMerge {
                 }
                 firstFile = false;
                 inStream.close();
-                System.out.println("Merged: " + vcfFile);
+                log.info("Merged: " + vcfFile);
             }
         }
         outStream.close();
-        System.out.println("Done!");
-        System.out.println("Created merged VCF: " + out);
+        log.info("Done!");
+        log.info("Created merged VCF: " + out);
+    }
+
+
+    public static void main(String []args) throws Exception {
+
+        if(3 != args.length){
+            throw new Exception("VCFMerge <indir_vcfs> <indir_alignments> <out.vcf>");
+        }
+        Path in = new Path(args[0]);
+        Path alignments = new Path(args[1]);
+        Path out = new Path(args[2]);
+
+        Configuration conf = new Configuration();
+        
+        merge(in,alignments,out,conf);
     }
 }

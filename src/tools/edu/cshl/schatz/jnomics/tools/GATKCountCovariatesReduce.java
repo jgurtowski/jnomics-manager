@@ -1,7 +1,6 @@
 package edu.cshl.schatz.jnomics.tools;
 
 import edu.cshl.schatz.jnomics.cli.JnomicsArgument;
-import edu.cshl.schatz.jnomics.io.ThreadedStreamConnector;
 import edu.cshl.schatz.jnomics.ob.SAMRecordWritable;
 import edu.cshl.schatz.jnomics.util.ProcessUtil;
 import org.apache.hadoop.conf.Configuration;
@@ -11,21 +10,21 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.mapreduce.Partitioner;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 
 /**
  * User: james
  */
-public class GATKCountCovariatesReduce extends GATKBaseReduce<SamtoolsMap.SamtoolsKey,SAMRecordWritable,NullWritable,NullWritable> {
+public class GATKCountCovariatesReduce extends GATKBaseReduce<NullWritable,NullWritable> {
 
     private JnomicsArgument vcf_mask_arg = new JnomicsArgument("vcf_mask","VCF file to mask known snps/indels",true);
     private File vcf_mask;
     
     private FileSystem fs;
-    
+
+    private Configuration conf;
+
     @Override
     public Class getOutputKeyClass() {
         return NullWritable.class;
@@ -55,52 +54,31 @@ public class GATKCountCovariatesReduce extends GATKBaseReduce<SamtoolsMap.Samtoo
         return newArgs;
     }
 
-
+    @Override
+    protected void setup(Context context) throws IOException, InterruptedException {
+        super.setup(context);
+        conf = context.getConfiguration();
+        fs = FileSystem.get(conf);
+    }
 
     @Override
     protected void reduce(SamtoolsMap.SamtoolsKey key, Iterable<SAMRecordWritable> alignments, Context context)
             throws IOException, InterruptedException {
+        
+        super.reduce(key,alignments,context);
 
-        File tmp_bam = new File(context.getTaskAttemptID()+".tmp.bam");
-        /**Write bam to temp file**/
-        String samtools_convert_cmd = String.format("%s view -Sb -o %s -", samtools_binary, tmp_bam);
-        System.out.println(samtools_convert_cmd);
-        Process samtools_convert = Runtime.getRuntime().exec(samtools_convert_cmd);
-
-        Thread errConn = new Thread(new ThreadedStreamConnector(samtools_convert.getErrorStream(),System.err));
-        Thread outConn = new Thread(new ThreadedStreamConnector(samtools_convert.getInputStream(),System.out));
-        outConn.start();errConn.start();
-
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(samtools_convert.getOutputStream()));
-        long count = 0;
-        for(SAMRecordWritable record: alignments){
-            if(0 == count){
-                writer.write(record.getTextHeader()+"\n");
-            }
-            writer.write(record+"\n");
-            if(0 == ++count % 1000 ){
-                context.progress();
-                context.write(NullWritable.get(),NullWritable.get());
-            }
-        }
-        writer.close();
-        samtools_convert.waitFor();
-        outConn.join();errConn.join();
-
-        /**Index Bam**/
-        String samtools_idx_cmd = String.format("%s index %s", samtools_binary, tmp_bam);
-        ProcessUtil.exceptionOnError(ProcessUtil.execAndReconnect(samtools_idx_cmd));
+        vcf_mask = new File(conf.get(vcf_mask_arg.getName()));
+        if(!vcf_mask.exists())
+            throw new IOException("Could not find vcf_mask file:" + vcf_mask);
 
         /** Count Covars **/
         File recal_out = new File(key.getRef()+"-"+key.getBin()+".covar");
-        String countCovars = String.format("java -Xmx4g -jar %s -T CountCovariates -R %s -I %s -knownSites %s -cov ReadGroupCovariate -cov QualityScoreCovariate -cov CycleCovariate -cov DinucCovariate -recalFile %s",
-                gatk_binary,reference_fa,tmp_bam,vcf_mask,recal_out);
+        String countCovars = String.format("java -Xmx3g -jar %s -T CountCovariates -L %s:%d-%d -R %s -I %s -knownSites %s -cov ReadGroupCovariate -cov QualityScoreCovariate -cov CycleCovariate -cov DinucCovariate -recalFile %s",
+                gatk_binary,key.getRef(),startRange,endRange,reference_fa,tmpBam,vcf_mask,recal_out);
         ProcessUtil.exceptionOnError(ProcessUtil.execAndReconnect(countCovars));
 
-        Configuration conf = context.getConfiguration();
+        tmpBam.delete();
         fs.copyFromLocalFile(new Path(recal_out.toString()),new Path(conf.get("mapred.output.dir")));
-
-
-
+        recal_out.delete();
     }
 }

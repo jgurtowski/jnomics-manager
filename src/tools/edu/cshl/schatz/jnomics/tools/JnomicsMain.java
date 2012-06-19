@@ -51,7 +51,7 @@ public class JnomicsMain extends Configured implements Tool {
                     put("seloader_reduce",SELoaderReduce.class);
                     put("gatk_realign_reduce", GATKRealignReduce.class);
                     put("gatk_call_reduce", GATKCallVarReduce.class);
-                    put("gatk_countcovariants_reduce", GATKCountCovariatesReduce.class);
+                    put("gatk_countcovariates_reduce", GATKCountCovariatesReduce.class);
                     put("gatk_recalibrate_reduce", GATKRecalibrateReduce.class);
                 }
             };
@@ -175,6 +175,14 @@ public class JnomicsMain extends Configured implements Tool {
         }
 
         Class<? extends JnomicsMapper> mapperClass = mapperClasses.get(map_arg.getValue());
+        if( null != red_arg.getValue() && null == reducerClasses.get(red_arg.getValue())){
+            System.out.println("Unknown Reducer: " + red_arg.getValue());
+            System.out.println("Available Reducers:");
+            for (Object t : reducerClasses.keySet()) {
+                System.out.println(t);
+            }
+            return 1;
+        }
         Class<? extends JnomicsReducer> reducerClass = red_arg.getValue() == null ? null : reducerClasses.get(red_arg.getValue());
 
         if (mapperClass == null) {

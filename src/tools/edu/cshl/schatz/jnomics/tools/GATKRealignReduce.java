@@ -6,23 +6,20 @@ import net.sf.picard.sam.AddOrReplaceReadGroups;
 import net.sf.picard.sam.MarkDuplicates;
 import net.sf.samtools.SAMFileReader;
 import net.sf.samtools.SAMRecord;
-import net.sf.samtools.SAMSequenceRecord;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.mapreduce.Partitioner;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
 /**
  * User: james
  */
-public class GATKRealignReduce extends GATKBaseReduce<SamtoolsMap.SamtoolsKey,SAMRecordWritable,SAMRecordWritable,NullWritable> {
+public class GATKRealignReduce extends GATKBaseReduce<SAMRecordWritable,NullWritable> {
 
 
     private final SAMRecordWritable recordWritable = new SAMRecordWritable();
@@ -52,43 +49,15 @@ public class GATKRealignReduce extends GATKBaseReduce<SamtoolsMap.SamtoolsKey,SA
     @Override
     protected void reduce(SamtoolsMap.SamtoolsKey key, Iterable<SAMRecordWritable> values, final Context context)
             throws IOException, InterruptedException {
-
-
-        /**Write Sam alignments to tmp file**/
-        final File tmpSam = new File(context.getTaskAttemptID()+".tmp.sam");
-        long count =0;
-        BufferedWriter writer = new BufferedWriter(new FileWriter(tmpSam));
-
-        int ref_len = -1;
-        for(SAMRecordWritable record: values){
-            if(0==count){
-                writer.write(record.getTextHeader()+"\n");
-                
-                SAMSequenceRecord sequence = record.getSAMRecord().getHeader().getSequence(key.getRef().toString());
-                if(null != sequence)
-                    ref_len = sequence.getSequenceLength();
-                if(-1 == ref_len)
-                    throw new IOException("Unable to find reference length from header");
-            }
-            writer.write(record + "\n");
-            if(0 == ++count % 1000){
-                context.progress();
-            }
-        }
-        writer.close();
-
-        long startRange = key.getPosition().get();
-        long endRange = key.getPosition().get() + binsize;
-        endRange = endRange > ref_len ? ref_len : endRange;
-        System.out.println("Working on Region:" + key.getRef() + ":" + startRange + "-" + endRange);
-
-
+        
+        super.reduce(key,values,context);
+        
         /**Add ReadGroups**/
         System.out.println("Adding Read Groups");
         final File tmpBamrdGroups = new File(context.getTaskAttemptID()+".tmp.rdgrp.bam");
         new AddOrReplaceReadGroups(){
             {
-                INPUT=tmpSam;
+                INPUT=tmpBam;
                 OUTPUT=tmpBamrdGroups;
                 RGID="1";
                 RGLB="jnomics";
@@ -101,7 +70,7 @@ public class GATKRealignReduce extends GATKBaseReduce<SamtoolsMap.SamtoolsKey,SA
             }
         };
 
-        tmpSam.delete();
+        tmpBam.delete();
 
         /**Remove Duplicates**/
         final File tmpBamRmDup = new File(context.getTaskAttemptID()+".tmp.rdgrp.rmdup.bam");

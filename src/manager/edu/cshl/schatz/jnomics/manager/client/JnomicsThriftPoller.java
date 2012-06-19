@@ -11,21 +11,28 @@ public class JnomicsThriftPoller {
     public static int pollForCompletion(JnomicsThriftJobID id, Authentication auth, JnomicsCompute.Client client)
             throws JnomicsThriftException, TException {
         
-        System.out.print("Polling Job "+ id);
+        System.out.println("Polling Job " + id.getJob_id());
         JnomicsThriftJobStatus status = client.getJobStatus(id, auth);
 
-        while(status.getRunning_state() != 1){
-            if(status.getRunning_state() == 3)
-                throw new JnomicsThriftException("Job failed");
+        while(!status.isComplete()){
+            System.out.println("Map: " +
+                    (int)(status.getMapProgress() * 100) +
+                    "% Reduce: " +
+                    (int)(status.getReduceProgress() * 100) +
+                    "%"
+            );
             try {
-                Thread.sleep(1000 * 60 * 5);
-                System.out.print(".");
+                Thread.sleep(1000 * 60 * 2);
             } catch (InterruptedException e) {
-                throw new JnomicsThriftException(e.getMessage());
+                throw new JnomicsThriftException(e.toString());
             }
+            status = client.getJobStatus(id, auth);
+
         }
-        
-        System.out.println("done");
+
+        if(status.getRunning_state() != 2)
+            throw new JnomicsThriftException(status.getFailure_info());
+
         return status.getRunning_state();
     }
 }
