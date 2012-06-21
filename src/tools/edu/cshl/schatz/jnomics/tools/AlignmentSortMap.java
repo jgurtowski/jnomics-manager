@@ -26,7 +26,8 @@ import java.io.IOException;
  * @author 	-	Piyush Kansal
  *
  */
-public class AlignmentSortMap extends JnomicsMapper<SAMRecordWritable, NullWritable, SamtoolsMap.SamtoolsKey, SAMRecordWritable>{
+public class AlignmentSortMap
+        extends JnomicsMapper<SAMRecordWritable, NullWritable, SamtoolsMap.SamtoolsKey, SAMRecordWritable>{
 
     private final SamtoolsMap.SamtoolsKey stkey = new SamtoolsMap.SamtoolsKey();
     private static final JnomicsArgument binsize_arg = new JnomicsArgument("binsize","bin chromosomes", false);
@@ -49,7 +50,7 @@ public class AlignmentSortMap extends JnomicsMapper<SAMRecordWritable, NullWrita
 
     protected void setup( final Context context ) throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
-        binsize = Integer.parseInt( conf.get( binsize_arg.getName(), "1000000" ) );
+        binsize = conf.getInt(binsize_arg.getName(), 1000000 );
     }
 		
     public void map( SAMRecordWritable key, NullWritable value, Context context ) throws IOException, InterruptedException {

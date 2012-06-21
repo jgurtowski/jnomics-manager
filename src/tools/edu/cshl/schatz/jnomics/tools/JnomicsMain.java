@@ -99,7 +99,7 @@ public class JnomicsMain extends Configured implements Tool {
         } else if (args[0].compareTo("loader-pe") == 0) {
             PairedEndLoader.main(Arrays.copyOfRange(args, 1, args.length));
         } else if (args[0].compareTo("alignment-extract") ==0){
-            AlignmentSortExtract.main(Arrays.copyOfRange(args,1,args.length));
+            AlignmentSortExtract.main(Arrays.copyOfRange(args, 1, args.length));
         }else if (args[0].compareTo("manifest-loader") == 0){
             ManifestLoader.main(Arrays.copyOfRange(args,1,args.length));
         }else if(args[0].compareTo("vcf_merge") == 0){

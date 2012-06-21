@@ -36,7 +36,7 @@ public class GATKCallVarReduce extends GATKBaseReduce<NullWritable,NullWritable>
         File recal_vcf = new File(key.getRef()+"-"+key.getBin()+".vcf");
         recal_vcf.createNewFile();
 
-        String variation_cmd = String.format("java -Xmx3g -jar %s -T UnifiedGenotyper -L %s:%d-%d -R %s -I %s -o %s -stand_call_conf 50 -stand_emit_conf 10.0 -minIndelCnt 5 -indelHeterozygosity 0.0001 -nt 5",
+        String variation_cmd = String.format("java -Xmx3g -jar %s -T UnifiedGenotyper -L %s:%d-%d -R %s -I %s -o %s -stand_call_conf 50 -stand_emit_conf 10.0 -minIndelCnt 5 -indelHeterozygosity 0.0001",
                 gatk_binary,key.getRef(),startRange,endRange,reference_fa,tmpBam,recal_vcf);
         ProcessUtil.exceptionOnError(ProcessUtil.execAndReconnect(variation_cmd));
 

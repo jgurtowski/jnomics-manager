@@ -7,8 +7,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.WritableComparator;
+import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.mapreduce.Partitioner;
+import org.apache.hadoop.util.ReflectionUtils;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -17,15 +20,12 @@ import java.io.OutputStreamWriter;
 /**
  * User: Piyush Kansal
  */
-public class AlignmentSortReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey,SAMRecordWritable,
-        NullWritable,NullWritable> {
+public class AlignmentSortReduce
+        extends JnomicsReducer <SamtoolsMap.SamtoolsKey,SAMRecordWritable,NullWritable,NullWritable> {
 
-    private static final String _NEW_LINE_			= System.getProperty("line.separator");
-    private static final String _UNMAPPED_CHR_		= "*";
-    private static final String _OP_DIR_			= "mapred.output.dir";
-    private static final String _HEADER_FILE_		= "header.sam";
-    private static final String _UNMAPPED_			= "~~UNMAPPED";
-
+    private static final String _OP_DIR_ = "mapred.output.dir";
+    public static final String UNMAPPED = "UNMAPPED";
+    
     private FileSystem ipFs;
     private String opDir;
 
@@ -55,7 +55,6 @@ public class AlignmentSortReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey,
     }
 
     protected void setup( Context context ) throws IOException, InterruptedException {
-
         Configuration conf = context.getConfiguration();
         opDir = conf.get( _OP_DIR_ );
         ipFs = FileSystem.get( conf );
@@ -63,44 +62,34 @@ public class AlignmentSortReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey,
 
     protected void reduce( SamtoolsMap.SamtoolsKey key, final Iterable<SAMRecordWritable> values,
                            final Context context ) throws IOException, InterruptedException {
-        /*
-        * Dump the SAM header in a separate file. This header will
-        * also have the sorting order of all the chromosomes
-        */
-        boolean headerWritten = false;
-        Path samHeader = new Path( opDir + "/" + _HEADER_FILE_ );
-        BufferedWriter samHeaderOut = null;
-        if( !ipFs.exists( samHeader ) ) {
-            samHeaderOut = new BufferedWriter( new OutputStreamWriter( ipFs.create( samHeader ) ) );
-        }
 
-        String fileName = "";
-        String alnStart = key.getPosition().toString();
+        Configuration conf = context.getConfiguration();
+        
         String chr = key.getRef().toString();
-
-        if( chr.equals( _UNMAPPED_CHR_ ) ) {
-            fileName = _UNMAPPED_;
-        }
-        else {
-            fileName = chr + "-" + alnStart;
-        }
-
-        BufferedWriter cout = new BufferedWriter( new OutputStreamWriter( ipFs.create( new Path( opDir + "/" + fileName ) ) ) );
-        if( null == cout ) {
-            System.out.println( "cout null" );
-        }
-
-        while( values.iterator().hasNext() ) {
-            SAMRecordWritable temp = values.iterator().next();
-            cout.write( temp.toString() + _NEW_LINE_ );
-
-            if( !headerWritten && ( null != samHeaderOut ) ) {
-                samHeaderOut.write( temp.getTextHeader().toString() + _NEW_LINE_ );
-                samHeaderOut.close();
-                headerWritten = true;
+        if(chr.startsWith("*"))
+            chr = UNMAPPED;
+        Path outPath = new Path(opDir,chr+"-"+key.getBin());
+        
+        SequenceFile.Writer writer = null;
+        if(conf.get("mapred.output.compress","").compareTo("true") == 0){
+            String codec_str = conf.get("mapred.output.compression.codec",
+                    "org.apache.hadoop.io.compress.GzipCodec");
+            CompressionCodec codec = null;
+            try {
+                codec = (CompressionCodec) ReflectionUtils.newInstance(Class.forName(codec_str), conf);
+            } catch (ClassNotFoundException e) {
+                throw new IOException(e.toString());
             }
+            writer = SequenceFile.createWriter(ipFs,conf,outPath,SAMRecordWritable.class,NullWritable.class,
+                    SequenceFile.CompressionType.BLOCK, codec);
+        }else{//no compression
+            writer = SequenceFile.createWriter(ipFs,conf,outPath,SAMRecordWritable.class,NullWritable.class);
         }
 
-        cout.close();
+        for(SAMRecordWritable w: values){
+            writer.append(w,NullWritable.get());
+        }
+
+        writer.close();
     }
 }
