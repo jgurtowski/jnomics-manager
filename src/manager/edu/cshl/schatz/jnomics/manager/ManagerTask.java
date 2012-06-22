@@ -5,6 +5,6 @@ package edu.cshl.schatz.jnomics.manager;
  */
 public interface ManagerTask {
 
-    public void runTask(String []args) throws Exception;
+    public void runTask(String[] args) throws Exception;
     
 }

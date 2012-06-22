@@ -24,9 +24,9 @@ import java.util.Iterator;
 /**
  * User: james
  */
-public class PairedEndLoader implements ManagerTask {
+public class PairedEndLoader implements ManagerTask{
 
-    final Log LOG = LogFactory.getLog(PairedEndLoader.class);
+    final static Log LOG = LogFactory.getLog(PairedEndLoader.class);
 
     /**
      *

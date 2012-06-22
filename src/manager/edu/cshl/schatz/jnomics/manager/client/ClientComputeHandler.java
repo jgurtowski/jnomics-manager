@@ -43,8 +43,11 @@ public class ClientComputeHandler extends ClientHandler {
             handler.handle(args);
         }else{
             System.out.println("Available Tasks:");
+            System.out.println();
             for(String tStrings: taskMap.keySet()){
-                System.out.println(tStrings+"\t"+taskMap.get(tStrings).newInstance().getDescription());
+                System.out.println(
+                        String.format("%-30s %-30s",tStrings,taskMap.get(tStrings).newInstance().getDescription())
+                );
             }
         }
     }

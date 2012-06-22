@@ -1,22 +1,36 @@
 package edu.cshl.schatz.jnomics.manager.client;
 
 import edu.cshl.schatz.jnomics.io.FastqParser;
+import edu.cshl.schatz.jnomics.io.JnomicsThriftFileSystem;
 import edu.cshl.schatz.jnomics.manager.api.Authentication;
 import edu.cshl.schatz.jnomics.manager.api.JnomicsData;
 import edu.cshl.schatz.jnomics.manager.api.JnomicsThriftFileStatus;
 import edu.cshl.schatz.jnomics.manager.api.JnomicsThriftHandle;
-import edu.cshl.schatz.jnomics.tools.PairedEndLoader;
+import edu.cshl.schatz.jnomics.ob.ReadCollectionWritable;
+import edu.cshl.schatz.jnomics.ob.ReadWritable;
+import edu.cshl.schatz.jnomics.ob.SAMRecordWritable;
+import edu.cshl.schatz.jnomics.util.*;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.*;
+import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.util.Progressable;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 
 import java.io.*;
+import java.net.URI;
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
@@ -30,11 +44,12 @@ public class ClientFSHandler extends ClientHandler{
 
     static{
         opts.addOption("ls",false,"list contents of directory");
-        opts.addOption("put",false,"upload file");
+        opts.addOption("put",false,"upload raw file");
         opts.addOption("get",false,"download file");
         opts.addOption("rm", false, "remove file");
         opts.addOption("rmr", false, "remove recursive (directory)");
-        opts.addOption("putpe",false,"upload paired end sequencing file");
+        opts.addOption("put_pe",false,"upload paired end sequencing file");
+        opts.addOption("put_se",false,"upload single end sequencing file");
         opts.addOption("mkdir", false, "make a directory");
     }
 
@@ -55,11 +70,11 @@ public class ClientFSHandler extends ClientHandler{
         TTransport transport = new TSocket(thriftDataHost, thriftDataPort);
         transport.open();
         TProtocol protocol = new TBinaryProtocol(transport);
-        JnomicsData.Client client = new JnomicsData.Client(protocol);
+        final JnomicsData.Client client = new JnomicsData.Client(protocol);
 
         String username = properties.getProperty("username");
         String password = properties.getProperty("password");
-        Authentication auth = new Authentication(username,password);
+        final Authentication auth = new Authentication(username,password);
 
         BasicParser parser = new BasicParser();
         CommandLine cl = parser.parse(opts,args.toArray(new String[0]));
@@ -167,20 +182,98 @@ public class ClientFSHandler extends ClientHandler{
                         System.out.println("Failed Deleting: " + file);
                 }
             }
-        }else if(cl.hasOption("put-pe")){ /*************************** put-pe *******************/
+        }else if(cl.hasOption("put_pe")){ /*************************** put-pe *******************/
             if(arglist.size() < 3){
-                f.printHelp("fs -put-pe <read.1.fq> <read.2.fq> <output.pe>",opts);
+                f.printHelp("fs -put_pe <reads.1.fq> <reads.2.fq> <output.pe>",opts);
             }else{
-                InputStream infile1 = new FileInputStream(arglist.get(0));
-                InputStream infile2 = new FileInputStream(arglist.get(1));
+                InputStream infile1 = edu.cshl.schatz.jnomics.util.FileUtil.getInputStreamWrapperFromExtension(
+                        new FileInputStream(arglist.get(0)),
+                        edu.cshl.schatz.jnomics.util.FileUtil.getExtension(arglist.get(0)));
+                InputStream infile2 = edu.cshl.schatz.jnomics.util.FileUtil.getInputStreamWrapperFromExtension(
+                        new FileInputStream(arglist.get(1)),
+                        edu.cshl.schatz.jnomics.util.FileUtil.getExtension(arglist.get(1)));
                 FastqParser parser1 = new FastqParser(infile1);
                 FastqParser parser2 = new FastqParser(infile2);
                 String outFile = arglist.get(2).concat(".pe");
 
-                JnomicsThriftHandle handle = client.create(outFile, auth);
+                JnomicsThriftFileSystem fs = new JnomicsThriftFileSystem(client,auth);
+                
 
-                client.close(handle,auth);
+                NullWritable value = NullWritable.get();
+                ReadCollectionWritable key = new ReadCollectionWritable();
+
+                SequenceFile.Writer writer = SequenceFile.createWriter(fs,new Configuration(),new Path(outFile),
+                        key.getClass(),value.getClass());
+
+                ReadWritable r1= new ReadWritable();
+                ReadWritable r2 = new ReadWritable();
+                key.addRead(r1);
+                key.addRead(r2);
+                Text keyName = new Text();
+                key.setName(keyName);
+
+                FastqParser.FastqRecord record1,record2;
+
+                Iterator<FastqParser.FastqRecord> it1 = parser1.iterator();
+                Iterator<FastqParser.FastqRecord> it2 = parser2.iterator();
+
+                int counter = 0;
+                while(it1.hasNext() && it2.hasNext()){
+                    record1 = it1.next();
+                    record2 = it2.next();
+                    keyName.set(Integer.toString(counter++));
+                    r1.setAll(record1.getName(), record1.getSequence(), record1.getDescription(), record1.getQuality());
+                    r2.setAll(record2.getName(),record2.getSequence(),record2.getDescription(),record2.getQuality());
+                    writer.append(key,value);
+                    if(0 == counter % 100000)
+                        System.out.println(counter);
+                }
+                
+                parser1.close();
+                parser2.close();
+                writer.close();
             }
+        }else if(cl.hasOption("put_se")){ /************************** put-se *********************/
+            if(arglist.size() < 2){
+                f.printHelp("fs -put_se <reads.fq> <output.se>",opts);
+            }else{
+
+                InputStream infile1 = edu.cshl.schatz.jnomics.util.FileUtil.getInputStreamWrapperFromExtension(
+                        new FileInputStream(arglist.get(0)),
+                        edu.cshl.schatz.jnomics.util.FileUtil.getExtension(arglist.get(0)));
+                FastqParser parser1 = new FastqParser(infile1);
+                String outFile = arglist.get(1).concat(".se");
+
+                NullWritable sfValue = NullWritable.get();
+                ReadCollectionWritable sfKey  = new ReadCollectionWritable();
+
+                ReadWritable r1= new ReadWritable();
+                sfKey.addRead(r1);
+                Text keyName = new Text();
+                sfKey.setName(keyName);
+
+                JnomicsThriftFileSystem fs = new JnomicsThriftFileSystem(client,auth);
+
+                SequenceFile.Writer writer = SequenceFile.createWriter(fs,new Configuration(),new Path(outFile),
+                        sfKey.getClass(),sfValue.getClass());
+
+
+                long count = 0;
+                for(FastqParser.FastqRecord record: parser1){
+                    r1.setAll(record.getName(),record.getSequence(),record.getDescription(),record.getQuality());
+                    keyName.set(record.getName());
+                    writer.append(sfKey,sfValue);
+                    if(0 == ++count % 100000){
+                        System.out.println(count);
+                    }
+                }
+
+                parser1.close();
+                infile1.close();
+                writer.close();
+
+            }
+        
         }else if(cl.hasOption("mkdir")){ /******************************mkdir **********************/
             if(arglist.size() < 1){
                 f.printHelp("fs -mkdir <directory>", opts);
