@@ -130,7 +130,7 @@ public class DNASequenceInputStream extends InputStream {
     }
 
     /**
-     * Reads the next base from the DNASequence. Repeatedly calling this method
+     * Reads the next base from the SequenceOpts. Repeatedly calling this method
      * is far, far less efficient than using <code>read(byte[], int, int)</code>
      * .
      * 

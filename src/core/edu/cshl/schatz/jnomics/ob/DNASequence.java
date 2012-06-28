@@ -477,7 +477,7 @@ public class DNASequence extends AbstractNucleotideSequence implements Nucleotid
     public void invert(int firstIndex, int length) {
         checkBounds(this, firstIndex, length);
 
-        // Convert the DNA sequence ranges into indices within the DNASequence
+        // Convert the DNA sequence ranges into indices within the SequenceOpts
         // range array. If the requested position falls in the center of a
         // range, this will also create break points at those positions.
 
@@ -648,7 +648,7 @@ public class DNASequence extends AbstractNucleotideSequence implements Nucleotid
 
         if (!(writeTo instanceof DNASequence)) {
             throw new UnsupportedOperationException(
-                "Currently can only write DNASequence subsequence into type DNASequence.");
+                "Currently can only write SequenceOpts subsequence into type SequenceOpts.");
         }
 
         DNASequence sequence = (DNASequence) writeTo;

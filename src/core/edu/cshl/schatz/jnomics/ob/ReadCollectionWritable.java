@@ -11,7 +11,8 @@ import java.util.*;
 /**
  * User: james
  */
-public class ReadCollectionWritable implements WritableComparable<ReadCollectionWritable>{
+public class ReadCollectionWritable implements WritableComparable<ReadCollectionWritable>,
+        SudoCollection<FastqStringProvider>, Iterable<ReadWritable>{
 
     private Text name;
     private List<ReadWritable> reads;
@@ -47,6 +48,14 @@ public class ReadCollectionWritable implements WritableComparable<ReadCollection
         return 0;
     }
 
+    public int size(){
+        return reads.size();
+    }
+
+    @Override
+    public FastqStringProvider get(int idx) {
+        return getRead(idx);
+    }
 
     public ReadWritable getRead(int idx){
         return reads.get(idx);
@@ -97,5 +106,13 @@ public class ReadCollectionWritable implements WritableComparable<ReadCollection
         return builder.toString();
     }
 
+    @Override
+    public Iterator<ReadWritable> iterator() {
+        return reads.iterator();
+    }
+
+    public void clear() {
+        reads.clear();
+    }
 }
 

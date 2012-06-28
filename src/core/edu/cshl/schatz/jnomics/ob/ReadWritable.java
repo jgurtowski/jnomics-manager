@@ -11,7 +11,7 @@ import java.io.IOException;
 /**
  * User: james
  */
-public class ReadWritable implements WritableComparable<ReadWritable>{
+public class ReadWritable implements WritableComparable<ReadWritable>, FastqStringProvider{
 
     private Text name, description, sequence, quality;
     
@@ -97,5 +97,13 @@ public class ReadWritable implements WritableComparable<ReadWritable>{
     
     public String toString(){
         return name.toString()+","+sequence.toString();
+    }
+
+    public void setSequence(String s) {
+        sequence.set(s);
+    }
+
+    public void setQuality(String s) {
+        quality.set(s);
     }
 }

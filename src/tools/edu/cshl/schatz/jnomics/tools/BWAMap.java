@@ -4,12 +4,11 @@ import edu.cshl.schatz.jnomics.cli.JnomicsArgument;
 import edu.cshl.schatz.jnomics.io.ThreadedStreamConnector;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsCounter;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsMapper;
-import edu.cshl.schatz.jnomics.ob.ReadCollectionWritable;
-import edu.cshl.schatz.jnomics.ob.ReadWritable;
-import edu.cshl.schatz.jnomics.ob.SAMRecordWritable;
+import edu.cshl.schatz.jnomics.ob.*;
 import net.sf.samtools.SAMFileReader;
 import net.sf.samtools.SAMRecord;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Counter;
 
 import java.io.BufferedOutputStream;
@@ -19,7 +18,7 @@ import java.io.IOException;
 import java.util.List;
 
 
-public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SAMRecordWritable,NullWritable> {
+public class BWAMap extends JnomicsMapper<Writable,NullWritable,AlignmentCollectionWritable,NullWritable> {
 
     private File[] tmpFiles;
     private String[] aln_cmds_pair,aln_cmds_single;
@@ -101,22 +100,22 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
         System.out.println(tmpFiles[2]);
         System.out.println(tmpFiles[3]);
         System.out.println("-----<");
+        SudoCollection<FastqStringProvider> collection;
         List<ReadWritable> reads;
         boolean first=true, paired=false;
         while(context.nextKeyValue()){
-            reads = context.getCurrentKey().getReads();
-            tmpWriter1.write(reads.get(0).getFastqString().getBytes());
+            collection = (SudoCollection<FastqStringProvider>) context.getCurrentKey();
+            tmpWriter1.write(collection.get(0).getFastqString().getBytes());
             tmpWriter1.write("\n".getBytes());
-            if(reads.size() == 2){
+            if(collection.size() == 2){
                 if(first)
                     paired=true;
-                tmpWriter2.write(reads.get(1).getFastqString().getBytes());
+                tmpWriter2.write(collection.get(1).getFastqString().getBytes());
                 tmpWriter2.write("\n".getBytes());
             }
         }
         tmpWriter1.close();
         tmpWriter2.close();
-
 
         Thread connecterr,connectout;
 
@@ -154,25 +153,37 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
 
         connecterr = new Thread(new ThreadedStreamConnector(sam_process.getErrorStream(), System.err));
         connecterr.start();
+        
+        final boolean pe = paired;
         /** setup reader thread - reads lines from bwa stdout and print them to context **/
         Thread readerThread = new Thread( new Runnable() {
 
-            private final SAMRecordWritable writableRecord = new SAMRecordWritable();
-
+            private final AlignmentCollectionWritable alignmentCollection = new AlignmentCollectionWritable();
+            {
+                alignmentCollection.addAlignment(new SAMRecordWritable());
+                if(pe){
+                    alignmentCollection.addAlignment(new SAMRecordWritable());
+                }
+            }
+            
             @Override
             public void run() {
                 SAMFileReader reader = new SAMFileReader(sam_process.getInputStream());
                 reader.setValidationStringency(SAMFileReader.ValidationStringency.LENIENT);
                 Counter mapped_counter = context.getCounter(JnomicsCounter.Alignment.MAPPED);
                 Counter totalreads_counter = context.getCounter(JnomicsCounter.Alignment.TOTAL);
+                int i = 0;
                 for(SAMRecord record: reader){
-                    writableRecord.set(record);
+                    alignmentCollection.getAlignment(i).set(record);
                     totalreads_counter.increment(1);
-                    if(writableRecord.getMappingQuality().get() != 0)
+                    if(2 == (2 & record.getFlags()))
                         mapped_counter.increment(1);
                     try {
-                        context.write(writableRecord,NullWritable.get());
-                        context.progress();
+                        if(!pe || 1 == i++){
+                            context.write(alignmentCollection,NullWritable.get());
+                            context.progress();
+                            i=0;
+                        }
                     }catch(Exception e){
                         readerError = e;
                     }
@@ -199,7 +210,7 @@ public class BWAMap extends JnomicsMapper<ReadCollectionWritable,NullWritable,SA
 
     @Override
     public Class getOutputKeyClass() {
-        return SAMRecordWritable.class;
+        return AlignmentCollectionWritable.class;
     }
 
     @Override

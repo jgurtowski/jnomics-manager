@@ -19,16 +19,16 @@ public class SVSimTest {
     // private String initialSeq, finalSeq, otherSeq;
     // private SVSimulator svsim;
     //
-    // private static final DNASequence seq(String sequence) {
+    // private static final SequenceOpts seq(String sequence) {
     // return seq(sequence, "name");
     // }
     //
-    // private static final DNASequence seq(String sequence, String
+    // private static final SequenceOpts seq(String sequence, String
     // sequenceName) {
-    // return new DNASequence(sequenceName, sequence);
+    // return new SequenceOpts(sequenceName, sequence);
     // }
     //
-    // private void doCompare(DNASequence mutant, String expectedAsString) {
+    // private void doCompare(SequenceOpts mutant, String expectedAsString) {
     // String mutantAsString = mutant.getSequenceString();
     //
     // assertEquals(expectedAsString, mutantAsString);
@@ -76,8 +76,8 @@ public class SVSimTest {
     // otherSeq = "GGG";
     // finalSeq = initialSeq + otherSeq;
     //
-    // DNASequence iSeq = seq(initialSeq);
-    // DNASequence oSeq = seq(otherSeq, "other");
+    // SequenceOpts iSeq = seq(initialSeq);
+    // SequenceOpts oSeq = seq(otherSeq, "other");
     //
     // svsim = new SVSimulator(iSeq);
     // svsim.doInsertion(5, oSeq);

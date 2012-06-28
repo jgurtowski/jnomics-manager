@@ -35,6 +35,8 @@ public class JnomicsMain extends Configured implements Tool {
                     put("alignmentsort_map", AlignmentSortMap.class);
                     put("cufflinks_map",CufflinksMap.class);
                     put("seloader_map",SELoaderMap.class);
+                    put("read_filter_map",AlignmentFilterMap.class);
+                    put("reverse_complement_map", ReverseComplementMap.class);
                 }
             };
 

@@ -9,4 +9,9 @@ public class JnomicsCounter {
         MAPPED,
         TOTAL
     }
+
+    public enum Filter{
+        IN,
+        TOTAL
+    }
 }

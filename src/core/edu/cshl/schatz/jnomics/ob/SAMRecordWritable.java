@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * User: james
  */
-public class SAMRecordWritable implements WritableComparable{
+public class SAMRecordWritable implements WritableComparable,FastqStringProvider{
 
     private Text header = new Text();
     private Text readName = new Text();
@@ -250,5 +250,12 @@ public class SAMRecordWritable implements WritableComparable{
         if(null == headerSequences)
             parseHeader();
         return headerSequences.get(name);
+    }
+    
+    public String getFastqString(){
+        return TextUtil.join(System.getProperty("line.separator"),new String[]{"@"+readName.toString(),
+                readString.toString(),
+                "+",
+                qualityString.toString()});
     }
 }

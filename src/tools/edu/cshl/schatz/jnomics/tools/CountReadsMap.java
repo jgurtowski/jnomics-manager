@@ -40,7 +40,8 @@ public class CountReadsMap extends JnomicsMapper<ReadCollectionWritable,NullWrit
     }
 
     @Override
-    protected void map(ReadCollectionWritable key, NullWritable value, Context context) throws IOException, InterruptedException {
+    protected void map(ReadCollectionWritable key, NullWritable value, Context context)
+            throws IOException, InterruptedException {
         for(ReadWritable r: key.getReads())
             context.write(name,count);
     }

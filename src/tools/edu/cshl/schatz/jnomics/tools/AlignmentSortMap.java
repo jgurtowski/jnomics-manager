@@ -13,6 +13,7 @@ package edu.cshl.schatz.jnomics.tools;
 
 import edu.cshl.schatz.jnomics.cli.JnomicsArgument;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsMapper;
+import edu.cshl.schatz.jnomics.ob.AlignmentCollectionWritable;
 import edu.cshl.schatz.jnomics.ob.SAMRecordWritable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
@@ -27,7 +28,7 @@ import java.io.IOException;
  *
  */
 public class AlignmentSortMap
-        extends JnomicsMapper<SAMRecordWritable, NullWritable, SamtoolsMap.SamtoolsKey, SAMRecordWritable>{
+        extends JnomicsMapper<AlignmentCollectionWritable, NullWritable, SamtoolsMap.SamtoolsKey, SAMRecordWritable>{
 
     private final SamtoolsMap.SamtoolsKey stkey = new SamtoolsMap.SamtoolsKey();
     private static final JnomicsArgument binsize_arg = new JnomicsArgument("binsize","bin chromosomes", false);
@@ -53,13 +54,16 @@ public class AlignmentSortMap
         binsize = conf.getInt(binsize_arg.getName(), 1000000 );
     }
 		
-    public void map( SAMRecordWritable key, NullWritable value, Context context ) throws IOException, InterruptedException {
+    public void map( AlignmentCollectionWritable key, NullWritable value, Context context )
+            throws IOException, InterruptedException {
 
-        int alignmentStart = key.getAlignmentStart().get();
-        stkey.setPosition( alignmentStart );
-        stkey.setRef( key.getReferenceName() );
-        int bin = alignmentStart / binsize;
-        stkey.setBin( bin );
-        context.write( stkey, key );
+        for(SAMRecordWritable record : key){
+            int alignmentStart = record.getAlignmentStart().get();
+            stkey.setPosition( alignmentStart );
+            stkey.setRef( record.getReferenceName() );
+            int bin = alignmentStart / binsize;
+            stkey.setBin( bin );
+            context.write( stkey, record );
+        }
     }
 }

@@ -2,6 +2,7 @@ package edu.cshl.schatz.jnomics.tools;
 
 import edu.cshl.schatz.jnomics.cli.JnomicsArgument;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsMapper;
+import edu.cshl.schatz.jnomics.ob.AlignmentCollectionWritable;
 import edu.cshl.schatz.jnomics.ob.SAMRecordWritable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
@@ -12,7 +13,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class SamtoolsMap extends JnomicsMapper<SAMRecordWritable,NullWritable, SamtoolsMap.SamtoolsKey, SAMRecordWritable> {
+public class SamtoolsMap extends JnomicsMapper<AlignmentCollectionWritable,NullWritable, SamtoolsMap.SamtoolsKey, SAMRecordWritable> {
 
     public static final int DEFAULT_GENOME_BINSIZE = 1000000;
     
@@ -107,19 +108,23 @@ public class SamtoolsMap extends JnomicsMapper<SAMRecordWritable,NullWritable, S
     }
 
     @Override
-    protected void map(SAMRecordWritable key, NullWritable value, Context context) throws IOException, InterruptedException {
-        if(key.getMappingQuality().get() == 0) // remove unmapped reads
-            return;
-        int alignmentStart = key.getAlignmentStart().get();
-        stkey.setPosition(alignmentStart);
-        stkey.setRef(key.getReferenceName());
-        int bin = alignmentStart / binsize;
-        stkey.setBin(bin);
-        context.write(stkey, key);
-        int end = alignmentStart + key.getReadString().toString().length() - 1;
-        if(end >= (bin+1) * binsize){
-            stkey.setBin(bin+1);
-            context.write(stkey,key);
+    protected void map(AlignmentCollectionWritable key, NullWritable value, Context context) throws IOException, InterruptedException {
+
+        /** Iterate through all of the reads in the alignment collection **/
+        for(SAMRecordWritable record : key){
+            if(record.getMappingQuality().get() == 0) // remove unmapped reads
+                return;
+            int alignmentStart = record.getAlignmentStart().get();
+            stkey.setPosition(alignmentStart);
+            stkey.setRef(record.getReferenceName());
+            int bin = alignmentStart / binsize;
+            stkey.setBin(bin);
+            context.write(stkey, record);
+            int end = alignmentStart + record.getReadString().toString().length() - 1;
+            if(end >= (bin+1) * binsize){
+                stkey.setBin(bin+1);
+                context.write(stkey,record);
+            }
         }
     }
 }
