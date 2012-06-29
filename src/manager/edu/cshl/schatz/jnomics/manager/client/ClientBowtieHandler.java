@@ -24,7 +24,8 @@ public class ClientBowtieHandler extends ClientHandler{
         return new JnomicsArgument[]{
                 new JnomicsArgument("in",true,true,"Input file"),
                 new JnomicsArgument("out",true,true,"Output dir"),
-                new JnomicsArgument("organism",true,true,"Organism for alignment index")
+                new JnomicsArgument("organism",true,true,"Organism for alignment index"),
+                new JnomicsArgument("opts",false,true,"Pass Alignment options to bowite")
         };
     }
 
@@ -46,6 +47,7 @@ public class ClientBowtieHandler extends ClientHandler{
         JnomicsThriftJobID jobID = client.alignBowtie(cli.getOptionValue("in"),
                 cli.getOptionValue("organism"),
                 cli.getOptionValue("out"),
+                nullToString(cli.getOptionValue("opts")),
                 auth);
 
         System.out.println("Submitted Job: " + jobID.getJob_id());

@@ -8,7 +8,6 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 
 import java.util.List;
-import java.util.Properties;
 
 /**
  * User: james
@@ -20,12 +19,13 @@ public class ClientBWAHandler extends ClientHandler{
 
     }
 
-
     public JnomicsArgument[] getArguments(){
         return new JnomicsArgument[]{
                 new JnomicsArgument("in",true,true,"Input file"),
                 new JnomicsArgument("out",true,true,"Output dir"),
-                new JnomicsArgument("organism",true,true,"Organism for alignment index")
+                new JnomicsArgument("organism",true,true,"Organism for alignment index"),
+                new JnomicsArgument("align_opts",false,true,"Pass options to BWA align"),
+                new JnomicsArgument("sampe_opts",false,true,"Pass options to BWA sampe")
         };
     }
 
@@ -47,6 +47,8 @@ public class ClientBWAHandler extends ClientHandler{
         JnomicsThriftJobID jobID = client.alignBWA(cli.getOptionValue("in"),
                 cli.getOptionValue("organism"),
                 cli.getOptionValue("out"),
+                nullToString(cli.getOptionValue("align_opts")),
+                nullToString(cli.getOptionValue("sampe_opts")),
                 auth);
 
         System.out.println("Submitted Job: " + jobID.getJob_id());

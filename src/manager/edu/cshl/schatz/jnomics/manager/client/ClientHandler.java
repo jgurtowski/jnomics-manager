@@ -38,7 +38,7 @@ public abstract class ClientHandler {
         CommandLine cli = parser.parse(options, args.toArray(new String[0]),false);
 
         for(JnomicsArgument arg : getArguments()){
-            if(!(arg.isRequired() && cli.hasOption(arg.getName())))
+            if(arg.isRequired() && !cli.hasOption(arg.getName()))
                 throw new JnomicsArgumentException("Missing " + arg.getName());
         }
 
@@ -47,5 +47,9 @@ public abstract class ClientHandler {
 
     protected Options getOptions(){
         return options;
+    }
+    
+    protected static String nullToString(String n){
+        return n == null ? "" : n;
     }
 }

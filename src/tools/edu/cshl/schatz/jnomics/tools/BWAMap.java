@@ -197,7 +197,7 @@ public class BWAMap extends JnomicsMapper<Writable,NullWritable,AlignmentCollect
         sam_process.waitFor();
         connecterr.join();
 
-        System.out.println("deleteing tmp files");
+        System.out.println("removing tmp files");
         for(File file: tmpFiles)
             file.delete();
 

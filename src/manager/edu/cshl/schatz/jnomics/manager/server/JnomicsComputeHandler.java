@@ -66,7 +66,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
     }
 
     @Override
-    public JnomicsThriftJobID alignBowtie(String inPath, String organism, String outPath, Authentication auth)
+    public JnomicsThriftJobID alignBowtie(String inPath, String organism, String outPath, String opts, Authentication auth)
             throws TException, JnomicsThriftException {
         logger.info("Starting Bowtie2 process");
         Configuration conf = getAlignConf(inPath,outPath);
@@ -74,12 +74,14 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         conf.set("mapred.cache.archives",properties.getProperty("hdfs-index-repo")+"/"+organism+"_bowtie.tar.gz#btarchive");
         conf.set("bowtie_binary","btarchive/bowtie2-align");
         conf.set("bowtie_index", "btarchive/"+organism);
+        conf.set("bowtie_opts",opts);
         conf.set("mapred.job.name",auth.getUsername()+"-bowtie2-"+inPath);
         return launchJobAs(auth.getUsername(),conf);
     }
 
     @Override
-    public JnomicsThriftJobID alignBWA(String inPath, String organism, String outPath, Authentication auth)
+    public JnomicsThriftJobID alignBWA(String inPath, String organism, String outPath, 
+                                       String alignOpts, String sampeOpts, Authentication auth)
             throws TException, JnomicsThriftException {
         logger.info("Starting Bwa process");
         Configuration conf = getAlignConf(inPath,outPath);
@@ -87,6 +89,8 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         conf.set("mapred.cache.archives",properties.getProperty("hdfs-index-repo")+"/"+organism+"_bwa.tar.gz#bwaarchive");
         conf.set("bwa_binary","bwaarchive/bwa");
         conf.set("bwa_index", "bwaarchive/"+organism);
+        conf.set("bwa_align_opts",alignOpts);
+        conf.set("bwa_sampe_opts",sampeOpts);
         conf.set("mapred.job.name",auth.getUsername()+"-bwa-"+inPath);
         return launchJobAs(auth.getUsername(),conf);
     }
