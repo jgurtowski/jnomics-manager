@@ -19,7 +19,7 @@ import java.util.Properties;
 public class JnomicsThriftClient {
 
     public static Authentication getAuthentication() throws IOException {
-        Properties properties = JnomicsApiConfig.get();
+        Properties properties = JnomicsApiConfig.getClientProperties();
         String username = properties.getProperty("username");
         String password = properties.getProperty("password");
         return new Authentication(username,password);
@@ -27,7 +27,7 @@ public class JnomicsThriftClient {
     
     public static JnomicsData.Client getFsClient() throws IOException, TTransportException {
 
-        Properties properties = JnomicsApiConfig.get();
+        Properties properties = JnomicsApiConfig.getClientProperties();
         String thriftDataHost = properties.getProperty("data-server-host");
         int thriftDataPort = Integer.parseInt(properties.getProperty("data-server-port"));
         TTransport transport = new TSocket(thriftDataHost, thriftDataPort);
@@ -40,7 +40,7 @@ public class JnomicsThriftClient {
 
 
     public static JnomicsCompute.Client getComputeClient() throws IOException, TTransportException{
-        Properties properties = JnomicsApiConfig.get();
+        Properties properties = JnomicsApiConfig.getClientProperties();
 
         String thriftComputeHost = properties.getProperty("compute-server-host");
         int thriftComputePort = Integer.parseInt(properties.getProperty("compute-server-port"));

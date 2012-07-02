@@ -71,7 +71,10 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         }
     }
     
-    
+    public Map<UUID, JnomicsFsHandle> getHandleMap(){
+        return handleMap;
+    }
+
     @Override
     public JnomicsThriftHandle create(String path, Authentication auth) throws TException, JnomicsThriftException {
         log.info("Creating file: " + path + " for user: "+ auth.getUsername());

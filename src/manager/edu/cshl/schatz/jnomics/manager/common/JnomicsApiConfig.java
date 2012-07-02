@@ -8,14 +8,25 @@ import java.util.Properties;
  */
 public class JnomicsApiConfig {
 
-    private static String MAIN_PROP_FILE = "jnomics-kbase.properties";
-
-    public static Properties get() throws IOException {
+    private static String SERVER_PROP_FILE = "jnomics-kbase-server.properties";
+    private static String CLIENT_PROP_FILE = "jnomics-kbase-client.properties";
+    
+    public static Properties getClientProperties() throws IOException {
         Properties prop = new Properties();
         try{
-            prop.load(ClassLoader.getSystemResourceAsStream(MAIN_PROP_FILE));
+            prop.load(ClassLoader.getSystemResourceAsStream(CLIENT_PROP_FILE));
         }catch(Exception e){
-            throw new IOException("Could not find " + MAIN_PROP_FILE);
+            throw new IOException("Could not find " + CLIENT_PROP_FILE);
+        }
+        return prop;
+    }
+    
+    public static Properties getServerProperties() throws IOException{
+        Properties prop = new Properties();
+        try{
+            prop.load(ClassLoader.getSystemResourceAsStream(SERVER_PROP_FILE));
+        }catch(Exception e){
+            throw new IOException("Could not find " + SERVER_PROP_FILE);
         }
         return prop;
     }

@@ -17,7 +17,7 @@ public class JnomicsComputeServer {
 
     public static void main(String []args) throws TTransportException, IOException {
 
-        Properties prop = JnomicsApiConfig.get();
+        Properties prop = JnomicsApiConfig.getServerProperties();
 
         int port = Integer.parseInt(prop.getProperty("compute-server-port"));
 

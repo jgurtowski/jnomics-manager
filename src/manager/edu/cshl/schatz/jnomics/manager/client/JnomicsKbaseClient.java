@@ -30,7 +30,7 @@ public class JnomicsKbaseClient {
             System.exit(-1);
         }
 
-        Properties prop = JnomicsApiConfig.get();
+        Properties prop = JnomicsApiConfig.getClientProperties();
         
         ClientHandler ch = null;
         
