@@ -11,22 +11,17 @@ import java.util.Properties;
  */
 public class ClientComputeHandler extends ClientHandler {
 
-
-    private Properties properties;
     private static final Map<String,Class<? extends ClientHandler>> taskMap = new HashMap<String, Class<? extends ClientHandler>>();
     static{
         taskMap.put("bowtie", ClientBowtieHandler.class);
         taskMap.put("bwa", ClientBWAHandler.class);
         taskMap.put("snp", ClientSnpHandler.class);
         taskMap.put("status", ClientJobStatusHandler.class);
-        taskMap.put("listjobs", ClientJobListHandler.class);
+        taskMap.put("list_jobs", ClientJobListHandler.class);
         taskMap.put("pair_reads", ClientPairReadsHandler.class);
         taskMap.put("single_reads", ClientSingleReadsHandler.class);
         taskMap.put("gatk", ClientGatkHandler.class);
-    }
-
-    public ClientComputeHandler(Properties props){
-        properties = props;
+        taskMap.put("vcf_merge", ClientMergeVCFHandler.class);
     }
 
     @Override
