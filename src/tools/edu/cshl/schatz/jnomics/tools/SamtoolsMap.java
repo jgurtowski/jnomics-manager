@@ -108,7 +108,8 @@ public class SamtoolsMap extends JnomicsMapper<AlignmentCollectionWritable,NullW
     }
 
     @Override
-    protected void map(AlignmentCollectionWritable key, NullWritable value, Context context) throws IOException, InterruptedException {
+    protected void map(AlignmentCollectionWritable key, NullWritable value, Context context)
+            throws IOException, InterruptedException {
 
         /** Iterate through all of the reads in the alignment collection **/
         for(SAMRecordWritable record : key){

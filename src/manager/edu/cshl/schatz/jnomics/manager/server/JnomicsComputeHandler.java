@@ -55,8 +55,8 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         Configuration conf = getGenericConf(inputPath,outputPath);
         conf.set("mapred.create.symlink","yes");
         conf.set("mapreduce.job.cache.archives.visibilities","true");
-        conf.set("mapred.mapoutput.key.class","edu.cshl.schatz.jnomics.ob.SAMRecordWritable");
-        conf.set("mapred.output.key.class","edu.cshl.schatz.jnomics.ob.SAMRecordWritable");
+        conf.set("mapred.mapoutput.key.class","edu.cshl.schatz.jnomics.ob.AlignmentCollectionWritable");
+        conf.set("mapred.output.key.class","edu.cshl.schatz.jnomics.ob.AlignmentCollectionWritable");
         conf.set("mapreduce.inputformat.class","org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat");
         conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
         conf.set("mapreduce.outputformat.class","org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat");
@@ -73,7 +73,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.Bowtie2Map");
         conf.set("mapred.cache.archives",properties.getProperty("hdfs-index-repo")+"/"+organism+"_bowtie.tar.gz#btarchive");
         conf.set("bowtie_binary","btarchive/bowtie2-align");
-        conf.set("bowtie_index", "btarchive/"+organism);
+        conf.set("bowtie_index", "btarchive/"+organism+".fa");
         conf.set("bowtie_opts",opts);
         conf.set("mapred.job.name",auth.getUsername()+"-bowtie2-"+inPath);
         return launchJobAs(auth.getUsername(),conf);
@@ -88,7 +88,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.BWAMap");
         conf.set("mapred.cache.archives",properties.getProperty("hdfs-index-repo")+"/"+organism+"_bwa.tar.gz#bwaarchive");
         conf.set("bwa_binary","bwaarchive/bwa");
-        conf.set("bwa_index", "bwaarchive/"+organism);
+        conf.set("bwa_index", "bwaarchive/"+organism+".fa");
         conf.set("bwa_align_opts",alignOpts);
         conf.set("bwa_sampe_opts",sampeOpts);
         conf.set("mapred.job.name",auth.getUsername()+"-bwa-"+inPath);
@@ -98,6 +98,8 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
     @Override
     public JnomicsThriftJobID snpSamtools(String inPath, String organism, String outPath, Authentication auth) throws TException, JnomicsThriftException {
         Configuration conf = getGenericConf(inPath,outPath);
+        conf.set("mapred.create.symlink","yes");
+        conf.set("mapreduce.job.cache.archives.visibilities","true");
         conf.set("mapred.mapoutput.key.class","edu.cshl.schatz.jnomics.tools.SamtoolsMap$SamtoolsKey");
         conf.set("mapred.mapoutput.value.class","edu.cshl.schatz.jnomics.ob.SAMRecordWritable");
         conf.set("mapred.output.key.class","org.apache.hadoop.io.Text");

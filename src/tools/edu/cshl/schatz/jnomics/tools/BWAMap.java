@@ -174,15 +174,19 @@ public class BWAMap extends JnomicsMapper<Writable,NullWritable,AlignmentCollect
                 Counter totalreads_counter = context.getCounter(JnomicsCounter.Alignment.TOTAL);
                 int i = 0;
                 for(SAMRecord record: reader){
+                    if(i > 1 )
+                        System.out.print("I is : " + i);
                     alignmentCollection.getAlignment(i).set(record);
                     totalreads_counter.increment(1);
                     if(2 == (2 & record.getFlags()))
                         mapped_counter.increment(1);
                     try {
-                        if(!pe || 1 == i++){
+                        if((!pe) || (i >= 1) ){
                             context.write(alignmentCollection,NullWritable.get());
                             context.progress();
                             i=0;
+                        }else{
+                            i++;
                         }
                     }catch(Exception e){
                         readerError = e;

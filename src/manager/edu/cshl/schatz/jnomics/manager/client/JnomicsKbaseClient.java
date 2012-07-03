@@ -35,7 +35,7 @@ public class JnomicsKbaseClient {
         ClientHandler ch = null;
         
         if(0 == args[0].compareTo("compute")){
-            ch = new ClientComputeHandler(prop);
+            ch = new ClientComputeHandler();
         }else if(0 == args[0].compareTo("fs")){
             ch = new ClientFSHandler(prop);
         }else{

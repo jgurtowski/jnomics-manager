@@ -1,12 +1,12 @@
 package edu.cshl.schatz.jnomics.tools;
 
 import edu.cshl.schatz.jnomics.cli.JnomicsArgument;
-import edu.cshl.schatz.jnomics.io.ThreadedLineOperator;
 import edu.cshl.schatz.jnomics.io.ThreadedStreamConnector;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsReducer;
 import edu.cshl.schatz.jnomics.ob.SAMRecordWritable;
-import edu.cshl.schatz.jnomics.util.Functional.Operation;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
@@ -14,7 +14,11 @@ import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.mapreduce.Partitioner;
 import org.apache.hadoop.mapreduce.lib.partition.HashPartitioner;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+
 
 public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMRecordWritable, Text, NullWritable> {
 
@@ -27,7 +31,7 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
     private final JnomicsArgument bcftools_opts_arg = new JnomicsArgument("bcftools_opts","bcftools view options", false);
     private final JnomicsArgument reference_file_arg = new JnomicsArgument("reference_fa",
 									   "Reference Fasta (must be indexed)", true);
-    
+    private FileSystem hdfs;
 
     @Override
     public Class getOutputKeyClass() {
@@ -87,8 +91,10 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
-        String binsize_str = context.getConfiguration().get(SamtoolsMap.genome_binsize_arg.getName());
+        Configuration conf = context.getConfiguration();
+        String binsize_str = conf.get(SamtoolsMap.genome_binsize_arg.getName());
         binsize = binsize_str == null ? SamtoolsMap.DEFAULT_GENOME_BINSIZE : Integer.parseInt(binsize_str);
+        hdfs = FileSystem.get(conf);
     }
 
     @Override
@@ -167,28 +173,13 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
         samtoolsProcessErr.start();
         bcftoolsProcessErr.start();
 
-        Thread bcfThread = new Thread(new ThreadedLineOperator(bcftoolsProcess.getInputStream(), new Operation(){
-            private final Text line = new Text();
-            @Override
-            public <T> void performOperation(T data){
-                String str = (String)data;
-                if(!str.startsWith("#")){
-                    line.set((String)data);
-                    try{
-                        context.write(line,NullWritable.get());
-                        context.progress();
-                    }catch(Exception e){
-                        readerErr = e;
-                    }
-                }
-            }
-        }));
-
-        bcfThread.start();
-
-        /*TODO Add check to see if any threads threw an exception*/
-
-        bcfThread.join();
+        String out = context.getConfiguration().get("mapred.output.dir");
+        Path outFile = new Path(out,key.getRef()+"-"+key.getBin()+".vcf");
+        OutputStream outStream = hdfs.create(outFile);
+        Thread bcfReaderThread = new Thread(new ThreadedStreamConnector(bcftoolsProcess.getInputStream(),outStream));
+        bcfReaderThread.start();
+        bcfReaderThread.join();
+        outStream.close();
         if(readerErr != null)
             throw new IOException(readerErr);
         samtoolsProcess.waitFor();

@@ -1,11 +1,10 @@
 package edu.cshl.schatz.jnomics.manager.server;
 
-import edu.cshl.schatz.jnomics.manager.api.JnomicsThriftException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -13,6 +12,7 @@ import java.util.UUID;
  */
 public class JnomicsHandleGarbageCollector implements Runnable {
 
+    private static final Log log = LogFactory.getLog(JnomicsHandleGarbageCollector.class);
     private static final int SLEEP_INTERVAL = 60 * 1000 * 4;
 
     private Map<UUID,JnomicsFsHandle> handles;
@@ -31,6 +31,7 @@ public class JnomicsHandleGarbageCollector implements Runnable {
             }
             JnomicsFsHandle handle;
             UUID uuid;
+            int count = 0;
             for(Map.Entry<UUID,JnomicsFsHandle> entry: handles.entrySet()){
                 uuid = entry.getKey();
                 handle = entry.getValue();
@@ -52,9 +53,11 @@ public class JnomicsHandleGarbageCollector implements Runnable {
                     } catch (IOException e) {
                     } finally{
                         handles.remove(uuid);
+                        count++;
                     }
                 }
             }
+            log.info("FS Handle Garbage Collector removed "+count+" unused handles");
         }
     }
 }

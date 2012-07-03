@@ -1,5 +1,6 @@
 package edu.cshl.schatz.jnomics.tools;
 
+import edu.cshl.schatz.jnomics.ob.AlignmentCollectionWritable;
 import edu.cshl.schatz.jnomics.ob.SAMRecordWritable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,13 +28,18 @@ public class VCFMerge {
         List<String> alignmentOrder = new ArrayList<String>();
         boolean found = false;
         SAMRecordWritable samRecordWritable = new SAMRecordWritable();
+        AlignmentCollectionWritable alignmentCollection = new AlignmentCollectionWritable();
         for(FileStatus stat: fs.listStatus(alignments)){
             if(stat.getPath().getName().startsWith("part-m") || stat.getPath().getName().startsWith("part-r")){
-
                 SequenceFile.Reader reader = new SequenceFile.Reader(fs,stat.getPath(),conf);
-                if(reader.getKeyClass() != SAMRecordWritable.class)
-                    throw new Exception("Expected SAMRecordWritable for sequence file");
-                reader.next(samRecordWritable);
+                if(reader.getKeyClass() == AlignmentCollectionWritable.class){
+                    reader.next(alignmentCollection);
+                    samRecordWritable = alignmentCollection.getAlignment(0);
+                }else if(reader.getKeyClass() == SAMRecordWritable.class){
+                    reader.next(samRecordWritable);
+                }else{
+                    throw new Exception("Expected SAMRecordWritable or AlignmentCollectionWritable for sequence file");
+                }
                 for(String line: samRecordWritable.getTextHeader().toString().split("\n")){
                     if(line.startsWith("@SQ")){
                         alignmentOrder.add(line.split("\t")[1].split(":")[1]);
