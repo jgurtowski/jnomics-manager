@@ -33,4 +33,23 @@ public class FileUtil {
     public static String getExtension(String name){
         return name.substring(name.lastIndexOf("."));
     }
+    
+    public static void markDeleteOnExit(File[] files){
+        for(File f : files){
+            f.deleteOnExit();
+        }
+    }
+    
+    public static void removeFiles(File[] files){
+        for(File f: files){
+            f.delete();
+        }
+    }
+
+    public static void removeFilesIfExist(File [] files){
+        for(File f : files){
+            if(f.exists())
+                f.delete();
+        }
+    }
 }

@@ -71,8 +71,9 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         logger.info("Starting Bowtie2 process");
         Configuration conf = getAlignConf(inPath,outPath);
         conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.Bowtie2Map");
-        conf.set("mapred.cache.archives",properties.getProperty("hdfs-index-repo")+"/"+organism+"_bowtie.tar.gz#btarchive");
-        conf.set("bowtie_binary","btarchive/bowtie2-align");
+        conf.set("mapred.cache.archives",properties.getProperty("hdfs-index-repo")+"/"+organism+"_bowtie.tar.gz#btarchive"
+                +","+ properties.getProperty("hdfs-index-repo")+"/bowtie.tar.gz#bowtie");
+        conf.set("bowtie_binary","bowtie/bowtie2-align");
         conf.set("bowtie_index", "btarchive/"+organism+".fa");
         conf.set("bowtie_opts",opts);
         conf.set("mapred.job.name",auth.getUsername()+"-bowtie2-"+inPath);
@@ -86,8 +87,9 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         logger.info("Starting Bwa process");
         Configuration conf = getAlignConf(inPath,outPath);
         conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.BWAMap");
-        conf.set("mapred.cache.archives",properties.getProperty("hdfs-index-repo")+"/"+organism+"_bwa.tar.gz#bwaarchive");
-        conf.set("bwa_binary","bwaarchive/bwa");
+        conf.set("mapred.cache.archives",properties.getProperty("hdfs-index-repo")+"/"+organism+"_bwa.tar.gz#bwaarchive"
+                +","+properties.getProperty("hdfs-index-repo")+"/bwa.tar.gz#bwa");
+        conf.set("bwa_binary","bwa/bwa");
         conf.set("bwa_index", "bwaarchive/"+organism+".fa");
         conf.set("bwa_align_opts",alignOpts);
         conf.set("bwa_sampe_opts",sampeOpts);
@@ -110,12 +112,14 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.SamtoolsReduce");
         conf.set("mapred.output.value.groupfn.class","edu.cshl.schatz.jnomics.tools.SamtoolsReduce$SamtoolsGrouper");
         conf.set("mapreduce.partitioner.class","edu.cshl.schatz.jnomics.tools.SamtoolsReduce$SamtoolsPartitioner");
-        conf.set("mapred.cache.archives",properties.getProperty("hdfs-index-repo")+"/"+organism+"_samtools.tar.gz#starchive");
-        conf.set("samtools_binary","starchive/samtools");
-        conf.set("bcftools_binary","starchive/bcftools");
+        conf.set("mapred.cache.archives",properties.getProperty("hdfs-index-repo")+"/"+organism+"_samtools.tar.gz#starchive"
+        +","+properties.getProperty("hdfs-index-repo")+"/samtools.tar.gz#samtools"+","+
+        properties.getProperty("hdfs-index-repo")+"/bcftools.tar.gz#bcftools");
+        conf.set("samtools_binary","samtools/samtools");
+        conf.set("bcftools_binary","bcftools/bcftools");
         conf.set("reference_fa","starchive/"+organism+".fa");
         conf.set("genome_binsize","1000000");
-        conf.setInt("mapred.reduce.tasks",96);
+        conf.setInt("mapred.reduce.tasks",100000);
         conf.set("mapred.job.name",auth.getUsername()+"-snp-"+inPath);
         return launchJobAs(auth.getUsername(), conf);
     }
