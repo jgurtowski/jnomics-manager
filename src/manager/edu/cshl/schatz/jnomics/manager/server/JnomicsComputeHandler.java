@@ -111,6 +111,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.SamtoolsMap");
         conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.SamtoolsReduce");
         conf.set("mapred.output.value.groupfn.class","edu.cshl.schatz.jnomics.tools.SamtoolsReduce$SamtoolsGrouper");
+        conf.set("mapred.reduce.tasks.speculative.execution","false");
         conf.set("mapreduce.partitioner.class","edu.cshl.schatz.jnomics.tools.SamtoolsReduce$SamtoolsPartitioner");
         conf.set("mapred.cache.archives",properties.getProperty("hdfs-index-repo")+"/"+organism+"_samtools.tar.gz#starchive"
         +","+properties.getProperty("hdfs-index-repo")+"/samtools.tar.gz#samtools"+","+
@@ -358,6 +359,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
         conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.GATKCallVarReduce");
         conf.set("mapred.job.name",auth.getUsername()+"-gatk-call-variants");
+        conf.set("mapred.reduce.tasks.speculative.execution","false");
         return launchJobAs(auth.getUsername(), conf);
     }
 

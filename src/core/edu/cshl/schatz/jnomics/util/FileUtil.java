@@ -31,7 +31,9 @@ public class FileUtil {
     }
     
     public static String getExtension(String name){
-        return name.substring(name.lastIndexOf("."));
+        if(name.contains("."))
+            return name.substring(name.lastIndexOf("."));
+        return new String();
     }
     
     public static void markDeleteOnExit(File[] files){

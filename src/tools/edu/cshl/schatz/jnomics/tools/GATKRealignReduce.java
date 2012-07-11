@@ -46,6 +46,7 @@ public class GATKRealignReduce extends GATKBaseReduce<SAMRecordWritable,NullWrit
         return SamtoolsReduce.SamtoolsGrouper.class;
     }
 
+
     @Override
     protected void reduce(SamtoolsMap.SamtoolsKey key, Iterable<SAMRecordWritable> values, final Context context)
             throws IOException, InterruptedException {

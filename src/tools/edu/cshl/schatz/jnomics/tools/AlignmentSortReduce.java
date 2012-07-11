@@ -16,6 +16,8 @@ import org.apache.hadoop.util.ReflectionUtils;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * User: Piyush Kansal
@@ -47,6 +49,15 @@ public class AlignmentSortReduce
     @Override
     public Class<? extends WritableComparator> getGrouperClass() {
         return SamtoolsReduce.SamtoolsGrouper.class;
+    }
+
+    @Override
+    public Map<String,String> getConfModifiers(){
+        return new HashMap<String, String>(){
+            {
+                put("mapred.reduce.tasks.speculative.execution","false");
+            }
+        };
     }
 
     @Override

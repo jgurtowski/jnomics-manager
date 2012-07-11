@@ -18,11 +18,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMRecordWritable, Text, NullWritable> {
 
-    private Throwable readerErr;
     private int reduceIt, binsize;
 
     private final JnomicsArgument samtools_bin_arg = new JnomicsArgument("samtools_binary","Samtools Binary",true);
@@ -76,6 +77,14 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
         }
     }
 
+    @Override
+    public Map<String,String> getConfModifiers(){
+        return new HashMap<String, String>(){
+            {
+                put("mapred.reduce.tasks.speculative.execution","false");
+            }
+        };
+    }
 
     public static class SamtoolsPartitioner extends Partitioner<SamtoolsMap.SamtoolsKey,SAMRecordWritable> {
 
@@ -180,8 +189,7 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
         bcfReaderThread.start();
         bcfReaderThread.join();
         outStream.close();
-        if(readerErr != null)
-            throw new IOException(readerErr);
+
         samtoolsProcess.waitFor();
         bcftoolsProcess.waitFor();
         sambcfLink.join();

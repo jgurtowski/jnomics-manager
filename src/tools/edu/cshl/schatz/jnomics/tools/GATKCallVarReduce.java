@@ -9,6 +9,8 @@ import org.apache.hadoop.io.NullWritable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * User: james
@@ -25,6 +27,19 @@ public class GATKCallVarReduce extends GATKBaseReduce<NullWritable,NullWritable>
     public Class getOutputValueClass() {
         return NullWritable.class;
     }
+
+
+    @Override
+    public Map<String,String> getConfModifiers(){
+        return new HashMap<String, String>(){
+            {
+                put("mapred.reduce.tasks.speculative.execution","false");
+            }
+        };
+    }
+
+
+
 
     @Override
     protected void reduce(SamtoolsMap.SamtoolsKey key, Iterable<SAMRecordWritable> values, Context context)
