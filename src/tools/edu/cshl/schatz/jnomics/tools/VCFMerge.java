@@ -22,15 +22,22 @@ public class VCFMerge {
 
     public static void merge(Path in, Path alignments, Path out, Configuration conf) throws Exception{
 
-        FileSystem fs = FileSystem.get(conf);
+        log.info("in merge : Merging - " + in + ":" + alignments + ":" + out);
 
+        FileSystem fs = FileSystem.get(conf);
+        for(Path p: new Path[]{in,alignments}){
+            if(!fs.exists(p)){
+                throw new Exception("Bad Path: "+ p);
+            }
+        }
         /** Get reference order from header of alignments **/
         List<String> alignmentOrder = new ArrayList<String>();
         boolean found = false;
         SAMRecordWritable samRecordWritable = new SAMRecordWritable();
         AlignmentCollectionWritable alignmentCollection = new AlignmentCollectionWritable();
         for(FileStatus stat: fs.listStatus(alignments)){
-            if(stat.getPath().getName().startsWith("part-m") || stat.getPath().getName().startsWith("part-r")){
+            String pathName = stat.getPath().getName();
+            if(pathName.startsWith("part-m") || pathName.startsWith("part-r")){
                 SequenceFile.Reader reader = new SequenceFile.Reader(fs,stat.getPath(),conf);
                 if(reader.getKeyClass() == AlignmentCollectionWritable.class){
                     reader.next(alignmentCollection);
@@ -85,8 +92,10 @@ public class VCFMerge {
         FSDataOutputStream outStream = fs.create(out);
         boolean firstFile = true;
         for(String ref: alignmentOrder){
-            if(!fileMap.containsKey(ref))
-                throw new Exception("VCF file names (reference names) do not agree with alignment headers");
+            if(!fileMap.containsKey(ref)){
+                log.warn("VCF file names (reference names) do not agree with alignment headers");
+                continue;
+            }
             for(Integer filePart : (List<Integer>)fileMap.get(ref)){
                 Path vcfFile = new Path(in + "/" + ref + "-" + filePart + ".vcf");
                 FSDataInputStream inStream = fs.open(vcfFile);

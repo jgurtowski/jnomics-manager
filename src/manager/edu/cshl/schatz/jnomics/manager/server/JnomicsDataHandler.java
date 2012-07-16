@@ -245,4 +245,39 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         }
         return state;
     }
+
+    @Override
+    public boolean mv(String path, String dest, Authentication auth) throws JnomicsThriftException, TException {
+        FileSystem fs = getFileSystem(auth.getUsername());
+        boolean state = false;
+        try {
+            state = fs.rename(new Path(path),new Path(dest));
+        } catch (IOException e) {
+            throw new JnomicsThriftException(e.toString());
+        }finally{
+            closeFileSystem(fs);
+        }
+        return state;
+    }
+
+    @Override
+    public List<String> listGenomes(Authentication auth) throws JnomicsThriftException, TException {
+        FileSystem fs = getFileSystem(auth.getUsername());
+        List<String> genomeList = new ArrayList<String>();
+        try {
+            FileStatus[] stats = fs.listStatus(new Path(properties.getProperty("hdfs-index-repo")));
+            for(FileStatus stat: stats){
+                String name = stat.getPath().getName();
+                if(name.contains("_samtools.tar.gz")){
+                    genomeList.add(name.substring(0,name.indexOf("_samtools.tar.gz")));
+                }
+            }
+        } catch (IOException e) {
+            throw new JnomicsThriftException(e.toString());
+        }finally{
+            closeFileSystem(fs);
+        }
+
+        return genomeList;
+    }
 }

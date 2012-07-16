@@ -8,15 +8,18 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.thrift.TException;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -36,10 +39,11 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
     }
 
     private Configuration getGenericConf(String inputPath, String outputPath){
-        Configuration.addDefaultResource(properties.getProperty("core-site-xml"));
-        Configuration.addDefaultResource(properties.getProperty("mapred-site-xml"));
-        Configuration.addDefaultResource(properties.getProperty("hdfs-site-xml"));
         Configuration conf = new Configuration();
+        //if you don't give Path's it will not load the files
+        conf.addResource(new Path(properties.getProperty("core-site-xml")));
+        conf.addResource(new Path(properties.getProperty("mapred-site-xml")));
+        conf.addResource(new Path(properties.getProperty("hdfs-site-xml")));
 
         conf.set("mapred.used.genericoptionsparser","true");
         conf.set("mapred.mapper.new-api","true");
@@ -111,8 +115,8 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.SamtoolsMap");
         conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.SamtoolsReduce");
         conf.set("mapred.output.value.groupfn.class","edu.cshl.schatz.jnomics.tools.SamtoolsReduce$SamtoolsGrouper");
-        conf.set("mapred.reduce.tasks.speculative.execution","false");
-        conf.set("mapreduce.partitioner.class","edu.cshl.schatz.jnomics.tools.SamtoolsReduce$SamtoolsPartitioner");
+        conf.set("mapred.reduce.tasks.speculative.execution", "false");
+        conf.set("mapreduce.partitioner.class", "edu.cshl.schatz.jnomics.tools.SamtoolsReduce$SamtoolsPartitioner");
         conf.set("mapred.cache.archives",properties.getProperty("hdfs-index-repo")+"/"+organism+"_samtools.tar.gz#starchive"
         +","+properties.getProperty("hdfs-index-repo")+"/samtools.tar.gz#samtools"+","+
         properties.getProperty("hdfs-index-repo")+"/bcftools.tar.gz#bcftools");
@@ -120,7 +124,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         conf.set("bcftools_binary","bcftools/bcftools");
         conf.set("reference_fa","starchive/"+organism+".fa");
         conf.set("genome_binsize","1000000");
-        conf.setInt("mapred.reduce.tasks",100000);
+        conf.setInt("mapred.reduce.tasks",1024);
         conf.set("mapred.job.name",auth.getUsername()+"-snp-"+inPath);
         return launchJobAs(auth.getUsername(), conf);
     }
@@ -299,22 +303,44 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 
     @Override
     public boolean mergeVCF(String inDir, String inAlignments, String outVCF, Authentication auth) throws JnomicsThriftException, TException {
-        Configuration conf = getGenericConf(inDir,outVCF);
+        final Configuration conf = getGenericConf(inDir,outVCF);
         logger.info("Merging VCF: " + inDir + ":" + inAlignments + ":" + outVCF);
+        final Path in = new Path(inDir);
+        final Path alignments = new Path(inAlignments);
+        final Path out = new Path(outVCF);
+        boolean status  = false;
         try {
-            VCFMerge.merge(new Path(inDir),new Path(inAlignments),new Path(outVCF),conf);
+            status = UserGroupInformation.createRemoteUser(auth.getUsername()).doAs(new PrivilegedExceptionAction<Boolean>() {
+                @Override
+                public Boolean run() throws Exception {
+                    VCFMerge.merge(in,alignments,out,conf);
+                    return true;
+                }
+            });
         }catch (Exception e) {
+            logger.info("Failed to merge: " + e.toString());
             throw new JnomicsThriftException(e.toString());
         }
-        return true;
+        return status;
     }
 
     @Override
     public boolean mergeCovariate(String inDir, String outCov, Authentication auth) throws JnomicsThriftException, TException {
-        Configuration conf = getGenericConf(inDir,outCov);
+        final Configuration conf = getGenericConf(inDir,outCov);
+        final Path in = new Path(inDir);
+        final Path out = new Path(outCov);
+
+        boolean status = false;
         try{
-            CovariateMerge.merge(new Path(inDir), new Path(outCov), conf);
+            status = UserGroupInformation.createRemoteUser(auth.getUsername()).doAs(new PrivilegedExceptionAction<Boolean>() {
+                @Override
+                public Boolean run() throws Exception {
+                    CovariateMerge.merge(in, out, conf);
+                    return true;
+                }
+            });
         }catch(Exception e){
+            logger.info("Failed to merge:" + e.toString());
             throw new JnomicsThriftException(e.toString());
         }
         return true;
@@ -336,7 +362,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         conf.set("reference_fa","gatk/"+organism+".fa");
         conf.set("gatk_jar", "gatk/GenomeAnalysisTK.jar");
         conf.set("genome_binsize","1000000");
-        conf.setInt("mapred.reduce.tasks",96);
+        conf.setInt("mapred.reduce.tasks",1024);
         return conf;
     }
     
@@ -359,7 +385,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
         conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.GATKCallVarReduce");
         conf.set("mapred.job.name",auth.getUsername()+"-gatk-call-variants");
-        conf.set("mapred.reduce.tasks.speculative.execution","false");
+        conf.set("mapred.reduce.tasks.speculative.execution", "false");
         return launchJobAs(auth.getUsername(), conf);
     }
 

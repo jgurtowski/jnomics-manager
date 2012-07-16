@@ -47,7 +47,7 @@ public abstract class AlignmentBaseMap
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
-        readsPerBin = conf.getInt(readsBinArg.getName(),100000);
+        readsPerBin = conf.getInt(readsBinArg.getName(),10000);
         tmpFiles[0] = new File(context.getTaskAttemptID()+".1.fq");
         tmpFiles[1] = new File(context.getTaskAttemptID()+".2.fq");
         FileUtil.markDeleteOnExit(tmpFiles);

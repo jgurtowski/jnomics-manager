@@ -65,6 +65,8 @@ service JnomicsData{
         void close(1: JnomicsThriftHandle handle, 2: Authentication auth) throws (1: JnomicsThriftException je),
         list<JnomicsThriftFileStatus> listStatus(1: string path, 2:Authentication auth) throws (1: JnomicsThriftException je),
         bool remove(1: string path, 2: bool recursive, 3: Authentication auth) throws (1: JnomicsThriftException je),
-        bool mkdir(1: string path, 2: Authentication auth) throws (1: JnomicsThriftException je)
+        bool mkdir(1: string path, 2: Authentication auth) throws (1: JnomicsThriftException je),
+        bool mv(1: string path, 2: string dest, 3:Authentication auth) throws (1: JnomicsThriftException je),
+        list<string> listGenomes(1:Authentication auth) throws (1: JnomicsThriftException je)
 }
 

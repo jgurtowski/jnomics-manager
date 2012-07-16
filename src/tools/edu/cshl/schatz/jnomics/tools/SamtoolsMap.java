@@ -15,7 +15,7 @@ import java.io.IOException;
 
 public class SamtoolsMap extends JnomicsMapper<AlignmentCollectionWritable,NullWritable, SamtoolsMap.SamtoolsKey, SAMRecordWritable> {
 
-    public static final int DEFAULT_GENOME_BINSIZE = 1000000;
+    public static final int DEFAULT_GENOME_BINSIZE = 100000;
     
     private final SamtoolsKey stkey = new SamtoolsKey();
     private int binsize;

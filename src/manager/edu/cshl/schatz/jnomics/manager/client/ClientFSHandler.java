@@ -51,6 +51,7 @@ public class ClientFSHandler extends ClientHandler{
         opts.addOption("put_pe",false,"upload paired end sequencing file");
         opts.addOption("put_se",false,"upload single end sequencing file");
         opts.addOption("mkdir", false, "make a directory");
+        opts.addOption("mv",false,"Move file or directory");
     }
 
     public ClientFSHandler(Properties prop){
@@ -277,6 +278,20 @@ public class ClientFSHandler extends ClientHandler{
         }else if(cl.hasOption("mkdir")){ /******************************mkdir **********************/
             if(arglist.size() < 1){
                 f.printHelp("fs -mkdir <directory>", opts);
+            }
+            if(client.mkdir(arglist.get(0),auth)){
+                System.out.println("Mkdir: "+ arglist.get(0));
+            }else{
+                System.out.println("Failed to mkdir: "+ arglist.get(0));
+            }
+        }else if(cl.hasOption("mv")){
+            if(arglist.size() < 2){
+                f.printHelp("fs -mv <dir/file> <dest>",opts);
+            }
+            if(client.mv(arglist.get(0),arglist.get(1),auth)){
+                System.out.println("Moved "+arglist.get(0)+" to "+arglist.get(1));
+            }else{
+                System.out.println("Failed to move "+arglist.get(0)+" to "+arglist.get(1));
             }
         }else{
             f.printHelp("Unknown Option",opts);

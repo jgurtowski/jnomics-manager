@@ -22,6 +22,7 @@ public class ClientComputeHandler extends ClientHandler {
         taskMap.put("single_reads", ClientSingleReadsHandler.class);
         taskMap.put("gatk", ClientGatkHandler.class);
         taskMap.put("vcf_merge", ClientMergeVCFHandler.class);
+        taskMap.put("list_genomes", ClientGenomeListHandler.class);
     }
 
     @Override
