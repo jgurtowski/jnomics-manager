@@ -21,6 +21,10 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Author: James
+ * Launches Samtools
+ */
 
 public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMRecordWritable, Text, NullWritable> {
 

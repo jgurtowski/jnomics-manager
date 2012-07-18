@@ -9,6 +9,7 @@ import edu.cshl.schatz.jnomics.manager.api.JnomicsThriftHandle;
 import edu.cshl.schatz.jnomics.ob.ReadCollectionWritable;
 import edu.cshl.schatz.jnomics.ob.ReadWritable;
 import edu.cshl.schatz.jnomics.ob.SAMRecordWritable;
+import edu.cshl.schatz.jnomics.tools.PairedEndLoader;
 import edu.cshl.schatz.jnomics.util.*;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -49,6 +50,7 @@ public class ClientFSHandler extends ClientHandler{
         opts.addOption("rm", false, "remove file");
         opts.addOption("rmr", false, "remove recursive (directory)");
         opts.addOption("put_pe",false,"upload paired end sequencing file");
+        opts.addOption("put_pe_i",false,"upload paired end sequencing file (reads interleaved, single file)");
         opts.addOption("put_se",false,"upload single end sequencing file");
         opts.addOption("mkdir", false, "make a directory");
         opts.addOption("mv",false,"Move file or directory");
@@ -193,46 +195,19 @@ public class ClientFSHandler extends ClientHandler{
                 InputStream infile2 = edu.cshl.schatz.jnomics.util.FileUtil.getInputStreamWrapperFromExtension(
                         new FileInputStream(arglist.get(1)),
                         edu.cshl.schatz.jnomics.util.FileUtil.getExtension(arglist.get(1)));
-                FastqParser parser1 = new FastqParser(infile1);
-                FastqParser parser2 = new FastqParser(infile2);
-                String outFile = arglist.get(2).concat(".pe");
 
-                JnomicsThriftFileSystem fs = new JnomicsThriftFileSystem(client,auth);
-                
-
-                NullWritable value = NullWritable.get();
-                ReadCollectionWritable key = new ReadCollectionWritable();
-
-                SequenceFile.Writer writer = SequenceFile.createWriter(fs,new Configuration(),new Path(outFile),
-                        key.getClass(),value.getClass());
-
-                ReadWritable r1= new ReadWritable();
-                ReadWritable r2 = new ReadWritable();
-                key.addRead(r1);
-                key.addRead(r2);
-                Text keyName = new Text();
-                key.setName(keyName);
-
-                FastqParser.FastqRecord record1,record2;
-
-                Iterator<FastqParser.FastqRecord> it1 = parser1.iterator();
-                Iterator<FastqParser.FastqRecord> it2 = parser2.iterator();
-
-                int counter = 0;
-                while(it1.hasNext() && it2.hasNext()){
-                    record1 = it1.next();
-                    record2 = it2.next();
-                    keyName.set(Integer.toString(counter++));
-                    r1.setAll(record1.getName(), record1.getSequence(), record1.getDescription(), record1.getQuality());
-                    r2.setAll(record2.getName(),record2.getSequence(),record2.getDescription(),record2.getQuality());
-                    writer.append(key,value);
-                    if(0 == counter % 100000)
-                        System.out.println(counter);
-                }
-                
-                parser1.close();
-                parser2.close();
-                writer.close();
+                FileSystem fs = new JnomicsThriftFileSystem(client,auth);
+                new PairedEndLoader().load(infile1,infile2,new Path(arglist.get(2)+".pe"),fs);
+            }
+        }else if(cl.hasOption("put_pe_i")){
+            if(arglist.size() < 2){
+                f.printHelp("fs -put_pe_i <reads.fq> <output.pe>",opts);
+            }else{
+                InputStream infile1 = edu.cshl.schatz.jnomics.util.FileUtil.getInputStreamWrapperFromExtension(
+                        new FileInputStream(arglist.get(0)),
+                        edu.cshl.schatz.jnomics.util.FileUtil.getExtension(arglist.get(0)));
+                FileSystem fs = new JnomicsThriftFileSystem(client,auth);
+                new PairedEndLoader().load(infile1,new Path(arglist.get(1)+".pe"),fs);
             }
         }else if(cl.hasOption("put_se")){ /************************** put-se *********************/
             if(arglist.size() < 2){

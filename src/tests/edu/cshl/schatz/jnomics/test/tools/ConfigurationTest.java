@@ -1,5 +1,6 @@
 package edu.cshl.schatz.jnomics.test.tools;
 
+import edu.cshl.schatz.jnomics.tools.BWAMap;
 import junit.framework.TestCase;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -15,5 +16,6 @@ public class ConfigurationTest extends TestCase {
         conf.addResource(new Path("/home/james/sources/hadoop/conf/mapred-site.xml"));
         System.out.println(conf);
         System.out.println(conf.get("mapred.output.compression.type"));
+        System.out.println(BWAMap.class.getName());
     }
 }

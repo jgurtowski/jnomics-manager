@@ -17,6 +17,9 @@ import java.io.IOException;
 
 /**
  * User: james
+ * Base Class for Aligners
+ * Does the work of writing the fastq files to disk and allows hooks for
+ * launching aligners
  */
 public abstract class AlignmentBaseMap
         extends JnomicsMapper<Writable, NullWritable, AlignmentCollectionWritable, NullWritable> {

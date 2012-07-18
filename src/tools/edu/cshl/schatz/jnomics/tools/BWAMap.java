@@ -10,7 +10,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-
+/**
+ * Author: James
+ *
+ * Distributed BWA
+ */
 public class BWAMap extends AlignmentBaseMap{
 
     private File[] tmpFiles;

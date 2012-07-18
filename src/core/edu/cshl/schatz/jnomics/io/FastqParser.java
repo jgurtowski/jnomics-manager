@@ -71,6 +71,20 @@ public class FastqParser implements Iterable<FastqParser.FastqRecord> {
         public FastqRecord() {
         }
 
+        public FastqRecord(FastqRecord other) {
+            this.name = other.getName();
+            this.sequence = other.getSequence();
+            this.description = other.getDescription();
+            this.quality = other.getQuality();
+        }
+
+        public void copy(FastqRecord other){
+            this.name = other.getName();
+            this.sequence = other.getSequence();
+            this.description = other.getDescription();
+            this.quality = other.getQuality();
+        }
+        
         public void setName(String name) {
             this.name = name;
         }

@@ -14,8 +14,6 @@ import java.io.IOException;
 /**
  * User: james
  */
-
-
 public class AlignmentFilterMap extends
         JnomicsMapper<AlignmentCollectionWritable, NullWritable, AlignmentCollectionWritable, NullWritable> {
 
