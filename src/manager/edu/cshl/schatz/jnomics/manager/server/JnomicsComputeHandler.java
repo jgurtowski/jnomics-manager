@@ -1,14 +1,13 @@
 package edu.cshl.schatz.jnomics.manager.server;
 
 import edu.cshl.schatz.jnomics.manager.api.*;
-import edu.cshl.schatz.jnomics.tools.CovariateMerge;
-import edu.cshl.schatz.jnomics.tools.VCFMerge;
+import edu.cshl.schatz.jnomics.mapreduce.JnomicsJobBuilder;
+import edu.cshl.schatz.jnomics.tools.*;
 import edu.cshl.schatz.jnomics.util.TextUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.RunningJob;
@@ -34,38 +33,20 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 
     private Properties properties;
 
+    private static final int NUM_REDUCE_TASKS = 1024;
+    
     public JnomicsComputeHandler(Properties systemProperties){
         properties = systemProperties;
     }
 
-    private Configuration getGenericConf(String inputPath, String outputPath){
+    private Configuration getGenericConf(){
         Configuration conf = new Configuration();
         //if you don't give Path's it will not load the files
         conf.addResource(new Path(properties.getProperty("core-site-xml")));
         conf.addResource(new Path(properties.getProperty("mapred-site-xml")));
         conf.addResource(new Path(properties.getProperty("hdfs-site-xml")));
-
-        conf.set("mapred.used.genericoptionsparser","true");
-        conf.set("mapred.mapper.new-api","true");
-        conf.set("mapred.reducer.new-api","true");
-        conf.set("mapred.input.dir",inputPath);
-        conf.set("mapred.output.dir",outputPath);
         conf.set("fs.default.name", properties.getProperty("hdfs-default-name"));
         conf.set("mapred.jar", properties.getProperty("jnomics-jar-path"));
-        return conf;
-    }
-
-    private Configuration getAlignConf(String inputPath, String outputPath){
-        Configuration conf = getGenericConf(inputPath,outputPath);
-        conf.set("mapred.create.symlink","yes");
-        conf.set("mapreduce.job.cache.archives.visibilities","true");
-        conf.set("mapred.mapoutput.key.class","edu.cshl.schatz.jnomics.ob.AlignmentCollectionWritable");
-        conf.set("mapred.output.key.class","edu.cshl.schatz.jnomics.ob.AlignmentCollectionWritable");
-        conf.set("mapreduce.inputformat.class","org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat");
-        conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
-        conf.set("mapreduce.outputformat.class","org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat");
-        conf.set("mapred.mapoutput.value.class","org.apache.hadoop.io.NullWritable");
-        conf.set("mapred.reduce.tasks","0");
         return conf;
     }
 
@@ -73,14 +54,22 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
     public JnomicsThriftJobID alignBowtie(String inPath, String organism, String outPath, String opts, Authentication auth)
             throws TException, JnomicsThriftException {
         logger.info("Starting Bowtie2 process");
-        Configuration conf = getAlignConf(inPath,outPath);
-        conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.Bowtie2Map");
-        conf.set("mapred.cache.archives",properties.getProperty("hdfs-index-repo")+"/"+organism+"_bowtie.tar.gz#btarchive"
-                +","+ properties.getProperty("hdfs-index-repo")+"/bowtie.tar.gz#bowtie");
-        conf.set("bowtie_binary","bowtie/bowtie2-align");
-        conf.set("bowtie_index", "btarchive/"+organism+".fa");
-        conf.set("bowtie_opts",opts);
-        conf.set("mapred.job.name",auth.getUsername()+"-bowtie2-"+inPath);
+        JnomicsJobBuilder builder = new JnomicsJobBuilder(getGenericConf(),Bowtie2Map.class);
+        builder.setInputPath(inPath)
+                .setOutputPath(outPath)
+                .setParam("bowtie_binary","bowtie/bowtie2-align")    
+                .setParam("bowtie_index", "btarchive/"+organism+".fa")
+                .setParam("bowtie_opts",opts)
+                .setJobName(auth.getUsername()+"-bowtie2-"+inPath)
+                .addArchive(properties.getProperty("hdfs-index-repo")+"/"+organism+"_bowtie.tar.gz#btarchive")
+                .addArchive(properties.getProperty("hdfs-index-repo") + "/bowtie.tar.gz#bowtie");
+
+        Configuration conf = null;
+        try{
+            conf = builder.getJobConf();
+        }catch(Exception e){
+            throw new JnomicsThriftException(e.toString());
+        }
         return launchJobAs(auth.getUsername(),conf);
     }
 
@@ -89,50 +78,54 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
                                        String alignOpts, String sampeOpts, Authentication auth)
             throws TException, JnomicsThriftException {
         logger.info("Starting Bwa process");
-        Configuration conf = getAlignConf(inPath,outPath);
-        conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.BWAMap");
-        conf.set("mapred.cache.archives",properties.getProperty("hdfs-index-repo")+"/"+organism+"_bwa.tar.gz#bwaarchive"
-                +","+properties.getProperty("hdfs-index-repo")+"/bwa.tar.gz#bwa");
-        conf.set("bwa_binary","bwa/bwa");
-        conf.set("bwa_index", "bwaarchive/"+organism+".fa");
-        conf.set("bwa_align_opts",alignOpts);
-        conf.set("bwa_sampe_opts",sampeOpts);
-        conf.set("mapred.job.name",auth.getUsername()+"-bwa-"+inPath);
+        JnomicsJobBuilder builder = new JnomicsJobBuilder(getGenericConf(), BWAMap.class);
+        builder.setInputPath(inPath)
+                .setOutputPath(outPath)
+                .setParam("bwa_binary","bwa/bwa")
+                .setParam("bwa_index", "bwaarchive/"+organism+".fa")
+                .setParam("bwa_align_opts",alignOpts)
+                .setParam("bwa_sampe_opts",sampeOpts)
+                .setJobName(auth.getUsername()+"-bwa-"+inPath)
+                .addArchive(properties.getProperty("hdfs-index-repo")+"/"+organism+"_bwa.tar.gz#bwaarchive")
+                .addArchive(properties.getProperty("hdfs-index-repo")+"/bwa.tar.gz#bwa");
+
+        Configuration conf = null;
+        try{
+            conf = builder.getJobConf();
+        }catch(Exception e){
+            throw new JnomicsThriftException(e.toString());
+        }
         return launchJobAs(auth.getUsername(),conf);
     }
 
     @Override
     public JnomicsThriftJobID snpSamtools(String inPath, String organism, String outPath, Authentication auth) throws TException, JnomicsThriftException {
-        Configuration conf = getGenericConf(inPath,outPath);
-        conf.set("mapred.create.symlink","yes");
-        conf.set("mapreduce.job.cache.archives.visibilities","true");
-        conf.set("mapred.mapoutput.key.class","edu.cshl.schatz.jnomics.tools.SamtoolsMap$SamtoolsKey");
-        conf.set("mapred.mapoutput.value.class","edu.cshl.schatz.jnomics.ob.SAMRecordWritable");
-        conf.set("mapred.output.key.class","org.apache.hadoop.io.Text");
-        conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
-        conf.set("mapreduce.inputformat.class","org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat");
-        conf.set("mapreduce.outputformat.class","org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat");
-        conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.SamtoolsMap");
-        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.SamtoolsReduce");
-        conf.set("mapred.output.value.groupfn.class","edu.cshl.schatz.jnomics.tools.SamtoolsReduce$SamtoolsGrouper");
-        conf.set("mapred.reduce.tasks.speculative.execution", "false");
-        conf.set("mapreduce.partitioner.class", "edu.cshl.schatz.jnomics.tools.SamtoolsReduce$SamtoolsPartitioner");
-        conf.set("mapred.cache.archives",properties.getProperty("hdfs-index-repo")+"/"+organism+"_samtools.tar.gz#starchive"
-        +","+properties.getProperty("hdfs-index-repo")+"/samtools.tar.gz#samtools"+","+
-        properties.getProperty("hdfs-index-repo")+"/bcftools.tar.gz#bcftools");
-        conf.set("samtools_binary","samtools/samtools");
-        conf.set("bcftools_binary","bcftools/bcftools");
-        conf.set("reference_fa","starchive/"+organism+".fa");
-        conf.set("genome_binsize","1000000");
-        conf.setInt("mapred.reduce.tasks",1024);
-        conf.set("mapred.job.name",auth.getUsername()+"-snp-"+inPath);
+        JnomicsJobBuilder builder = new JnomicsJobBuilder(getGenericConf(), SamtoolsMap.class, SamtoolsReduce.class);
+        builder.setInputPath(inPath)
+                .setOutputPath(outPath)
+                .addArchive(properties.getProperty("hdfs-index-repo")+"/"+organism+"_samtools.tar.gz#starchive")
+                .addArchive(properties.getProperty("hdfs-index-repo")+"/samtools.tar.gz#samtools")
+                .addArchive(properties.getProperty("hdfs-index-repo")+"/bcftools.tar.gz#bcftools")
+                .setParam("samtools_binary","samtools/samtools")
+                .setParam("bcftools_binary","bcftools/bcftools")
+                .setParam("reference_fa","starchive/"+organism+".fa")
+                .setParam("genome_binsize","1000000")
+                .setReduceTasks(NUM_REDUCE_TASKS)
+                .setJobName(auth.getUsername()+"-snp-"+inPath);
+
+        Configuration conf = null;
+        try{
+            conf = builder.getJobConf();
+        }catch (Exception e){
+            throw new JnomicsThriftException(e.toString());
+        }
         return launchJobAs(auth.getUsername(), conf);
     }
 
     @Override
     public JnomicsThriftJobStatus getJobStatus(final JnomicsThriftJobID jobID, final Authentication auth)
             throws TException, JnomicsThriftException {
-        JnomicsThriftJobStatus runningJob = new JobClientRunner<JnomicsThriftJobStatus>(auth.getUsername(),
+        return new JobClientRunner<JnomicsThriftJobStatus>(auth.getUsername(),
                 new Configuration(),properties){
             @Override
             public JnomicsThriftJobStatus jobClientTask() throws Exception {
@@ -149,7 +142,6 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
                         job.reduceProgress());
             }
         }.run();
-        return runningJob;
     }
 
     @Override
@@ -203,7 +195,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
             }catch (Exception t){
                 throw new JnomicsThriftException(t.toString());
             }
-            new JnomicsThriftException(e.toString());
+            throw new JnomicsThriftException(e.toString());
         }
 
         Path manifest,f1;
@@ -242,19 +234,19 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         Path manifest = writeManifest(new File(file1).getName(), new String[]{data}, auth.getUsername());
 
         Path manifestlog = new Path(manifest +".log");
-        Configuration conf = getGenericConf(manifest.toString(),manifestlog.toString());
-        conf.set("mapred.job.name",new File(file1).getName()+"-pe-conversion");
-        conf.set("mapred.mapoutput.key.class","org.apache.hadoop.io.IntWritable");
-        conf.set("mapred.mapoutput.value.class","edu.cshl.schatz.jnomics.ob.writable.PEMetaInfo");
-        conf.set("mapred.output.key.class","org.apache.hadoop.io.Text");
-        conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
-        conf.set("mapreduce.inputformat.class","org.apache.hadoop.mapreduce.lib.input.TextInputFormat");
-        conf.set("mapreduce.outputformat.class","org.apache.hadoop.mapreduce.lib.output.TextOutputFormat");
-        conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.PELoaderMap");
-        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.PELoaderReduce");
-        conf.setInt("mapred.reduce.tasks",1);
-        String username = auth.getUsername();
-        JnomicsThriftJobID id = launchJobAs(username,conf);
+        JnomicsJobBuilder builder = new JnomicsJobBuilder(getGenericConf(),PELoaderMap.class,PELoaderReduce.class);
+        builder.setJobName(new File(file1).getName()+"-pe-conversion")
+                .setInputPath(manifest.toString())
+                .setOutputPath(manifestlog.toString())
+                .setParam("mapreduce.outputformat.class","org.apache.hadoop.mapreduce.lib.output.TextOutputFormat")
+                .setReduceTasks(1);
+        Configuration conf;
+        try{
+            conf = builder.getJobConf();
+        }catch(Exception e){
+            throw new JnomicsThriftException(e.toString());
+        }
+        JnomicsThriftJobID id = launchJobAs(auth.getUsername(),conf);
         logger.info("submitted job: " + conf.get("mapred.job.name") + " " + id);
         return new JnomicsThriftJobID(id);
     }
@@ -271,17 +263,19 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         
         Path manifestlog = new Path(manifest + ".log");
 
-        Configuration conf = getGenericConf(manifest.toString(),manifestlog.toString());
-        conf.set("mapred.job.name",fileBase+"-pe-conversion");
-        conf.set("mapred.mapoutput.key.class","org.apache.hadoop.io.IntWritable");
-        conf.set("mapred.mapoutput.value.class","edu.cshl.schatz.jnomics.ob.writable.SEMetaInfo");
-        conf.set("mapred.output.key.class","org.apache.hadoop.io.Text");
-        conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
-        conf.set("mapreduce.inputformat.class","org.apache.hadoop.mapreduce.lib.input.TextInputFormat");
-        conf.set("mapreduce.outputformat.class","org.apache.hadoop.mapreduce.lib.output.TextOutputFormat");
-        conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.SELoaderMap");
-        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.SELoaderReduce");
-        conf.setInt("mapred.reduce.tasks",1);
+        JnomicsJobBuilder builder = new JnomicsJobBuilder(getGenericConf(),SELoaderMap.class,SELoaderReduce.class);
+        builder.setJobName(fileBase+"-pe-conversion")
+                .setInputPath(manifest.toString())
+                .setOutputPath(manifestlog.toString())
+                .setReduceTasks(1);
+
+        Configuration conf = null;
+        try{
+            conf = builder.getJobConf();
+        }catch(Exception e){
+            throw new JnomicsThriftException(e.toString());
+        }
+
         JnomicsThriftJobID id = launchJobAs(username,conf);
         logger.info("submitted job: " + conf.get("mapred.job.name") + " " + id);
         return new JnomicsThriftJobID(id);        
@@ -303,7 +297,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 
     @Override
     public boolean mergeVCF(String inDir, String inAlignments, String outVCF, Authentication auth) throws JnomicsThriftException, TException {
-        final Configuration conf = getGenericConf(inDir,outVCF);
+        final Configuration conf = getGenericConf();
         logger.info("Merging VCF: " + inDir + ":" + inAlignments + ":" + outVCF);
         final Path in = new Path(inDir);
         final Path alignments = new Path(inAlignments);
@@ -326,7 +320,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 
     @Override
     public boolean mergeCovariate(String inDir, String outCov, Authentication auth) throws JnomicsThriftException, TException {
-        final Configuration conf = getGenericConf(inDir,outCov);
+        final Configuration conf = getGenericConf();
         final Path in = new Path(inDir);
         final Path out = new Path(outCov);
 
@@ -343,79 +337,88 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
             logger.info("Failed to merge:" + e.toString());
             throw new JnomicsThriftException(e.toString());
         }
-        return true;
+        return status;
     }
 
-    private Configuration getGATKConf(String inPath, String outPath, String organism){
-        Configuration conf = getGenericConf(inPath,outPath);
-        conf.set("mapred.create.symlink","yes");
-        conf.set("mapreduce.job.cache.archives.visibilities","true");
-        conf.set("mapred.mapoutput.key.class","edu.cshl.schatz.jnomics.tools.SamtoolsMap$SamtoolsKey");
-        conf.set("mapred.mapoutput.value.class","edu.cshl.schatz.jnomics.ob.SAMRecordWritable");
-        conf.set("mapreduce.inputformat.class","org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat");
-        conf.set("mapreduce.outputformat.class","org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat");
-        conf.set("mapreduce.map.class","edu.cshl.schatz.jnomics.tools.SamtoolsMap");
-        conf.set("mapred.output.value.groupfn.class","edu.cshl.schatz.jnomics.tools.SamtoolsReduce$SamtoolsGrouper");
-        conf.set("mapreduce.partitioner.class","edu.cshl.schatz.jnomics.tools.SamtoolsReduce$SamtoolsPartitioner");
-        conf.set("mapred.cache.archives",properties.getProperty("hdfs-index-repo")+"/"+organism+"_gatk.tar.gz#gatk");
-        conf.set("samtools_binary","gatk/samtools");
-        conf.set("reference_fa","gatk/"+organism+".fa");
-        conf.set("gatk_jar", "gatk/GenomeAnalysisTK.jar");
-        conf.set("genome_binsize","1000000");
-        conf.setInt("mapred.reduce.tasks",1024);
-        return conf;
+    private JnomicsJobBuilder getGATKConfBuilder(String inPath, String outPath, String organism){
+        JnomicsJobBuilder builder = new JnomicsJobBuilder(getGenericConf(),SamtoolsMap.class);
+        builder.setParam("samtools_binary","gatk/samtools")
+                .setParam("reference_fa","gatk/"+organism+".fa")
+                .setParam("gatk_jar", "gatk/GenomeAnalysisTK.jar")
+                .setParam("genome_binsize","1000000")
+                .setReduceTasks(NUM_REDUCE_TASKS)
+                .addArchive(properties.getProperty("hdfs-index-repo")+"/"+organism+"_gatk.tar.gz#gatk")
+                .setInputPath(inPath)
+                .setOutputPath(outPath);
+        return builder;
     }
     
     @Override
     public JnomicsThriftJobID gatkRealign(String inPath, String organism, String outPath, Authentication auth)
             throws JnomicsThriftException, TException {
-        Configuration conf = getGATKConf(inPath,outPath,organism);
-        conf.set("mapred.output.key.class","edu.cshl.schatz.jnomics.ob.SAMRecordWritable");
-        conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
-        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.GATKRealignReduce");
-        conf.set("mapred.job.name",auth.getUsername()+"-gatk-realign-"+inPath);
+        JnomicsJobBuilder builder = getGATKConfBuilder(inPath, outPath, organism);
+        builder.setReducerClass(GATKRealignReduce.class)
+                .setJobName(auth.getUsername()+"-gatk-realign-"+inPath);
+        Configuration conf = null;
+        try{
+            conf = builder.getJobConf();
+        }catch(Exception e){
+            throw new JnomicsThriftException(e.toString());
+        }
         return launchJobAs(auth.getUsername(), conf);
     }
 
     @Override
     public JnomicsThriftJobID gatkCallVariants(String inPath, String organism, String outPath, Authentication auth)
             throws JnomicsThriftException, TException {
-        Configuration conf = getGATKConf(inPath,outPath,organism);
-        conf.set("mapred.output.key.class","org.apache.hadoop.io.NullWritable");
-        conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
-        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.GATKCallVarReduce");
-        conf.set("mapred.job.name",auth.getUsername()+"-gatk-call-variants");
-        conf.set("mapred.reduce.tasks.speculative.execution", "false");
+
+        JnomicsJobBuilder builder = getGATKConfBuilder(inPath,outPath,organism);
+        builder.setReducerClass(GATKCallVarReduce.class)
+                .setJobName(auth.getUsername()+"-gatk-call-variants");
+        Configuration conf = null;
+        try{
+            conf = builder.getJobConf();
+        }catch(Exception e){
+            throw new JnomicsThriftException(e.toString());
+        }
         return launchJobAs(auth.getUsername(), conf);
     }
 
     @Override
     public JnomicsThriftJobID gatkCountCovariates(String inPath, String organism, String vcfMask, String outPath, Authentication auth)
             throws JnomicsThriftException, TException {
-        Configuration conf = getGATKConf(inPath,outPath,organism);
-        conf.set("mapred.output.key.class","org.apache.hadoop.io.NullWritable");
-        conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
-        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.GATKCountCovariatesReduce");
+        JnomicsJobBuilder builder = getGATKConfBuilder(inPath, outPath, organism);
         Path vcfMaskPath = new Path(vcfMask);
-        conf.set("mared.cache.files",vcfMaskPath.toString()+"#"+vcfMaskPath.getName());
-        conf.set("tmpfiles",vcfMaskPath.toString()+"#"+vcfMaskPath.getName());
-        conf.set("vcf_mask",vcfMaskPath.getName());
-        conf.set("mapred.job.name",auth.getUsername()+"-gatk-count-covariates");
+        builder.setReducerClass(GATKCountCovariatesReduce.class)
+                .setParam("mared.cache.files",vcfMaskPath.toString()+"#"+vcfMaskPath.getName())
+                .setParam("tmpfiles",vcfMaskPath.toString()+"#"+vcfMaskPath.getName())
+                .setParam("vcf_mask",vcfMaskPath.getName())
+                .setJobName(auth.getUsername()+"-gatk-count-covariates");
+        Configuration conf = null;
+        try{
+            conf = builder.getJobConf();
+        }catch(Exception e){
+            throw new JnomicsThriftException(e.toString());
+        }
         return launchJobAs(auth.getUsername(),conf);
     }
 
     @Override
     public JnomicsThriftJobID gatkRecalibrate(String inPath, String organism, String recalFile, String outPath, Authentication auth)
             throws JnomicsThriftException, TException {
-        Configuration conf = getGATKConf(inPath,outPath,organism);
-        conf.set("mapred.output.key.class","edu.cshl.schatz.jnomics.ob.SAMRecordWritable");
-        conf.set("mapred.output.value.class","org.apache.hadoop.io.NullWritable");
-        conf.set("mapreduce.reduce.class","edu.cshl.schatz.jnomics.tools.GATKRecalibrateReduce");
+        JnomicsJobBuilder builder = getGATKConfBuilder(inPath, outPath, organism);
         Path recalFilePath = new Path(recalFile);
-        conf.set("mapred.cache.files", recalFilePath.toString()+"#"+recalFilePath.getName());
-        conf.set("tmpfiles", recalFilePath.toString()+"#"+recalFilePath.getName());
-        conf.set("recal_file",recalFilePath.getName());
-        conf.set("mapred.job.name",auth.getUsername()+"-gatk-recalibrate");
+        builder.setReducerClass(GATKRecalibrateReduce.class)
+                .setParam("mapred.cache.files", recalFilePath.toString()+"#"+recalFilePath.getName())
+                .setParam("tmpfiles", recalFilePath.toString()+"#"+recalFilePath.getName())
+                .setParam("recal_file",recalFilePath.getName())
+                .setJobName(auth.getUsername()+"-gatk-recalibrate");
+        Configuration conf = null;
+        try{
+            conf = builder.getJobConf();
+        }catch(Exception e){
+            throw new JnomicsThriftException(e.toString());
+        }
         return launchJobAs(auth.getUsername(),conf);
     }
 }

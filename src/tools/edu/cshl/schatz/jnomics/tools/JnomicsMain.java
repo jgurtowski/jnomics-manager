@@ -1,10 +1,12 @@
 package edu.cshl.schatz.jnomics.tools;
 
 
+import edu.cshl.schatz.jnomics.cli.ExtendedGnuParser;
 import edu.cshl.schatz.jnomics.cli.JnomicsArgument;
+import edu.cshl.schatz.jnomics.mapreduce.JnomicsJobBuilder;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsMapper;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsReducer;
-import org.apache.commons.cli.MissingOptionException;
+import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -156,9 +158,95 @@ public class JnomicsMain extends Configured implements Tool {
         }
     }
 
-
     @Override
     public int run(String[] args) throws Exception {
+        /** Standard options **/
+        Options options = new Options();
+        options.addOption(OptionBuilder.withArgName("required").withLongOpt("mapper").isRequired(true).hasArg().create());
+        options.addOption(OptionBuilder.withArgName("optional").withLongOpt("reducer").isRequired(false).hasArg().create());
+        options.addOption(OptionBuilder.withArgName("required").withLongOpt("in").isRequired(true).hasArg().create());
+        options.addOption(OptionBuilder.withArgName("required").withLongOpt("out").isRequired(true).hasArg().create());
+        options.addOption(OptionBuilder.withArgName("optional").withLongOpt("archives").isRequired(false).hasArg().create());
+        options.addOption(OptionBuilder.withArgName("optional").withLongOpt("num_reducers").isRequired(false).hasArg().create());
+
+        ExtendedGnuParser parser = new ExtendedGnuParser(true);
+        HelpFormatter formatter = new HelpFormatter();
+        CommandLine cli = null;
+        try{
+            cli = parser.parse(options,args,false);
+        }catch(ParseException e){
+            formatter.printHelp(e.toString(),options);
+            return -1;
+        }
+        
+        JnomicsJobBuilder builder = null;
+
+        /** Set Mapper Class **/
+        Class<? extends JnomicsMapper> mapperClass;
+        if(mapperClasses.containsKey(cli.getOptionValue("mapper"))){
+            mapperClass = mapperClasses.get(cli.getOptionValue("mapper"));
+            builder = new JnomicsJobBuilder(getConf(),mapperClass);
+        }else{
+            formatter.printHelp("bad mapper: "+ cli.getOptionValue("mapper"),options);
+            return -1;
+        }
+
+        /** Set Reducer class **/
+        if(cli.hasOption("reducer")){
+            if(reducerClasses.containsKey(cli.getOptionValue("reducer"))){
+                builder.setReducerClass(reducerClasses.get(cli.getOptionValue("reducer")));
+            }else{
+                formatter.printHelp("bad reducer: " + cli.getOptionValue("reducer"),options);
+                return -1;
+            }
+        }
+
+        /** Set input and output path**/
+        builder.setInputPath(cli.getOptionValue("in"))
+                .setOutputPath(cli.getOptionValue("out"));
+
+        /**Add any archives to distributed cache, requires full uri (hdfs://namenode:port/...)**/
+        if(cli.hasOption("archives")){
+            String []archives = cli.getOptionValue("archives").split(",");
+            for(String archive : archives){
+                builder.addArchive(archive);
+            }
+        }
+
+        /**Set num reduce tasks**/
+        if(cli.hasOption("num_reducers")){
+            builder.setReduceTasks(Integer.parseInt(cli.getOptionValue("num_reducers")));
+        }
+        
+        /**get additional args from mapper and reducer selected**/
+        for( JnomicsArgument arg: builder.getArgs() ){
+            options.addOption(OptionBuilder.withArgName(arg.isRequired() ? "required" : "optional")
+                    .withLongOpt(arg.getName()).isRequired(arg.isRequired()).hasArg().create());
+        }
+
+        /**reparse the arguments with the additonal options**/
+        try{
+            cli = parser.parse(options,args);
+        }catch(ParseException e){
+            formatter.printHelp(e.toString(),options);
+            return -1;
+        }
+
+        for(JnomicsArgument arg: builder.getArgs()){
+            if(cli.hasOption(arg.getName())){
+                builder.setParam(arg.getName(),cli.getOptionValue(arg.getName()));
+            }
+        }
+
+        builder.setJobName(mapperClass.getSimpleName()+"-"+cli.getOptionValue("in"));
+        
+        Job job = new Job(builder.getJobConf());
+        job.setJarByClass(JnomicsMain.class);
+        return job.waitForCompletion(true) ? 0 : 1;
+    }
+    
+
+    public int runold(String[] args) throws Exception {
         JnomicsArgument map_arg = new JnomicsArgument("mapper", "map task", true);
         JnomicsArgument red_arg = new JnomicsArgument("reducer", "reduce task", false);
         JnomicsArgument in_arg = new JnomicsArgument("in", "Input path", true);

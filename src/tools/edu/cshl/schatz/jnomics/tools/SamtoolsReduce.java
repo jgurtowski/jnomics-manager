@@ -185,7 +185,6 @@ public class SamtoolsReduce extends JnomicsReducer<SamtoolsMap.SamtoolsKey, SAMR
         Thread bcftoolsProcessErr = new Thread(new ThreadedStreamConnector(bcftoolsProcess.getErrorStream(),System.err));
         samtoolsProcessErr.start();
         bcftoolsProcessErr.start();
-
         String out = context.getConfiguration().get("mapred.output.dir");
         Path outFile = new Path(out,key.getRef()+"-"+key.getBin()+".vcf");
         OutputStream outStream = hdfs.create(outFile);

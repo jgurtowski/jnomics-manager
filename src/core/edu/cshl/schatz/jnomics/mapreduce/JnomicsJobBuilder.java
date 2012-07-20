@@ -21,7 +21,7 @@ public class JnomicsJobBuilder {
 
     List<String> archives = new ArrayList<String>();
     
-    JnomicsJobBuilder(Configuration conf,
+    public JnomicsJobBuilder(Configuration conf,
                       Class<? extends JnomicsMapper> mapper,
                       Class<? extends JnomicsReducer> reducer){
         this.conf = conf;
@@ -29,15 +29,15 @@ public class JnomicsJobBuilder {
         this.reducer = reducer;
     }
 
-    JnomicsJobBuilder(Class<? extends JnomicsMapper> mapper, Class<? extends JnomicsReducer> reducer){
+    public JnomicsJobBuilder(Class<? extends JnomicsMapper> mapper, Class<? extends JnomicsReducer> reducer){
         this(new Configuration(), mapper,reducer);
     }
     
-    JnomicsJobBuilder(Class<? extends JnomicsMapper> mapper){
+    public JnomicsJobBuilder(Class<? extends JnomicsMapper> mapper){
         this(mapper,null);
     }
 
-    JnomicsJobBuilder(Configuration conf, Class<? extends JnomicsMapper> mapper){
+    public JnomicsJobBuilder(Configuration conf, Class<? extends JnomicsMapper> mapper){
         this(conf,mapper,null);
     }
 
@@ -55,6 +55,11 @@ public class JnomicsJobBuilder {
     
     public JnomicsJobBuilder setJobName(String name){
         conf.set("mapred.job.name", name);
+        return this;
+    }
+
+    public JnomicsJobBuilder setReducerClass(Class<? extends JnomicsReducer> reducer){
+        this.reducer = reducer;
         return this;
     }
     
@@ -78,7 +83,7 @@ public class JnomicsJobBuilder {
         return this;
     }
     
-    public JnomicsJobBuilder setOuputPath(String out){
+    public JnomicsJobBuilder setOutputPath(String out){
         conf.set("mapred.output.dir", out);
         return this;
     }
@@ -101,7 +106,7 @@ public class JnomicsJobBuilder {
         ifNotSetConf("mapred.used.genericoptionsparser","true");
         ifNotSetConf("mapred.mapper.new-api", "true");
         ifNotSetConf("mapred.reducer.new-api", "true");
-        ifNotSetConf("mapred.outputformat.class",SequenceFileOutputFormat.class.getName());
+        ifNotSetConf("mapreduce.outputformat.class",SequenceFileOutputFormat.class.getName());
         
         conf.set("mapreduce.map.class",mapper.getName());
         JnomicsMapper mapperInst = mapper.newInstance();
@@ -112,7 +117,9 @@ public class JnomicsJobBuilder {
         jArgs = mapperInst.getArgs();
 
         if(null != reducer){
+            conf.set("mapreduce.reduce.class",reducer.getName());
             JnomicsReducer reducerInst = reducer.newInstance();
+
             addConfModifiers(reducerInst.getConfModifiers());
             jArgs = (JnomicsArgument []) ArrayUtils.addAll(jArgs,reducerInst.getArgs());
             Class grouper = reducerInst.getGrouperClass();
@@ -127,6 +134,7 @@ public class JnomicsJobBuilder {
         }else{
             conf.set("mapred.output.key.class", conf.get("mapred.mapoutput.key.class"));
             conf.set("mapred.output.value.class", conf.get("mapred.mapoutput.value.class"));
+            conf.setInt("mapred.reduce.tasks",0);
         }
         
         if(archives.size() > 0){
