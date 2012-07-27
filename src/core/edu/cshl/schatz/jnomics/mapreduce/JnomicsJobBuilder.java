@@ -113,6 +113,9 @@ public class JnomicsJobBuilder {
         conf.set("mapreduce.inputformat.class",mapperInst.getInputFormat().getName());
         conf.set("mapred.mapoutput.key.class",mapperInst.getOutputKeyClass().getName());
         conf.set("mapred.mapoutput.value.class", mapperInst.getOutputValueClass().getName());
+        if(null != mapperInst.getCombinerClass()){
+            conf.set("mapred.combiner.class",mapperInst.getCombinerClass().getName());
+        }
         addConfModifiers(mapperInst.getConfModifiers());
         jArgs = mapperInst.getArgs();
 

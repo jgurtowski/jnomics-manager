@@ -5,7 +5,7 @@ import oauth.signpost.OAuthConsumer;
 import oauth.signpost.basic.DefaultOAuthConsumer;
 
 
-public class OAauthClient {
+public class OAuthClient {
 	
 	public static void main(String[] args) {
 		

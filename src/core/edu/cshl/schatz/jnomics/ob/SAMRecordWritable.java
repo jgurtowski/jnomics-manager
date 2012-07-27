@@ -43,7 +43,11 @@ public class SAMRecordWritable implements WritableComparable,FastqStringProvider
     }
 
     public void set(SAMRecord samRecord){
-        header.set(samRecord.getHeader().getTextHeader().trim());
+        SAMFileHeader samHeader = samRecord.getHeader();
+        String head = "@HD";
+        if(null != samHeader.getTextHeader())
+            head = samHeader.getTextHeader().trim();
+        header.set(head);
         readName.set(samRecord.getReadName());
         flags.set(samRecord.getFlags());
         referenceName.set(samRecord.getReferenceName());

@@ -296,7 +296,8 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
     }
 
     @Override
-    public boolean mergeVCF(String inDir, String inAlignments, String outVCF, Authentication auth) throws JnomicsThriftException, TException {
+    public boolean mergeVCF(String inDir, String inAlignments, String outVCF, Authentication auth)
+            throws JnomicsThriftException, TException {
         final Configuration conf = getGenericConf();
         logger.info("Merging VCF: " + inDir + ":" + inAlignments + ":" + outVCF);
         final Path in = new Path(inDir);

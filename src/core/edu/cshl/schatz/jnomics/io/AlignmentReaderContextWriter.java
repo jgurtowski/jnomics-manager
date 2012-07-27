@@ -22,20 +22,25 @@ public class AlignmentReaderContextWriter{
 
     public AlignmentReaderContextWriter(boolean pairedEnd){
         this.pairedEnd = pairedEnd;
+        System.out.println("PairedEnd ? :" + pairedEnd);
         alignmentCollection.addAlignment(new SAMRecordWritable());
         if(pairedEnd)
             alignmentCollection.addAlignment(new SAMRecordWritable());
+
+        System.out.println("Collectionsize: " + alignmentCollection.size());
     }
 
     public void read(InputStream inputStream, Mapper.Context context)
             throws IOException, InterruptedException {
         SAMFileReader reader = new SAMFileReader(inputStream);
+
         reader.setValidationStringency(SAMFileReader.ValidationStringency.LENIENT);
         Counter mapped_counter = context.getCounter(JnomicsCounter.Alignment.MAPPED);
         Counter totalreads_counter = context.getCounter(JnomicsCounter.Alignment.TOTAL);
         int i = 0;
         for(SAMRecord record: reader){
             alignmentCollection.getAlignment(i).set(record);
+
             totalreads_counter.increment(1);
             if(2 == (2 & record.getFlags()))
                 mapped_counter.increment(1);
