@@ -90,7 +90,6 @@ public class ReadKmerDistMap extends JnomicsMapper<ReadCollectionWritable, NullW
         in = new BufferedReader(new InputStreamReader(klookup.getInputStream()));
         errorWriter = new Thread(new ThreadedStreamConnector(klookup.getErrorStream(), System.err));
         errorWriter.start();
-        Thread.sleep(60000);
     }
 
     @Override
