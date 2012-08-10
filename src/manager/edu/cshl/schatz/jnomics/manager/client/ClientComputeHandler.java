@@ -4,7 +4,6 @@ import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * User: james
@@ -23,6 +22,7 @@ public class ClientComputeHandler extends ClientHandler {
         taskMap.put("gatk", ClientGatkHandler.class);
         taskMap.put("vcf_merge", ClientMergeVCFHandler.class);
         taskMap.put("list_genomes", ClientGenomeListHandler.class);
+        taskMap.put("samtools_pipeline", ClientSamtoolsPipelineHandler.class);
     }
 
     @Override

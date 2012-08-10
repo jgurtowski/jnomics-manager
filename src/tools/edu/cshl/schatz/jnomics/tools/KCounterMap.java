@@ -7,9 +7,8 @@ import edu.cshl.schatz.jnomics.ob.ReadCollectionWritable;
 import edu.cshl.schatz.jnomics.ob.ReadWritable;
 import edu.cshl.schatz.jnomics.util.Nucleotide;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
@@ -18,11 +17,11 @@ import java.io.IOException;
 /**
  * Takes reads from a ReadCollectionWritable and breaks them into kmers of size kmer_size
  */
-public class KCounterMap extends JnomicsMapper<ReadCollectionWritable, NullWritable, FixedKmerWritable, IntWritable> {
+public class KCounterMap extends JnomicsMapper<ReadCollectionWritable, NullWritable, FixedKmerWritable, LongWritable> {
 
-    private final JnomicsArgument ksize_arg = new JnomicsArgument("kmer_size", "Kmer size for counting", true);
+    private final JnomicsArgument ksize_arg = new JnomicsArgument("kmer_size", "KmerAndCount size for counting", true);
 
-    private final IntWritable one = new IntWritable(1);
+    private final LongWritable one = new LongWritable(1);
     
     private FixedKmerWritable kmerWritable, revKmerWritable;
 
@@ -34,7 +33,7 @@ public class KCounterMap extends JnomicsMapper<ReadCollectionWritable, NullWrita
 
     @Override
     public Class getOutputValueClass() {
-        return IntWritable.class;
+        return LongWritable.class;
     }
 
     @Override
@@ -46,13 +45,13 @@ public class KCounterMap extends JnomicsMapper<ReadCollectionWritable, NullWrita
     public Class<? extends Reducer> getCombinerClass(){
         return KCounterReduce.class;
     }
-    
+
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
         int ksize = Integer.parseInt(conf.get(ksize_arg.getName()));
         if(ksize < 1 )
-            throw new InterruptedException("Bad Kmer Size");
+            throw new InterruptedException("Bad KmerAndCount Size");
         kmerWritable = new FixedKmerWritable(ksize);
         revKmerWritable = new FixedKmerWritable(ksize);
     }

@@ -11,6 +11,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.thrift.TException;
 import org.slf4j.LoggerFactory;
@@ -205,7 +206,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
             manifest = new Path("manifests/"+f1.getName()+"-"+UUID.randomUUID().toString()+".manifest");
             outStream = fs.create(manifest);
             for(String line: data){
-                outStream.write((data + "\n").getBytes());
+                outStream.write((line + "\n").getBytes());
             }
         }catch(Exception e){
             throw new JnomicsThriftException(e.toString());
@@ -421,5 +422,145 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
             throw new JnomicsThriftException(e.toString());
         }
         return launchJobAs(auth.getUsername(),conf);
+    }
+
+    @Override
+    public JnomicsThriftJobID runSNPPipeline(final String inPath, final String organism, final String outPath,
+                                             final Authentication auth)
+            throws JnomicsThriftException, TException {
+        logger.info("Running snpPipeline...");
+        logger.info("Loading manifest");
+        String initPath = inPath;
+        boolean loadShock = false;
+        if(inPath.startsWith("http")){
+            String []shockPaths = inPath.split(",");
+            String []manifestData = new String[shockPaths.length];
+            int i=0;
+            for(String p: shockPaths){
+                manifestData[i++] = p + "\t" + new Path(new Path(outPath,"http_load"),"d"+i).toString();
+            }
+            Path manifest = writeManifest("shockdata",manifestData,auth.getUsername());
+            initPath = manifest.toString();
+            loadShock = true;
+        }
+        
+        logger.info("Starting new Thread");
+        
+        final String nxtPath = initPath;
+        final boolean loadShockfinal = loadShock;
+        
+        new Thread(new Runnable(){
+            @Override
+            public void run() {
+                String alignIn;
+                if(loadShockfinal){
+                    final JnomicsJobBuilder shockBuilder = new JnomicsJobBuilder(getGenericConf(),HttpLoaderMap.class,
+                            HttpLoaderReduce.class);
+                    shockBuilder.setInputPath(nxtPath)
+                            .setOutputPath(nxtPath+"out")
+                            .setJobName("http-load"+nxtPath)
+                            .setReduceTasks(10);
+                    String proxy;
+                    if(null != (proxy = properties.getProperty("http-proxy",null)))
+                        shockBuilder.setParam("proxy",proxy);
+                    Job shockLoadJob = null;
+                    try{
+                        shockLoadJob = UserGroupInformation.createRemoteUser(auth.getUsername()).doAs(new PrivilegedExceptionAction<Job>() {
+                            @Override
+                            public Job run() throws Exception {
+                                Job job = new Job(shockBuilder.getJobConf());
+                                job.waitForCompletion(true);
+                                return job;
+                            }
+                        });
+                    }catch(Exception e){
+                        logger.error("Failed to load data:" + e.toString());
+                        return;
+                    }
+                    try{
+                        if(null == shockLoadJob || !shockLoadJob.isSuccessful()){
+                            logger.error("Failed to load data from shock");
+                            return;
+                        }
+                    }catch(Exception e){
+                        logger.error(e.getMessage());
+                        return;
+                    }
+                    alignIn = new Path(outPath,"http_load").toString();
+                }else{
+                    alignIn = inPath;
+                }
+                
+                Path alignOut = new Path(outPath,"bowtie_align");
+
+                final JnomicsJobBuilder alignBuilder = new JnomicsJobBuilder(getGenericConf(),Bowtie2Map.class);
+                alignBuilder.setInputPath(alignIn)
+                        .setOutputPath(alignOut.toString())
+                        .setParam("bowtie_binary", "bowtie/bowtie2-align")
+                        .setParam("bowtie_index", "btarchive/"+organism+".fa")
+                        .setJobName(auth.getUsername() + "-bowtie2-" + inPath)
+                        .addArchive(properties.getProperty("hdfs-index-repo")+"/"+organism+"_bowtie.tar.gz#btarchive")
+                        .addArchive(properties.getProperty("hdfs-index-repo") + "/bowtie.tar.gz#bowtie");
+                Job j = null;
+                try{
+                    j = UserGroupInformation.createRemoteUser(auth.getUsername()).doAs(new PrivilegedExceptionAction<Job>() {
+                        @Override
+                        public Job run() throws Exception {
+                            Job job = new Job(alignBuilder.getJobConf());
+                            job.waitForCompletion(true);
+                            return job;
+                        }
+                    });
+                }catch(Exception e){
+                    logger.error("Failed to align:" + e.toString());
+                    return;
+                }
+
+                logger.info("Alignment task finished");
+                
+                Path snpIn = alignOut;
+                Path snpOut = new Path(outPath, "snp");
+                Job snpJob = null;
+                try {
+                    if(null != j && j.isSuccessful()){
+                        logger.info("alignment successful, running samtools");
+                        final JnomicsJobBuilder snpBuilder = new JnomicsJobBuilder(getGenericConf(), SamtoolsMap.class, SamtoolsReduce.class);
+                        snpBuilder.setInputPath(snpIn.toString())
+                                .setOutputPath(snpOut.toString())
+                                .addArchive(properties.getProperty("hdfs-index-repo")+"/"+organism+"_samtools.tar.gz#starchive")
+                                .addArchive(properties.getProperty("hdfs-index-repo")+"/samtools.tar.gz#samtools")
+                                .addArchive(properties.getProperty("hdfs-index-repo")+"/bcftools.tar.gz#bcftools")
+                                .setParam("samtools_binary","samtools/samtools")
+                                .setParam("bcftools_binary","bcftools/bcftools")
+                                .setParam("reference_fa","starchive/"+organism+".fa")
+                                .setParam("genome_binsize","1000000")
+                                .setReduceTasks(NUM_REDUCE_TASKS)
+                                .setJobName(auth.getUsername()+"-snp-"+inPath);
+
+                        snpJob = UserGroupInformation.createRemoteUser(auth.getUsername()).doAs(new PrivilegedExceptionAction<Job>() {
+                            @Override
+                            public Job run() throws Exception {
+                                Job job = new Job(snpBuilder.getJobConf());
+                                job.waitForCompletion(true);
+                                return job;
+                            }
+                        });
+                    }
+                } catch (Exception e) {
+                    logger.error("Failed to call snps" + e.toString());
+                    return;
+                }
+
+                try{
+                    if(null != snpJob && snpJob.isSuccessful()){
+                        mergeVCF(snpOut.toString(),alignOut.toString(),new Path(outPath,"out.vcf").toString(),auth);
+                    }
+                }catch(Exception e){
+                    logger.error("Problem merging covariates");
+                    return;
+                }
+            }
+        }).start();
+        return new JnomicsThriftJobID();
     }
 }

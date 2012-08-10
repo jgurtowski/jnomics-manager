@@ -39,6 +39,9 @@ public class JnomicsMain extends Configured implements Tool {
                     put("seloader_map",SELoaderMap.class);
                     put("read_filter_map",AlignmentFilterMap.class);
                     put("reverse_complement_map", ReverseComplementMap.class);
+                    put("kcounterhist_map", KCounterHistMap.class);
+                    put("readkmerdist_map", ReadKmerDistMap.class);
+                    put("httploader_map", HttpLoaderMap.class);
                 }
             };
 
@@ -57,6 +60,8 @@ public class JnomicsMain extends Configured implements Tool {
                     put("gatk_call_reduce", GATKCallVarReduce.class);
                     put("gatk_countcovariates_reduce", GATKCountCovariatesReduce.class);
                     put("gatk_recalibrate_reduce", GATKRecalibrateReduce.class);
+                    put("kcounterhist_reduce",KCounterHistReduce.class);
+                    put("httploader_reduce", HttpLoaderReduce.class);
                 }
             };
 

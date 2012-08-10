@@ -4,13 +4,15 @@ import edu.cshl.schatz.jnomics.manager.api.Authentication;
 import edu.cshl.schatz.jnomics.manager.api.JnomicsCompute;
 import edu.cshl.schatz.jnomics.manager.api.JnomicsData;
 import edu.cshl.schatz.jnomics.manager.common.JnomicsApiConfig;
+import org.apache.thrift.async.TAsyncClientManager;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
+import org.apache.thrift.transport.*;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import java.util.Properties;
 
 /**
@@ -51,4 +53,17 @@ public class JnomicsThriftClient {
 
         return client;
     }
+    
+
+    public static JnomicsCompute.AsyncClient getAsyncComputeClient() throws IOException, TTransportException{
+        Properties properties = JnomicsApiConfig.getClientProperties();
+
+        String thriftComputeHost = properties.getProperty("compute-server-host");
+        int thriftComputePort = Integer.parseInt(properties.getProperty("compute-server-port"));
+        JnomicsCompute.AsyncClient client = new JnomicsCompute.AsyncClient(new TBinaryProtocol.Factory(),
+                new TAsyncClientManager(), new TNonblockingSocket(thriftComputeHost,thriftComputePort));
+
+        return client;
+    }
+    
 }

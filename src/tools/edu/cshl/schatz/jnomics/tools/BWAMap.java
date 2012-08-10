@@ -4,7 +4,7 @@ import edu.cshl.schatz.jnomics.cli.JnomicsArgument;
 import edu.cshl.schatz.jnomics.io.AlignmentReaderContextWriter;
 import edu.cshl.schatz.jnomics.io.ThreadedStreamConnector;
 import edu.cshl.schatz.jnomics.util.FileUtil;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -38,7 +38,7 @@ public class BWAMap extends AlignmentBaseMap{
         JnomicsArgument[] superArgs = super.getArgs();
         JnomicsArgument[] newArgs = new JnomicsArgument[]{bwa_aln_opts_arg,bwa_binary_arg,bwa_idx_arg,
                 bwa_sampe_opts_arg,bwa_samse_opts_arg};
-        return (JnomicsArgument [])ArrayUtils.addAll(superArgs, newArgs);
+        return ArrayUtils.addAll(superArgs, newArgs);
     }
 
     @Override

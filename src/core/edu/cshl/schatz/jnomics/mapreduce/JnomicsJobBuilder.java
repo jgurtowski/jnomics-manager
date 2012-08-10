@@ -2,7 +2,7 @@ package edu.cshl.schatz.jnomics.mapreduce;
 
 import edu.cshl.schatz.jnomics.cli.JnomicsArgument;
 import edu.cshl.schatz.jnomics.util.TextUtil;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 
@@ -94,7 +94,7 @@ public class JnomicsJobBuilder {
         JnomicsArgument[] args = mapperInst.getArgs();
         if(null != reducer){
             JnomicsReducer reducerInst = reducer.newInstance();
-            args = (JnomicsArgument[]) ArrayUtils.addAll(args,reducerInst.getArgs());
+            args = ArrayUtils.addAll(args, reducerInst.getArgs());
         }
         return args;
     }
@@ -114,7 +114,7 @@ public class JnomicsJobBuilder {
         conf.set("mapred.mapoutput.key.class",mapperInst.getOutputKeyClass().getName());
         conf.set("mapred.mapoutput.value.class", mapperInst.getOutputValueClass().getName());
         if(null != mapperInst.getCombinerClass()){
-            conf.set("mapred.combiner.class",mapperInst.getCombinerClass().getName());
+            conf.set("mapreduce.combine.class",mapperInst.getCombinerClass().getName());
         }
         addConfModifiers(mapperInst.getConfModifiers());
         jArgs = mapperInst.getArgs();

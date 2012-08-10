@@ -28,6 +28,7 @@
 	<dependency org="commons-httpclient" name="commons-httpclient" rev="20020423" conf="default->master"/>
 	<dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.9.7" conf="default->master"/>
 	<dependency org="org.codehaus.jackson" name="jackson-core-asl" rev="1.9.7" conf="default->master"/>
-      <dependency org="org.apache.thrift" name="libthrift" rev="0.8.0" conf="default->master"/>
+        <dependency org="org.apache.thrift" name="libthrift" rev="0.8.0" conf="default->master"/>
+        <dependency org="org.apache.commons" name="commons-lang3" rev="3.1" conf="default->master" />
     </dependencies>
 </ivy-module>

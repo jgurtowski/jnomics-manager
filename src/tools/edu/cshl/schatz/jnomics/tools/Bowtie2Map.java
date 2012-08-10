@@ -3,11 +3,7 @@ package edu.cshl.schatz.jnomics.tools;
 import edu.cshl.schatz.jnomics.cli.JnomicsArgument;
 import edu.cshl.schatz.jnomics.io.AlignmentReaderContextWriter;
 import edu.cshl.schatz.jnomics.io.ThreadedStreamConnector;
-import edu.cshl.schatz.jnomics.ob.AlignmentCollectionWritable;
-import edu.cshl.schatz.jnomics.util.FileUtil;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.thirdparty.guava.common.io.Files;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +26,7 @@ public class Bowtie2Map extends AlignmentBaseMap{
     public JnomicsArgument[] getArgs(){
         JnomicsArgument[] superArgs = super.getArgs();
         JnomicsArgument[] newArgs = new JnomicsArgument[]{bowtie_opts,bowtie_idx,bowtie_binary};
-        return (JnomicsArgument[] )ArrayUtils.addAll(superArgs,newArgs);
+        return ArrayUtils.addAll(superArgs, newArgs);
     }
 
     @Override

@@ -54,7 +54,8 @@ service JnomicsCompute{
         JnomicsThriftJobID gatkRealign (1: string inPath, 2: string organism, 3: string outPath, 4: Authentication auth) throws (1: JnomicsThriftException je),
         JnomicsThriftJobID gatkCallVariants (1: string inPath, 2: string organism, 3: string outPath, 4: Authentication auth) throws (1:JnomicsThriftException je),
         JnomicsThriftJobID gatkCountCovariates (1: string inPath, 2: string organism, 3: string vcfMask, 4: string outPath, 5: Authentication auth) throws (1:JnomicsThriftException je),
-        JnomicsThriftJobID gatkRecalibrate (1: string inPath, 2: string organism, 3: string recalFile, 4: string outPath, 5: Authentication auth) throws (1: JnomicsThriftException je)
+        JnomicsThriftJobID gatkRecalibrate (1: string inPath, 2: string organism, 3: string recalFile, 4: string outPath, 5: Authentication auth) throws (1: JnomicsThriftException je),
+        JnomicsThriftJobID runSNPPipeline(1: string inPath, 2: string organism, 3: string outPath, 4: Authentication auth) throws (1: JnomicsThriftException je)
 }
 
 service JnomicsData{
@@ -68,5 +69,6 @@ service JnomicsData{
         bool mkdir(1: string path, 2: Authentication auth) throws (1: JnomicsThriftException je),
         bool mv(1: string path, 2: string dest, 3:Authentication auth) throws (1: JnomicsThriftException je),
         list<string> listGenomes(1:Authentication auth) throws (1: JnomicsThriftException je)
+
 }
 
