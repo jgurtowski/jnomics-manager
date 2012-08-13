@@ -6,7 +6,7 @@ To build the jnomics jar type:
 
 $> ant jar
 
-Compile and runtime dependencies should be downloaded by ivy
+Compile and runtime dependencies should be downloaded by ivy, except for thrift which you should download and install from source (configure --with-java=yes && make && make install)
 
 Add $HOME/bin/jnomics/bin to your command path.
 
