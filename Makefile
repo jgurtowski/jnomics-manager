@@ -16,7 +16,7 @@ all:
 
 deploy: deploy-jnomics
 
-test: deploy
+test:
 	cd ${SERVICE_TEST_DIR} && ./test_var_service.sh
 
 make-dest-dir:
