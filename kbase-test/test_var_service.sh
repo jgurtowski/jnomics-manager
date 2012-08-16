@@ -69,4 +69,7 @@ jmessage "Downloading complete vcf"
 #download vcf
 jkbase fs -get ${TEST_DIR}/yeastrename_test.vcf
 
+jmessage "Tests Complete: PASSED, Have a nice day :)"
+
 rm -f yeastrename.1.fq yeastrename.2.fq 
+
