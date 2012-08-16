@@ -1,0 +1,5 @@
+
+Edit /kb/deployment/services/jnomics/conf/jnomics-kbase-client.properties, 
+     change username to your kbase username
+
+Run /kb/deployment/services/jnomics/bin/jkbase to interact with the cluster

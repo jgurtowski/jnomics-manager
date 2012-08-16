@@ -28,3 +28,4 @@ deploy-jnomics: make-dest-dir build-jnomics
 	cp conf/jnomics-kbase-client.properties $(SERVICE_CONF_DIR)
 	cp conf/jnomics-kbase-server.properties $(SERVICE_CONF_DIR)
 	cp bin/jkbase $(SERVICE_BIN_DIR)
+	cp docs/KBASE-DEPLOY-README $(SERVICE_DIR)
