@@ -1,3 +1,5 @@
 #!/bin/bash
 
-java -cp jnomics.jar:../conf edu.cshl.schatz.jnomics.manager.client.JnomicsKbaseClient $*
+SCRIPT_PATH=`dirname "$0"`
+
+java -cp ${SCRIPT_PATH}/../lib/jnomics.jar:${SCRIPT_PATH}/../conf edu.cshl.schatz.jnomics.manager.client.JnomicsKbaseClient $*
