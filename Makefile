@@ -3,6 +3,7 @@ SERVICE_DIR=$(TARGET)/services/$(SERVICE)
 SERVICE_BIN_DIR=$(SERVICE_DIR)/bin
 SERVICE_CONF_DIR=$(SERVICE_DIR)/conf
 SERVICE_LIB_DIR=$(SERVICE_DIR)/lib
+SERVICE_TEST_DIR=$(SERVICE_DIR)/test
 
 TARGET ?= /kb/deployment
 
@@ -15,10 +16,14 @@ all:
 
 deploy: deploy-jnomics
 
+test: deploy
+	cd ${SERVICE_TEST_DIR} && ./test_var_service.sh
+
 make-dest-dir:
 	mkdir -p $(SERVICE_BIN_DIR)
 	mkdir -p $(SERVICE_CONF_DIR)
 	mkdir -p $(SERVICE_LIB_DIR)
+	mkdir -p $(SERVICE_TEST_DIR)
 
 build-jnomics:
 	ant jar
@@ -29,3 +34,6 @@ deploy-jnomics: make-dest-dir build-jnomics
 	cp conf/jnomics-kbase-server.properties $(SERVICE_CONF_DIR)
 	cp bin/jkbase $(SERVICE_BIN_DIR)
 	cp docs/KBASE-DEPLOY-README $(SERVICE_DIR)
+	cp kbase-test/test_var_service.sh $(SERVICE_TEST_DIR)
+
+
