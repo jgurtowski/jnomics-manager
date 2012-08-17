@@ -2,7 +2,7 @@
 
 set -e
 
-export PATH=/kb/deployment/services/jnomics/bin:$PATH
+export PATH=/kb/deployment/bin:$PATH
 
 TEST_DIR="test_${$}"
 
@@ -26,10 +26,6 @@ function jmessage {
 jmessage "Removing stale files"
 rm -f yeastrename.1.fq yeastrename.2.fq 
 rm -f yeastrename_test.vcf
-#jkbase fs -rmr yeastrename_test.pe
-#jkbase fs -rmr yeastrename_test_bwa
-#jkbase fs -rmr yeastrename_test_snp
-#jkbase fs -rm yeastrename_test.vcf
 
 #run new stuff
 jmessage "Downloading test data"
