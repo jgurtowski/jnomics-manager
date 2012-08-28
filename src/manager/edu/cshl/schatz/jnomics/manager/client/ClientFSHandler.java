@@ -77,7 +77,8 @@ public class ClientFSHandler extends ClientHandler{
 
         String username = properties.getProperty("username");
         String password = properties.getProperty("password");
-        final Authentication auth = new Authentication(username,password);
+        String token = properties.getProperty("token");
+        final Authentication auth = new Authentication(username,password,token);
 
         BasicParser parser = new BasicParser();
         CommandLine cl = parser.parse(opts,args.toArray(new String[0]));

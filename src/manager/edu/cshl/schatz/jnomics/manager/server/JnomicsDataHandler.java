@@ -22,6 +22,8 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
     private final Map<UUID, JnomicsFsHandle> handleMap = Collections.synchronizedMap(new HashMap<UUID, JnomicsFsHandle>());
     private Properties properties;
 
+    private JnomicsServiceAuthentication authenticator;
+
     private final ThreadLocal bufferCache = new ThreadLocal(){
         @Override
         protected Object initialValue() {
@@ -31,6 +33,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
 
     public JnomicsDataHandler(Properties props){
         properties = props;
+        authenticator = new JnomicsServiceAuthentication();
     }
 
     private UUID getUniqueUUID(){
@@ -77,9 +80,14 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
 
     @Override
     public JnomicsThriftHandle create(String path, Authentication auth) throws TException, JnomicsThriftException {
-        log.info("Creating file: " + path + " for user: "+ auth.getUsername());
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        
+        log.info("Creating file: " + path + " for user: "+ username);
 
-        FileSystem fs = getFileSystem(auth.getUsername());
+        FileSystem fs = getFileSystem(username);
 
         FSDataOutputStream stream = null;
         try {
@@ -98,9 +106,14 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
 
     @Override
     public JnomicsThriftHandle open(String path, Authentication auth) throws JnomicsThriftException, TException {
-        log.info("Opening file: " + path + " for user: " + auth.getUsername());
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+
+        log.info("Opening file: " + path + " for user: " + username);
         
-        FileSystem fs = getFileSystem(auth.getUsername());
+        FileSystem fs = getFileSystem(username);
         FSDataInputStream stream = null;
         try{
             stream = fs.open(new Path(path));
@@ -179,7 +192,14 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
 
     @Override
     public List<JnomicsThriftFileStatus> listStatus(String path, Authentication auth) throws TException, JnomicsThriftException {
-        FileSystem fs = getFileSystem(auth.getUsername());
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        
+        log.info("Getting file status of "+ path + " for user "+ username);
+        
+        FileSystem fs = getFileSystem(username);
         FileStatus[] stats;
         try{
             stats = fs.listStatus(new Path(path));
@@ -215,12 +235,19 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
 
     @Override
     public boolean remove(String path, boolean recursive, Authentication auth) throws JnomicsThriftException, TException {
-        FileSystem fs = getFileSystem(auth.getUsername());
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+
+        log.info("Removing path "+ path+ " for user "+ username);
+        
+        FileSystem fs = getFileSystem(username);
         boolean state = false;
         try{
             state = fs.delete(new Path(path), recursive);
         }catch(Exception e){
-            log.error("Problem deleting " + path + " for user: " + auth.getUsername());
+            log.error("Problem deleting " + path + " for user: " + username);
             e.printStackTrace();
             throw new JnomicsThriftException(e.toString());
         }finally{
@@ -232,12 +259,19 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
 
     @Override
     public boolean mkdir(String path, Authentication auth) throws JnomicsThriftException, TException {
-        FileSystem fs = getFileSystem(auth.getUsername());
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        
+        log.info("Making directory "+ path + " for user " + username);
+        
+        FileSystem fs = getFileSystem(username);
         boolean state = false;
         try{
             state = fs.mkdirs(new Path(path));
         }catch(Exception e){
-            log.error("Problem making directory "+ path + " for user: " + auth.getUsername());
+            log.error("Problem making directory "+ path + " for user: " + username);
             e.printStackTrace();
             throw new JnomicsThriftException(e.toString());
         }finally{
@@ -248,7 +282,14 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
 
     @Override
     public boolean mv(String path, String dest, Authentication auth) throws JnomicsThriftException, TException {
-        FileSystem fs = getFileSystem(auth.getUsername());
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        
+        log.info("Moving "+ path +" to "+ dest +  " for user "+ username);
+        
+        FileSystem fs = getFileSystem(username);
         boolean state = false;
         try {
             state = fs.rename(new Path(path),new Path(dest));
@@ -262,7 +303,14 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
 
     @Override
     public List<String> listGenomes(Authentication auth) throws JnomicsThriftException, TException {
-        FileSystem fs = getFileSystem(auth.getUsername());
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        
+        log.info("Listing genomes for user "+ username);
+        
+        FileSystem fs = getFileSystem(username);
         List<String> genomeList = new ArrayList<String>();
         try {
             FileStatus[] stats = fs.listStatus(new Path(properties.getProperty("hdfs-index-repo")));

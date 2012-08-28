@@ -13,18 +13,6 @@ import java.util.Properties;
 
 public class JnomicsComputeServer {
 
-/*    public static class JnomicsServerSocket extends TServerSocket{
-        public JnomicsServerSocket(int port) throws TTransportException {
-            super(port);
-        }
-
-        public getClientIP(){
-            getServerSocket()
-        }
-
-    }*/
-
-
     public static void main(String []args) throws TTransportException, IOException {
 
         Properties prop = JnomicsApiConfig.getServerProperties();

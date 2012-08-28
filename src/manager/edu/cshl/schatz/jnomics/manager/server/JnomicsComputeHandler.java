@@ -36,8 +36,11 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 
     private static final int NUM_REDUCE_TASKS = 1024;
     
+    private JnomicsServiceAuthentication authenticator;
+    
     public JnomicsComputeHandler(Properties systemProperties){
         properties = systemProperties;
+        authenticator = new JnomicsServiceAuthentication();
     }
 
     private Configuration getGenericConf(){
@@ -51,17 +54,23 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         return conf;
     }
 
+
     @Override
     public JnomicsThriftJobID alignBowtie(String inPath, String organism, String outPath, String opts, Authentication auth)
             throws TException, JnomicsThriftException {
-        logger.info("Starting Bowtie2 process");
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        
+        logger.info("Starting Bowtie2 process for user " + username);
         JnomicsJobBuilder builder = new JnomicsJobBuilder(getGenericConf(),Bowtie2Map.class);
         builder.setInputPath(inPath)
                 .setOutputPath(outPath)
                 .setParam("bowtie_binary","bowtie/bowtie2-align")    
                 .setParam("bowtie_index", "btarchive/"+organism+".fa")
                 .setParam("bowtie_opts",opts)
-                .setJobName(auth.getUsername()+"-bowtie2-"+inPath)
+                .setJobName(username+"-bowtie2-"+inPath)
                 .addArchive(properties.getProperty("hdfs-index-repo")+"/"+organism+"_bowtie.tar.gz#btarchive")
                 .addArchive(properties.getProperty("hdfs-index-repo") + "/bowtie.tar.gz#bowtie");
 
@@ -71,14 +80,19 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         }catch(Exception e){
             throw new JnomicsThriftException(e.toString());
         }
-        return launchJobAs(auth.getUsername(),conf);
+        return launchJobAs(username,conf);
     }
 
     @Override
     public JnomicsThriftJobID alignBWA(String inPath, String organism, String outPath, 
                                        String alignOpts, String sampeOpts, Authentication auth)
             throws TException, JnomicsThriftException {
-        logger.info("Starting Bwa process");
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+
+        logger.info("Starting Bwa process for user " + username);
         JnomicsJobBuilder builder = new JnomicsJobBuilder(getGenericConf(), BWAMap.class);
         builder.setInputPath(inPath)
                 .setOutputPath(outPath)
@@ -86,7 +100,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
                 .setParam("bwa_index", "bwaarchive/"+organism+".fa")
                 .setParam("bwa_align_opts",alignOpts)
                 .setParam("bwa_sampe_opts",sampeOpts)
-                .setJobName(auth.getUsername()+"-bwa-"+inPath)
+                .setJobName(username+"-bwa-"+inPath)
                 .addArchive(properties.getProperty("hdfs-index-repo")+"/"+organism+"_bwa.tar.gz#bwaarchive")
                 .addArchive(properties.getProperty("hdfs-index-repo")+"/bwa.tar.gz#bwa");
 
@@ -96,11 +110,17 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         }catch(Exception e){
             throw new JnomicsThriftException(e.toString());
         }
-        return launchJobAs(auth.getUsername(),conf);
+        return launchJobAs(username,conf);
     }
 
     @Override
     public JnomicsThriftJobID snpSamtools(String inPath, String organism, String outPath, Authentication auth) throws TException, JnomicsThriftException {
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        logger.info("Running samtools pipeline for user: "+ username);
+        
         JnomicsJobBuilder builder = new JnomicsJobBuilder(getGenericConf(), SamtoolsMap.class, SamtoolsReduce.class);
         builder.setInputPath(inPath)
                 .setOutputPath(outPath)
@@ -112,7 +132,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
                 .setParam("reference_fa","starchive/"+organism+".fa")
                 .setParam("genome_binsize","1000000")
                 .setReduceTasks(NUM_REDUCE_TASKS)
-                .setJobName(auth.getUsername()+"-snp-"+inPath);
+                .setJobName(username+"-snp-"+inPath);
 
         Configuration conf = null;
         try{
@@ -120,20 +140,26 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         }catch (Exception e){
             throw new JnomicsThriftException(e.toString());
         }
-        return launchJobAs(auth.getUsername(), conf);
+        return launchJobAs(username, conf);
     }
 
     @Override
     public JnomicsThriftJobStatus getJobStatus(final JnomicsThriftJobID jobID, final Authentication auth)
             throws TException, JnomicsThriftException {
-        return new JobClientRunner<JnomicsThriftJobStatus>(auth.getUsername(),
+        final String username = authenticator.authenticate(auth);
+        if(null == username){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        logger.info("Getting job status for user "+ username);
+
+        return new JobClientRunner<JnomicsThriftJobStatus>(username,
                 new Configuration(),properties){
             @Override
             public JnomicsThriftJobStatus jobClientTask() throws Exception {
 
                 RunningJob job = getJobClient().getJob(JobID.forName(jobID.getJob_id()));
                 return new JnomicsThriftJobStatus(job.getID().toString(),
-                        auth.getUsername(),
+                        username,
                         null,
                         job.isComplete(),
                         job.getJobState(),
@@ -147,7 +173,13 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 
     @Override
     public List<JnomicsThriftJobStatus> getAllJobs(Authentication auth) throws JnomicsThriftException, TException {
-        JobStatus[] statuses = new JobClientRunner<JobStatus[]>(auth.getUsername(),new Configuration(),properties){
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        logger.info("Getting all job status for user "+ username);
+
+        JobStatus[] statuses = new JobClientRunner<JobStatus[]>(username,new Configuration(),properties){
             @Override
             public JobStatus[] jobClientTask() throws Exception {
                 logger.info("getting jobs");
@@ -157,7 +189,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         logger.info("got jobs");
         List<JnomicsThriftJobStatus> newStats = new ArrayList<JnomicsThriftJobStatus>();
         for(JobStatus stat: statuses){
-            if(0 == auth.getUsername().compareTo(stat.getUsername()))
+            if(0 == username.compareTo(stat.getUsername()))
                 newStats.add(new JnomicsThriftJobStatus(stat.getJobID().toString(),
                         stat.getUsername(),
                         stat.getFailureInfo(),
@@ -177,11 +209,12 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
      *
      * @param filename filename to use as prefix for manifest file
      * @param data data to write to manifest file, each string in the array is aline
-     * @param username username to perform fs operations as
+     * @param username to perform fs operations as
      * @return Path of the created manfiest file
      * @throws JnomicsThriftException
      */
     private Path writeManifest(String filename, String []data, String username) throws JnomicsThriftException{
+
         //write manifest file and run job
         FileSystem fs = null;
         try {
@@ -230,9 +263,15 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
     @Override
     public JnomicsThriftJobID pairReads(String file1, String file2, String outFile, Authentication auth)
             throws JnomicsThriftException, TException {
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        logger.info("Pairing reads in hdfs for user "+ username);
+
 
         String data = TextUtil.join("\t",new String[]{file1,file2,outFile});
-        Path manifest = writeManifest(new File(file1).getName(), new String[]{data}, auth.getUsername());
+        Path manifest = writeManifest(new File(file1).getName(), new String[]{data}, username);
 
         Path manifestlog = new Path(manifest +".log");
         JnomicsJobBuilder builder = new JnomicsJobBuilder(getGenericConf(),PELoaderMap.class,PELoaderReduce.class);
@@ -247,7 +286,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         }catch(Exception e){
             throw new JnomicsThriftException(e.toString());
         }
-        JnomicsThriftJobID id = launchJobAs(auth.getUsername(),conf);
+        JnomicsThriftJobID id = launchJobAs(username,conf);
         logger.info("submitted job: " + conf.get("mapred.job.name") + " " + id);
         return new JnomicsThriftJobID(id);
     }
@@ -256,8 +295,14 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
     public JnomicsThriftJobID singleReads(String file, String outFile, Authentication auth)
             throws JnomicsThriftException, TException {
 
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        logger.info("converting single reads to sequence file for user "+ username);
+
+
         String fileBase = new File(file).getName();
-        String username = auth.getUsername();
 
         String data = TextUtil.join("\t",new String[]{file,outFile});
         Path manifest = writeManifest(fileBase,new String[]{data},username);
@@ -299,14 +344,20 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
     @Override
     public boolean mergeVCF(String inDir, String inAlignments, String outVCF, Authentication auth)
             throws JnomicsThriftException, TException {
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+
         final Configuration conf = getGenericConf();
-        logger.info("Merging VCF: " + inDir + ":" + inAlignments + ":" + outVCF);
+        logger.info("Merging VCF: " + inDir + ":" + inAlignments + ":" + outVCF + " for user " + username);
+
         final Path in = new Path(inDir);
         final Path alignments = new Path(inAlignments);
         final Path out = new Path(outVCF);
         boolean status  = false;
         try {
-            status = UserGroupInformation.createRemoteUser(auth.getUsername()).doAs(new PrivilegedExceptionAction<Boolean>() {
+            status = UserGroupInformation.createRemoteUser(username).doAs(new PrivilegedExceptionAction<Boolean>() {
                 @Override
                 public Boolean run() throws Exception {
                     VCFMerge.merge(in,alignments,out,conf);
@@ -322,13 +373,19 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 
     @Override
     public boolean mergeCovariate(String inDir, String outCov, Authentication auth) throws JnomicsThriftException, TException {
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        logger.info("Merging covariates for user"+ username);
+
         final Configuration conf = getGenericConf();
         final Path in = new Path(inDir);
         final Path out = new Path(outCov);
 
         boolean status = false;
         try{
-            status = UserGroupInformation.createRemoteUser(auth.getUsername()).doAs(new PrivilegedExceptionAction<Boolean>() {
+            status = UserGroupInformation.createRemoteUser(username).doAs(new PrivilegedExceptionAction<Boolean>() {
                 @Override
                 public Boolean run() throws Exception {
                     CovariateMerge.merge(in, out, conf);
@@ -358,78 +415,105 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
     @Override
     public JnomicsThriftJobID gatkRealign(String inPath, String organism, String outPath, Authentication auth)
             throws JnomicsThriftException, TException {
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        logger.info("gatk realign for user "+ username);
+
         JnomicsJobBuilder builder = getGATKConfBuilder(inPath, outPath, organism);
         builder.setReducerClass(GATKRealignReduce.class)
-                .setJobName(auth.getUsername()+"-gatk-realign-"+inPath);
+                .setJobName(username+"-gatk-realign-"+inPath);
         Configuration conf = null;
         try{
             conf = builder.getJobConf();
         }catch(Exception e){
             throw new JnomicsThriftException(e.toString());
         }
-        return launchJobAs(auth.getUsername(), conf);
+        return launchJobAs(username, conf);
     }
 
     @Override
     public JnomicsThriftJobID gatkCallVariants(String inPath, String organism, String outPath, Authentication auth)
             throws JnomicsThriftException, TException {
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        logger.info("gatkCallVariants for user "+ username);
 
         JnomicsJobBuilder builder = getGATKConfBuilder(inPath,outPath,organism);
         builder.setReducerClass(GATKCallVarReduce.class)
-                .setJobName(auth.getUsername()+"-gatk-call-variants");
+                .setJobName(username+"-gatk-call-variants");
         Configuration conf = null;
         try{
             conf = builder.getJobConf();
         }catch(Exception e){
             throw new JnomicsThriftException(e.toString());
         }
-        return launchJobAs(auth.getUsername(), conf);
+        return launchJobAs(username, conf);
     }
 
     @Override
-    public JnomicsThriftJobID gatkCountCovariates(String inPath, String organism, String vcfMask, String outPath, Authentication auth)
+    public JnomicsThriftJobID gatkCountCovariates(String inPath, String organism, String vcfMask,
+                                                  String outPath, Authentication auth)
             throws JnomicsThriftException, TException {
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        logger.info("gatkCountCovariates for user "+ username);
+
         JnomicsJobBuilder builder = getGATKConfBuilder(inPath, outPath, organism);
         Path vcfMaskPath = new Path(vcfMask);
         builder.setReducerClass(GATKCountCovariatesReduce.class)
                 .setParam("mared.cache.files",vcfMaskPath.toString()+"#"+vcfMaskPath.getName())
                 .setParam("tmpfiles",vcfMaskPath.toString()+"#"+vcfMaskPath.getName())
                 .setParam("vcf_mask",vcfMaskPath.getName())
-                .setJobName(auth.getUsername()+"-gatk-count-covariates");
+                .setJobName(username+"-gatk-count-covariates");
         Configuration conf = null;
         try{
             conf = builder.getJobConf();
         }catch(Exception e){
             throw new JnomicsThriftException(e.toString());
         }
-        return launchJobAs(auth.getUsername(),conf);
+        return launchJobAs(username,conf);
     }
 
     @Override
     public JnomicsThriftJobID gatkRecalibrate(String inPath, String organism, String recalFile, String outPath, Authentication auth)
             throws JnomicsThriftException, TException {
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        logger.info("gatkRecalibrate for user "+ username);
+
         JnomicsJobBuilder builder = getGATKConfBuilder(inPath, outPath, organism);
         Path recalFilePath = new Path(recalFile);
         builder.setReducerClass(GATKRecalibrateReduce.class)
                 .setParam("mapred.cache.files", recalFilePath.toString()+"#"+recalFilePath.getName())
                 .setParam("tmpfiles", recalFilePath.toString()+"#"+recalFilePath.getName())
                 .setParam("recal_file",recalFilePath.getName())
-                .setJobName(auth.getUsername()+"-gatk-recalibrate");
+                .setJobName(username+"-gatk-recalibrate");
         Configuration conf = null;
         try{
             conf = builder.getJobConf();
         }catch(Exception e){
             throw new JnomicsThriftException(e.toString());
         }
-        return launchJobAs(auth.getUsername(),conf);
+        return launchJobAs(username,conf);
     }
 
     @Override
     public JnomicsThriftJobID runSNPPipeline(final String inPath, final String organism, final String outPath,
                                              final Authentication auth)
             throws JnomicsThriftException, TException {
-        logger.info("Running snpPipeline...");
-        logger.info("Loading manifest");
+        final String username = authenticator.authenticate(auth);
+        if( null == username ){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        logger.info("Running snpPipeline for user "+ username);
         String initPath = inPath;
         boolean loadShock = false;
         if(inPath.startsWith("http")){
@@ -439,7 +523,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
             for(String p: shockPaths){
                 manifestData[i++] = p + "\t" + new Path(new Path(outPath,"http_load"),"d"+i).toString();
             }
-            Path manifest = writeManifest("shockdata",manifestData,auth.getUsername());
+            Path manifest = writeManifest("shockdata",manifestData,username);
             initPath = manifest.toString();
             loadShock = true;
         }
@@ -465,7 +549,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
                         shockBuilder.setParam("proxy",proxy);
                     Job shockLoadJob = null;
                     try{
-                        shockLoadJob = UserGroupInformation.createRemoteUser(auth.getUsername()).doAs(new PrivilegedExceptionAction<Job>() {
+                        shockLoadJob = UserGroupInformation.createRemoteUser(username).doAs(new PrivilegedExceptionAction<Job>() {
                             @Override
                             public Job run() throws Exception {
                                 Job job = new Job(shockBuilder.getJobConf());
@@ -498,12 +582,12 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
                         .setOutputPath(alignOut.toString())
                         .setParam("bowtie_binary", "bowtie/bowtie2-align")
                         .setParam("bowtie_index", "btarchive/"+organism+".fa")
-                        .setJobName(auth.getUsername() + "-bowtie2-" + inPath)
-                        .addArchive(properties.getProperty("hdfs-index-repo")+"/"+organism+"_bowtie.tar.gz#btarchive")
+                        .setJobName(username + "-bowtie2-" + inPath)
+                        .addArchive(properties.getProperty("hdfs-index-repo") + "/" + organism + "_bowtie.tar.gz#btarchive")
                         .addArchive(properties.getProperty("hdfs-index-repo") + "/bowtie.tar.gz#bowtie");
                 Job j = null;
                 try{
-                    j = UserGroupInformation.createRemoteUser(auth.getUsername()).doAs(new PrivilegedExceptionAction<Job>() {
+                    j = UserGroupInformation.createRemoteUser(username).doAs(new PrivilegedExceptionAction<Job>() {
                         @Override
                         public Job run() throws Exception {
                             Job job = new Job(alignBuilder.getJobConf());
@@ -535,9 +619,9 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
                                 .setParam("reference_fa","starchive/"+organism+".fa")
                                 .setParam("genome_binsize","1000000")
                                 .setReduceTasks(NUM_REDUCE_TASKS)
-                                .setJobName(auth.getUsername()+"-snp-"+inPath);
+                                .setJobName(username+"-snp-"+inPath);
 
-                        snpJob = UserGroupInformation.createRemoteUser(auth.getUsername()).doAs(new PrivilegedExceptionAction<Job>() {
+                        snpJob = UserGroupInformation.createRemoteUser(username).doAs(new PrivilegedExceptionAction<Job>() {
                             @Override
                             public Job run() throws Exception {
                                 Job job = new Job(snpBuilder.getJobConf());

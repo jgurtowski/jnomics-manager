@@ -2,7 +2,8 @@ namespace java edu.cshl.schatz.jnomics.manager.api
 
 struct Authentication{
        1: string username,
-       2: string password
+       2: string password,
+       3: string token
 }
 
 struct JnomicsThriftJobID{

@@ -24,7 +24,8 @@ public class JnomicsThriftClient {
         Properties properties = JnomicsApiConfig.getClientProperties();
         String username = properties.getProperty("username");
         String password = properties.getProperty("password");
-        return new Authentication(username,password);
+        String token = properties.getProperty("token");
+        return new Authentication(username,password,token);
     }
     
     public static JnomicsData.Client getFsClient() throws IOException, TTransportException {
