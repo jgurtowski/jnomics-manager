@@ -106,8 +106,7 @@ public class JnomicsJobBuilder {
         ifNotSetConf("mapred.used.genericoptionsparser","true");
         ifNotSetConf("mapred.mapper.new-api", "true");
         ifNotSetConf("mapred.reducer.new-api", "true");
-        ifNotSetConf("mapreduce.outputformat.class",SequenceFileOutputFormat.class.getName());
-        
+
         conf.set("mapreduce.map.class",mapper.getName());
         JnomicsMapper mapperInst = mapper.newInstance();
         conf.set("mapreduce.inputformat.class",mapperInst.getInputFormat().getName());
@@ -122,7 +121,9 @@ public class JnomicsJobBuilder {
         if(null != reducer){
             conf.set("mapreduce.reduce.class",reducer.getName());
             JnomicsReducer reducerInst = reducer.newInstance();
-
+            
+            conf.set("mapreduce.outputformat.class",reducerInst.getOutputFormat().getName());
+            
             addConfModifiers(reducerInst.getConfModifiers());
             jArgs = (JnomicsArgument []) ArrayUtils.addAll(jArgs,reducerInst.getArgs());
             Class grouper = reducerInst.getGrouperClass();

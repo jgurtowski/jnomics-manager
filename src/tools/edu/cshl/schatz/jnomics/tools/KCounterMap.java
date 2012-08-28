@@ -65,7 +65,6 @@ public class KCounterMap extends JnomicsMapper<ReadCollectionWritable, NullWrita
                 try {
                     kmerWritable.set(seq_bytes, i, i + kmerWritable.getKsize());
                     revKmerWritable.set(Nucleotide.reverseComplement(seq_bytes,i, i+kmerWritable.getKsize()));
-
                 } catch (Exception e) {
                     throw new IOException(e);
                 }

@@ -24,6 +24,27 @@ public class ClientComputeHandler extends ClientHandler {
         taskMap.put("list_genomes", ClientGenomeListHandler.class);
         taskMap.put("samtools_pipeline", ClientSamtoolsPipelineHandler.class);
     }
+    
+    private String[] getHelpOrder(){
+        return new String[]{
+                "Alignment:",
+                "bowtie",
+                "bwa",
+                "",
+                "Variation:",
+                "snp",
+                "samtools_pipeline",
+                "gatk",
+                "",
+                "Utility:",
+                "list_jobs",
+                "status",
+                "list_genomes",
+                "vcf_merge",
+                "pair_reads",
+                "single_reads"
+        };
+    }
 
     @Override
     protected JnomicsArgument[] getArguments() {
@@ -40,10 +61,13 @@ public class ClientComputeHandler extends ClientHandler {
         }else{
             System.out.println("Available Tasks:");
             System.out.println();
-            for(String tStrings: taskMap.keySet()){
-                System.out.println(
-                        String.format("%-30s %-30s",tStrings,taskMap.get(tStrings).newInstance().getDescription())
-                );
+            for(String tStrings: getHelpOrder()){
+                if(!taskMap.containsKey(tStrings))
+                    System.out.println(tStrings);
+                else
+                    System.out.println(
+                            String.format("%-30s %-30s",tStrings,taskMap.get(tStrings).newInstance().getDescription())
+                    );
             }
         }
     }
