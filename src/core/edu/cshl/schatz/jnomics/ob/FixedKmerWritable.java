@@ -12,8 +12,11 @@ import java.util.Arrays;
 
 
 /**
+ *Deprecated, Do not use!
+ *
  * Represent Kmers of a fixed length
  * Kmers are bitpacked and can only include ACGT. N's are converted to A's
+ *
  */
 public class FixedKmerWritable implements WritableComparable<FixedKmerWritable> {
 

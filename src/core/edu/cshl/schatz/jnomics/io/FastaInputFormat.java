@@ -30,7 +30,8 @@ public class FastaInputFormat extends FileInputFormat<Writable, QueryTemplate> {
 	public RecordReader<Writable, QueryTemplate> createRecordReader(
 			InputSplit arg0, TaskAttemptContext arg1) throws IOException,
 			InterruptedException {
-		return new FastaRecordReader();
+
+        return new FastaRecordReader();
 	}
 	
 	

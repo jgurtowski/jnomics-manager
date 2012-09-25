@@ -43,6 +43,12 @@ public class JnomicsMain extends Configured implements Tool {
                     put("readkmerdist_map", ReadKmerDistMap.class);
                     put("httploader_map", HttpLoaderMap.class);
                     put("readfilesplit_map", ReadFileSplitMap.class);
+                    put("readkmeranalysis_map", ReadKmerAnalysisMap.class);
+                    put("readkmerfilter_map", ReadKmerFilterMap.class);
+                    put("textkmercount_map", TextKmerCountMap.class);
+                    put("textkmercounthist_map",TextKmerCountHistMap.class);
+                    put("textcountreadcorrected_map", TextCountReadCorrectedMap.class);
+                    put("customreadkmerfilter_map", CustomReadKmerFilterMap.class);
                 }
             };
 
@@ -53,7 +59,7 @@ public class JnomicsMain extends Configured implements Tool {
                     put("kcounter_reduce", KCounterReduce.class);
                     put("templatehist_reduce", TemplateHistReduce.class);
                     put("peloader_reduce",PELoaderReduce.class);
-                    put("longcount_reduce",CountLongReduce.class);
+                    put("countlong_reduce",CountLongReduce.class);
                     put("alignmentsort_reduce", AlignmentSortReduce.class);
                     put("cufflinks_reduce",CufflinksReduce.class);
                     put("seloader_reduce",SELoaderReduce.class);
@@ -64,6 +70,9 @@ public class JnomicsMain extends Configured implements Tool {
                     put("kcounterhist_reduce",KCounterHistReduce.class);
                     put("httploader_reduce", HttpLoaderReduce.class);
                     put("readfilesplit_reduce", ReadFileSplitReduce.class);
+                    put("textkmercount_reduce", TextKmerCountReduce.class);
+                    put("textkmercounthist_reduce",TextKmerCountHistReduce.class);
+                    put("textcountreadcorrected_reduce",TextCountReadCorrectedReduce.class);
                 }
             };
 

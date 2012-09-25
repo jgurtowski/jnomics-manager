@@ -121,7 +121,7 @@ public class JnomicsJobBuilder {
         if(null != reducer){
             conf.set("mapreduce.reduce.class",reducer.getName());
             JnomicsReducer reducerInst = reducer.newInstance();
-            
+
             conf.set("mapreduce.outputformat.class",reducerInst.getOutputFormat().getName());
             
             addConfModifiers(reducerInst.getConfModifiers());
@@ -133,12 +133,19 @@ public class JnomicsJobBuilder {
             Class partitioner = reducerInst.getPartitionerClass();
             if( null != partitioner )
                 conf.set("mapreduce.partitioner.class",partitioner.getName());
-            conf.set("mapred.output.key.class",reducerInst.getOutputKeyClass().getName());
+
+            if(null == reducerInst.getOutputKeyClass())//if we don't know what the key is, use whatever comes from the mapper
+                conf.set("mapred.output.key.class",mapperInst.getOutputKeyClass().getName());
+            else
+                conf.set("mapred.output.key.class",reducerInst.getOutputKeyClass().getName());
             conf.set("mapred.output.value.class",reducerInst.getOutputValueClass().getName());
         }else{
             conf.set("mapred.output.key.class", conf.get("mapred.mapoutput.key.class"));
             conf.set("mapred.output.value.class", conf.get("mapred.mapoutput.value.class"));
             conf.setInt("mapred.reduce.tasks",0);
+
+            //mapper only job, use mapper outputformat
+            conf.set("mapreduce.outputformat.class", mapperInst.getOutputFormat().getName());
         }
         
         if(archives.size() > 0){
