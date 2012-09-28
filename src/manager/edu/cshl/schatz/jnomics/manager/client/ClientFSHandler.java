@@ -68,12 +68,7 @@ public class ClientFSHandler extends ClientHandler{
             f.printHelp("Help",opts);
             return;
         }
-        String thriftDataHost = properties.getProperty("data-server-host");
-        int thriftDataPort = Integer.parseInt(properties.getProperty("data-server-port"));
-        TTransport transport = new TSocket(thriftDataHost, thriftDataPort);
-        transport.open();
-        TProtocol protocol = new TBinaryProtocol(transport);
-        final JnomicsData.Client client = new JnomicsData.Client(protocol);
+        final JnomicsData.Client client = JnomicsThriftClient.getFsClient();
 
         String username = properties.getProperty("username");
         String password = properties.getProperty("password");
@@ -272,9 +267,6 @@ public class ClientFSHandler extends ClientHandler{
         }else{
             f.printHelp("Unknown Option",opts);
         }
-
-        transport.close();
-
     }
 
     @Override

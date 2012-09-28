@@ -7,12 +7,10 @@ import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadPoolServer;
-import org.apache.thrift.transport.TServerSocket;
-import org.apache.thrift.transport.TServerTransport;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransportException;
+import org.apache.thrift.transport.*;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.Properties;
 
 /**
@@ -44,13 +42,17 @@ public class JnomicsDataServer {
         Properties prop = JnomicsApiConfig.getServerProperties();
 
         int port = Integer.parseInt(prop.getProperty("data-server-port",Integer.toString(DEFAULTPORT)));
-
+        String host = prop.getProperty("data-server-host");
+        
         JnomicsDataHandler handler = new JnomicsDataHandler(prop);
         Thread garbageCollectorThread = new Thread(new JnomicsHandleGarbageCollector(handler));
         JnomicsData.Processor processor = new JnomicsDataProcessorHax(handler);
-        //JnomicsData.Processor processor = new JnomicsData.Processor(handler);
 
-        TServerTransport serverTransport = new TServerSocket(port);
+        TSSLTransportFactory.TSSLTransportParameters params = new TSSLTransportFactory.TSSLTransportParameters();
+        params.setKeyStore("/home/james/keystore.jks","kbasekeystore");
+        TServerTransport serverTransport = TSSLTransportFactory.getServerSocket(port,10000,
+                InetAddress.getByName(host),params);
+
         TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
 
         System.out.println("Starting server port "+ port +"...");

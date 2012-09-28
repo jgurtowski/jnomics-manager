@@ -14,6 +14,7 @@ import org.apache.thrift.transport.*;
 import org.apache.thrift.server.TNonblockingServer;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.Properties;
 
 public class JnomicsComputeServer {
@@ -27,7 +28,7 @@ public class JnomicsComputeServer {
 
         @Override
         public boolean process(TProtocol in, TProtocol out) throws TException {
-            System.err.println("Processing from client: " + ((TSocket)in.getTransport()).getSocket().getInetAddress());
+            System.err.println("Processing from client: " + ((TSocket) in.getTransport()).getSocket().getInetAddress());
             return super.process(in,out);
         }
     }
@@ -37,15 +38,16 @@ public class JnomicsComputeServer {
         Properties prop = JnomicsApiConfig.getServerProperties();
 
         int port = Integer.parseInt(prop.getProperty("compute-server-port"));
-
+        String host = prop.getProperty("compute-server-host");
+        
         JnomicsComputeHandler handler = new JnomicsComputeHandler(prop);
         JnomicsCompute.Processor processor = new JnomicsComputeProcessorHax(handler);
-        //JnomicsCompute.Processor processor = new JnomicsCompute.Processor(handler);
 
-        TServerTransport serverTransport = new TServerSocket(port);
+        TSSLTransportFactory.TSSLTransportParameters params = new TSSLTransportFactory.TSSLTransportParameters();
+        params.setKeyStore("/home/james/keystore.jks","kbasekeystore");
+        TServerTransport serverTransport = TSSLTransportFactory.getServerSocket(port,10000,
+                InetAddress.getByName(host),params);
 
-        //TNonblockingServerTransport serverTransport = new TNonblockingServerSocket(port);
-        //TServer server = new TNonblockingServer(new TNonblockingServer.Args(serverTransport).processor(processor));
         TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
 
         System.out.println("Starting server port "+ port +"...");
