@@ -1,4 +1,6 @@
 
+#Note: You probably do not want to start these services
+
 Look in "conf" dir for configuration and documentation of configuration
 
 The bin dir contains the scripts to start/stop and interact with the

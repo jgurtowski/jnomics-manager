@@ -1,5 +1,8 @@
 
-Edit ../conf/jnomics-kbase-client.properties, 
-     change username to your kbase username
+Run:
+ 
+ make deploy 
+
+in root of the jnomics project
 
 Add ../bin/jkbase to your PATH to interact with the cluster
