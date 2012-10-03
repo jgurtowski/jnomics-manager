@@ -7,9 +7,11 @@ CLIENT_BIN_DIR=$(DEPLOYMENT_DIR)/bin
 CLIENT_LIB_DIR=$(DEPLOYMENT_DIR)/lib
 CLIENT_CONF_DIR=$(DEPLOYMENT_DIR)/conf
 CLIENT_DOCS_DIR=$(DEPLOYMENT_DIR)/docs
+CLIENT_CERT_DIR=$(DEPLOYMENT_DIR)/cert
 SERVICE_BIN_DIR=$(SERVICE_DIR)/bin
 SERVICE_CONF_DIR=$(SERVICE_DIR)/conf
 SERVICE_LIB_DIR=$(SERVICE_DIR)/lib
+
 
 JAVA_HOME:=/kb/runtime/java
 ANT_HOME:=/kb/runtime/ant
@@ -31,6 +33,7 @@ make-dest-dir:
 	mkdir -p $(CLIENT_LIB_DIR)
 	mkdir -p $(CLIENT_CONF_DIR)
 	mkdir -p $(CLIENT_DOCS_DIR)
+	mkdir -p $(CLIENT_CERT_DIR)
 
 build-jnomics:
 	ant jar
@@ -45,4 +48,4 @@ deploy-jnomics: make-dest-dir build-jnomics
 	cp bin/start-data-server.sh $(SERVICE_BIN_DIR)
 	cp bin/start-compute-server.sh $(SERVICE_BIN_DIR)
 	cp docs/KBASE-DEPLOY-README $(CLIENT_DOCS_DIR)/JNOMICS-CLIENT-README
-
+	cp cert/truststore.jks $(CLIENT_CERT_DIR)
