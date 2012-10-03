@@ -9,6 +9,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -20,7 +21,7 @@ import java.util.Properties;
  */
 public class JnomicsThriftClient {
 
-    public static Authentication getAuthentication() throws IOException {
+    public static Authentication getAuthentication() throws Exception {
         Properties properties = JnomicsApiConfig.getClientProperties();
         String username = properties.getProperty("username");
         String password = properties.getProperty("password");
@@ -28,15 +29,19 @@ public class JnomicsThriftClient {
         return new Authentication(username,password,token);
     }
     
-    public static JnomicsData.Client getFsClient() throws IOException, TTransportException {
+    public static JnomicsData.Client getFsClient() throws Exception, TTransportException {
 
         Properties properties = JnomicsApiConfig.getClientProperties();
         String thriftDataHost = properties.getProperty("data-server-host");
         int thriftDataPort = Integer.parseInt(properties.getProperty("data-server-port"));
+        String trustStore = System.getProperty("jkclient_truststore");
+        if(null == trustStore || !new File(trustStore).exists()){
+            throw new Exception("Cannot find trust store: "+ trustStore);
+        }
 
         TSSLTransportFactory.TSSLTransportParameters params =
                 new TSSLTransportFactory.TSSLTransportParameters();
-        params.setTrustStore("/home/james/bin/truststore.jks","kbasekeystore");
+        params.setTrustStore(trustStore,"kbasekeystore");
         TTransport transport = TSSLTransportFactory.getClientSocket(thriftDataHost,thriftDataPort,10000,params);
 
         TProtocol protocol = new TBinaryProtocol(transport);
@@ -45,17 +50,20 @@ public class JnomicsThriftClient {
         return client;
     }
 
-    public static JnomicsCompute.Client getComputeClient() throws IOException, TTransportException{
+    public static JnomicsCompute.Client getComputeClient() throws Exception, TTransportException{
 
         Properties properties = JnomicsApiConfig.getClientProperties();
         String thriftComputeHost = properties.getProperty("compute-server-host");
         int thriftComputePort = Integer.parseInt(properties.getProperty("compute-server-port"));
+        String trustStore = System.getProperty("jkclient_truststore");
+        if(null == trustStore || !new File(trustStore).exists()){
+            throw new Exception("Cannot find trust store: "+ trustStore);
+        }
 
         TSSLTransportFactory.TSSLTransportParameters params =
                 new TSSLTransportFactory.TSSLTransportParameters();
-        params.setTrustStore("/home/james/bin/truststore.jks","kbasekeystore");
+        params.setTrustStore(trustStore,"kbasekeystore");
         TTransport thriftTransport = TSSLTransportFactory.getClientSocket(thriftComputeHost,thriftComputePort,10000,params);
-
 
         TProtocol protocol = new TBinaryProtocol(thriftTransport);
         JnomicsCompute.Client client = new JnomicsCompute.Client(protocol);
@@ -64,7 +72,7 @@ public class JnomicsThriftClient {
     }
     
 
-    public static JnomicsCompute.AsyncClient getAsyncComputeClient() throws IOException, TTransportException{
+    public static JnomicsCompute.AsyncClient getAsyncComputeClient() throws Exception, TTransportException{
         Properties properties = JnomicsApiConfig.getClientProperties();
 
         String thriftComputeHost = properties.getProperty("compute-server-host");

@@ -9,6 +9,7 @@ import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Properties;
@@ -43,13 +44,17 @@ public class JnomicsDataServer {
 
         int port = Integer.parseInt(prop.getProperty("data-server-port",Integer.toString(DEFAULTPORT)));
         String host = prop.getProperty("data-server-host");
+        String keyStore = System.getProperty("jkserver_keystore");
+        if(null == keyStore || !new File(keyStore).exists()){
+            throw new IOException("Cannot find key store: " + keyStore);
+        }
         
         JnomicsDataHandler handler = new JnomicsDataHandler(prop);
         Thread garbageCollectorThread = new Thread(new JnomicsHandleGarbageCollector(handler));
         JnomicsData.Processor processor = new JnomicsDataProcessorHax(handler);
 
         TSSLTransportFactory.TSSLTransportParameters params = new TSSLTransportFactory.TSSLTransportParameters();
-        params.setKeyStore("/home/james/keystore.jks","kbasekeystore");
+        params.setKeyStore(keyStore,"kbasekeystore");
         TServerTransport serverTransport = TSSLTransportFactory.getServerSocket(port,10000,
                 InetAddress.getByName(host),params);
 

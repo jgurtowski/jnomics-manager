@@ -13,6 +13,7 @@ import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.*;
 import org.apache.thrift.server.TNonblockingServer;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Properties;
@@ -39,12 +40,17 @@ public class JnomicsComputeServer {
 
         int port = Integer.parseInt(prop.getProperty("compute-server-port"));
         String host = prop.getProperty("compute-server-host");
-        
+
+        String keyStore = System.getProperty("jkserver_keystore");
+        if(null == keyStore || !new File(keyStore).exists()){
+            throw new IOException("Cannot find key store: " + keyStore);
+        }
+
         JnomicsComputeHandler handler = new JnomicsComputeHandler(prop);
         JnomicsCompute.Processor processor = new JnomicsComputeProcessorHax(handler);
 
         TSSLTransportFactory.TSSLTransportParameters params = new TSSLTransportFactory.TSSLTransportParameters();
-        params.setKeyStore("/home/james/keystore.jks","kbasekeystore");
+        params.setKeyStore(keyStore,"kbasekeystore");
         TServerTransport serverTransport = TSSLTransportFactory.getServerSocket(port,10000,
                 InetAddress.getByName(host),params);
 

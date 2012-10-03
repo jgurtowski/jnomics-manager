@@ -58,11 +58,18 @@
     <copy todir="${build.dir}">
       <fileset dir="${src.dir}/core" includes="**/*.properties" />
     </copy>
+    <jar jarfile="${bin.dir}/deps.jar">
+      <zipgroupfileset dir="${lib.dir}">
+        <include name="**/*.jar" />
+      </zipgroupfileset>
+    </jar>
     <jar destfile="${bin.dir}/jnomics.jar" basedir="${build.dir}">
+      <!--<zipgroupfileset dir="${lib.dir}" />-->
+      <zipfileset src="${bin.dir}/deps.jar" excludes="META-INF/*.SF" />
       <manifest>
 	<attribute name="Main-Class" value="edu.cshl.schatz.jnomics.tools.JnomicsMain" />
       </manifest>
-      <zipgroupfileset dir="${lib.dir}" />
+      
     </jar>
   </target>
   

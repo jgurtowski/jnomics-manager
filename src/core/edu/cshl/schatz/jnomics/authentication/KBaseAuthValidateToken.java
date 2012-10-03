@@ -10,19 +10,25 @@
 
 package edu.cshl.schatz.jnomics.authentication;
 
-import java.net.*;
-import java.io.*;
-import java.util.*;
-import java.security.interfaces.RSAPublicKey; //RSA public key
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.Signature; 
-import java.security.SignatureException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMReader;
 
-import javax.net.ssl.HttpsURLConnection;
-import com.mongodb.DBObject;
+import javax.net.ssl.*;
+import java.io.*;
+import java.net.URL;
+import java.security.*;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Hashtable;
+
+//import java.security.InvalidKeyException;
+//import java.security.NoSuchAlgorithmException;
+//import java.security.Signature;
+//import java.security.SignatureException;
+//import javax.net.ssl.HttpsURLConnection;
 //import org.json.simple.*; //http://code.google.com/p/json-simple/
-import com.mongodb.util.JSON;
 
 /** KBaseAuthValidToken.java
  * 
@@ -48,62 +54,63 @@ public class KBaseAuthValidateToken {
 	 * 
 	 * @param params The input parameters, is an String array. the first
 	 *		  parameter should be the token.
-	 * @return "ture" or "false" that indicates the valid of input token.
 	 * 
 	 * */
-//	public static boolean main(String[] params)  {
-//		boolean result = false;
-//		String msg = "Usage: \n" +
-//					 "java KBaseAuthValidateToken [input token]\n" ;
-//		
-//		if (params.length != 1 ) {
-//			System.out.println(msg);
-//		} else {
-//			String testToken = params[0];
-//			boolean test_result = false;
-//			
-//			try {
-//				test_result = KBaseAuthValidateToken.verify(testToken);
-//			} catch (InvalidKeyException e) {
-//				
-//				String err_msg = "Error, the Autenticatio server returns an invalid key, " +
-//								 "Please check the input token.\n";
-//				System.out.println(err_msg);
-//				//e.printStackTrace();
-//			} catch (NoSuchAlgorithmException e) {
-//				// TODO Auto-generated catch block
-//				String err_msg = "Error, the system does not support SHA1withRSA algorithm."+
-//								 "please check the intalled Java.security package, or JCA.\n";
-//				System.out.println(err_msg);
-//				//e.printStackTrace();
-//			} catch (SignatureException e) {
-//				// TODO Auto-generated catch block
-//				String err_msg = "Error, the signature is wrong," +
-//						 		 "Please check the input token.\n";
-//				System.out.println(err_msg);
-//				//e.printStackTrace();
-//			} catch (RuntimeException e) {
-//				// TODO Auto-generated catch block
-//				String err_msg = "Error, this is a runtime exception,please check.\n";
-//				System.out.println(err_msg);
-//				//e.printStackTrace();
-//			} catch (IOException e) {
-//				// TODO Auto-generated catch block
-//				String err_msg = "Error, can not connect to the Authentication server."+
-//								 "Please check the token\n";
-//				System.out.println(err_msg);
-//				//e.printStackTrace();
-//			}
-//			
-//			if (test_result){
-//				result = true;
-//				System.out.println("Good token");
-//			} else
-//				System.out.println("Bad token");
-//
-//		} //end if	
-//		return result;
-//	} // end of main()
+	public static void main(String[] params)  {
+		String msg = "Usage: \n" +
+					 "java KBaseAuthValidateToken [input token]\n" ;
+		
+		if (params.length != 1 ) {
+			System.out.println(msg);
+		} else {
+			String testToken = params[0];
+			boolean test_result = false;
+			
+			try {
+				test_result = KBaseAuthValidateToken.verify(testToken);
+			} catch (InvalidKeyException e) {
+				
+				String err_msg = "Error, the Autenticatio server returns an invalid key, " +
+								 "Please check the input token.\n";
+				System.out.println(err_msg);
+			//e.printStackTrace();
+			} catch (NoSuchAlgorithmException e) {
+				// TODO Auto-generated catch block
+				String err_msg = "Error, the system does not support SHA1withRSA algorithm."+
+								 "please check the intalled Java.security package, or JCA.\n";
+				System.out.println(err_msg);
+				//e.printStackTrace();
+			} catch (SignatureException e) {
+				// TODO Auto-generated catch block
+				String err_msg = "Error, the signature is wrong," +
+						 		 "Please check the input token.\n";
+				System.out.println(err_msg);
+				//e.printStackTrace();
+			} catch (KeyManagementException e) {
+				// TODO Auto-generated catch block
+				String err_msg = "Error, SSL key management is wrong," +
+						 		 "Please check the input token.\n";
+				System.out.println(err_msg);
+				e.printStackTrace();
+			} catch (RuntimeException e) {
+				// TODO Auto-generated catch block
+				String err_msg = "Error, this is a runtime exception,please check.\n";
+				System.out.println(err_msg);
+				e.printStackTrace();
+			} catch (IOException e) {
+				String err_msg = "Error, can not connect to the Authentication server."+
+								 "Please check the token\n";
+				System.out.println(err_msg);
+				e.printStackTrace();
+			}
+			
+			if (test_result){
+				System.out.println("Good token");
+			} else
+				System.out.println("Bad token");
+
+		} //end if	
+	} // end of main()
 	
 	/**
 	 * This function validate the identity of a user by checking the user's token.
@@ -127,7 +134,7 @@ public class KBaseAuthValidateToken {
 	 * @throws InvalidKeyException 
 	 * @throws SignatureException 
 	 * */
-	public static boolean verify(String token) throws RuntimeException, IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+	public static boolean verify(String token) throws RuntimeException, IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException,  KeyManagementException {
 		boolean result = false;
 		
 		if (token == null)
@@ -137,8 +144,8 @@ public class KBaseAuthValidateToken {
 		int sig_position = token.indexOf("|sig=");
 		String sig_data = token.substring(0,sig_position);
 		String sig = "";
-		if (token.length() - sig_position >= 4)
-			token.substring(sig_position+4);  // string start after "="
+		if (token.length() - sig_position >= 5)
+			sig = token.substring(sig_position+5);  // string start after "="
 			
 		Hashtable<String, String>  parsed_token = new Hashtable<String, String> ();
 		
@@ -157,7 +164,27 @@ public class KBaseAuthValidateToken {
 		}
 		
 		/** now HTTPS the SigningSubgject of input Token */
-		URL validation_url = new URL((String) parsed_token.get("SigningObject"));
+		URL validation_url = new URL((String) parsed_token.get("SigningSubject"));
+		// Create a trust manager that does not validate certificate chains
+		TrustManager[] trustAllCerts = new TrustManager[] { 
+		  new X509TrustManager() {
+		    public X509Certificate[] getAcceptedIssuers() { 
+		      return new X509Certificate[0]; 
+		    }
+		    public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+		    public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+		}};
+		
+		// Ignore differences between given hostname and certificate hostname
+		HostnameVerifier hv = new HostnameVerifier() {
+		  public boolean verify(String hostname, SSLSession session) { return true; }
+		};
+		
+		// Install the all-trusting trust manager
+		SSLContext sc = SSLContext.getInstance("SSL");
+		sc.init(null, trustAllCerts, new SecureRandom());
+		HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+		HttpsURLConnection.setDefaultHostnameVerifier(hv);
 		
 		/** make the request to Authentication server */
 		HttpsURLConnection conn = (HttpsURLConnection) validation_url.openConnection(); 
@@ -165,18 +192,15 @@ public class KBaseAuthValidateToken {
 		
 		/** Encoding the HTTP response into JSON format */
 		BufferedReader br = new BufferedReader(new InputStreamReader(in));
-		StringBuilder sb = new StringBuilder();
-		String line = null;
-		
-		while ((line = br.readLine()) != null) {
-			sb.append((line + "\n"));
-		}
-		
-		DBObject obj = (DBObject)JSON.parse(sb.toString());
-		
+		ObjectMapper m = new ObjectMapper();
+		JsonNode jn = m.readTree(br);
+		JsonNode jd = jn.get("pubkey");
+
 		/** now get the public key and do the verify */
-		RSAPublicKey pubKey = (RSAPublicKey) obj.get("pubkey");
-		
+		Security.addProvider(new BouncyCastleProvider());
+		PEMReader pemReader = new PEMReader(new StringReader(jd.textValue().replace("\\n","\n")));
+		RSAPublicKey pubKey = (RSAPublicKey) pemReader.readObject();
+
 		/** http://docs.oracle.com/javase/6/docs/technotes/guides/security/crypto/CryptoSpec.html#KeyFactoryEx */
 		Signature s = Signature.getInstance("SHA1withRSA");
 		
@@ -206,6 +230,7 @@ public class KBaseAuthValidateToken {
 		* For more information on this, I think it is recommended to read 
 		* DatatypeConverter class' reference from JavaDocs. 
 		*/
+
 		byte[] sig_byte = javax.xml.bind.DatatypeConverter.parseHexBinary(sig);
 		
 		/** verification of signature*/
@@ -223,19 +248,18 @@ public class KBaseAuthValidateToken {
 	 * 
 	 * */
 	public static String getUserName(String token) {
-		String username = "";
+		String username = null;
+		if (token == null) 
+			return username;
 		
-		int pos_of_first_equal = token.indexOf("=");
-		int pos_of_first_vertical_line = token.indexOf("|");
-		
-		String key = token.substring(0, pos_of_first_equal);
-		if (pos_of_first_vertical_line > pos_of_first_equal) {
-			String value = token.substring(pos_of_first_equal+1,pos_of_first_vertical_line);
-			
-			if (key.equals("un"))
-				username = value;
-		}
-			
+		String[] splitted_token = token.split("\\|");
+		for (int i=0; i < splitted_token.length - 1; i++) {
+            if (splitted_token[i].startsWith("un")) {
+                String [] un_vals = splitted_token[i].split("=");
+                if(un_vals.length > 1)
+                    username = un_vals[1];
+            }
+		}	
 		return username;
 	};
 	
@@ -249,18 +273,15 @@ public class KBaseAuthValidateToken {
 	 * */
 	public static boolean validateToken(String token) {
 		boolean result = false;
-		
-		int pos_of_equal_symbol = token.indexOf("=");
-		int pos_start = 0;
-		if (pos_of_equal_symbol != -1) {
-			String key = token.substring(pos_start,pos_of_equal_symbol);
-			if (key.equals("un")) {
+		if (token == null)
+			return result;
+		String[] splitted_token = token.split("=\\|");
+		for (int i=0; i < splitted_token.length - 1 ; i++) {
+			if (splitted_token[i].equals("un")) {
 				result = true;
-			} else {
-				pos_start = pos_of_equal_symbol;
-				pos_of_equal_symbol = token.indexOf("=",pos_start+1);
 			}
-		}
+		}	
+		
 		return result;
 	}
 };

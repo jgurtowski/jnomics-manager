@@ -51,12 +51,16 @@ public class JnomicsServiceAuthentication {
                 else
                     tokenCache.remove(token);
             }
-            if(KBaseAuthValidateToken.validateToken(token)){
-                String username = KBaseAuthValidateToken.getUserName(token);
-                if(null != username){
-                    tokenCache.put(token,new AuthContainer(username));
-                    return username;
+            try {
+                if(KBaseAuthValidateToken.verify(token)){
+                    String username = KBaseAuthValidateToken.getUserName(token);
+                    if(null != username){
+                        tokenCache.put(token,new AuthContainer(username));
+                        return username;
+                    }
                 }
+            } catch (Exception e){
+                return null;
             }
         }
         return null;

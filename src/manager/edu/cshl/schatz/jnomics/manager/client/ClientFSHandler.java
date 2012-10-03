@@ -2,10 +2,7 @@ package edu.cshl.schatz.jnomics.manager.client;
 
 import edu.cshl.schatz.jnomics.io.FastqParser;
 import edu.cshl.schatz.jnomics.io.JnomicsThriftFileSystem;
-import edu.cshl.schatz.jnomics.manager.api.Authentication;
-import edu.cshl.schatz.jnomics.manager.api.JnomicsData;
-import edu.cshl.schatz.jnomics.manager.api.JnomicsThriftFileStatus;
-import edu.cshl.schatz.jnomics.manager.api.JnomicsThriftHandle;
+import edu.cshl.schatz.jnomics.manager.api.*;
 import edu.cshl.schatz.jnomics.ob.ReadCollectionWritable;
 import edu.cshl.schatz.jnomics.ob.ReadWritable;
 import edu.cshl.schatz.jnomics.ob.SAMRecordWritable;
@@ -267,8 +264,8 @@ public class ClientFSHandler extends ClientHandler{
         }else{
             f.printHelp("Unknown Option",opts);
         }
-    }
 
+    }
     @Override
     protected JnomicsArgument[] getArguments() {
         return new JnomicsArgument[0];

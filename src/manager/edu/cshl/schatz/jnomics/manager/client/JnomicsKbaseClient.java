@@ -1,5 +1,6 @@
 package edu.cshl.schatz.jnomics.manager.client;
 
+import edu.cshl.schatz.jnomics.manager.api.JnomicsThriftException;
 import edu.cshl.schatz.jnomics.manager.common.JnomicsApiConfig;
 
 import java.util.ArrayList;
@@ -45,6 +46,15 @@ public class JnomicsKbaseClient {
 
         ArrayList<String> newArgs = new ArrayList<String>(Arrays.asList(args));
         newArgs.remove(args[0]);
-        ch.handle(newArgs);
+        try{
+            ch.handle(newArgs);
+        }catch(JnomicsThriftException e){
+            if(e.msg.compareTo("Permission Denied") == 0){
+                GlobusPasswordPrompter.getPasswordFromUser();
+                main(args);
+            }else{
+                throw e;
+            }
+        }
     }
 }
