@@ -37,5 +37,6 @@
       <dependency org="com.fasterxml.jackson.core" name="jackson-core" rev="2.0.6" conf="default->master"/>
       <dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.0.6" conf="default->master"/>
       <dependency org="bouncycastle" name="bcprov-jdk16" rev="140" conf="default->master"/>
+      <dependency org="org.slf4j" name="slf4j-simple" rev="1.7.1" conf="default->master"/>
     </dependencies>
 </ivy-module>
