@@ -10,17 +10,36 @@ COPYRIGHT = ""
 # Specify Maven 2.0 remote repositories here, like this:
 repositories.remote << "http://repo1.maven.org/maven2"
 
+COMMONS_CODEC = 'commons-codec:commons-codec:jar:1.7'
 COMMONS_CLI = 'commons-cli:commons-cli:jar:1.2'
 THRIFT = 'org.apache.thrift:libthrift:jar:0.8.0'
 HADOOP_CORE = 'org.apache.hadoop:hadoop-core:jar:1.1.0'
+JNOMICS_JAR = 'jnomics/target/jnomics-1.0.0.jar'
+SLF4J = 'org.slf4j:slf4j-api:jar:1.7.2'
+MONGO = 'com.mongodb:mongo:jar:2.9.1'
+
+
+download artifact(MONGO) =>
+'https://github.com/downloads/mongodb/mongo-java-driver/mongo-2.9.1.jar'
+
 
 desc "The Jnomics-client project"
 define "jnomics-client" do
-
   project.version = VERSION_NUMBER
   project.group = GROUP
   manifest["Implementation-Vendor"] = COPYRIGHT
-  compile.with COMMONS_CLI, THRIFT, HADOOP_CORE
+  compile.with COMMONS_CLI, THRIFT, HADOOP_CORE, JNOMICS_JAR, SLF4J, MONGO, COMMONS_CODEC
+
   package(:jar)
 
+  task :thrift do
+    system 'thrift -out src/main/java --gen java thrift/jnomics_thrift_api.thrift'
+  end
+
 end
+
+
+
+
+
+
