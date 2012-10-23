@@ -4,7 +4,7 @@
 # Version number for this release
 VERSION_NUMBER = "1.0.0"
 # Group identifier for your projects
-GROUP = "jnomics-client"
+GROUP = "jnomics-manager"
 COPYRIGHT = ""
 
 # Specify Maven 2.0 remote repositories here, like this:
@@ -23,8 +23,8 @@ download artifact(MONGO) =>
 'https://github.com/downloads/mongodb/mongo-java-driver/mongo-2.9.1.jar'
 
 
-desc "The Jnomics-client project"
-define "jnomics-client" do
+desc "The jnomics-manager project"
+define "jnomics-manager" do
   project.version = VERSION_NUMBER
   project.group = GROUP
   manifest["Implementation-Vendor"] = COPYRIGHT
