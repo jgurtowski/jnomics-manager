@@ -18,6 +18,11 @@ JNOMICS_JAR = 'jnomics/target/jnomics-1.0.0.jar'
 SLF4J = 'org.slf4j:slf4j-api:jar:1.7.2'
 MONGO = 'com.mongodb:mongo:jar:2.9.1'
 
+JACKSON = ['com.fasterxml.jackson.core:jackson-annotations:jar:2.0.6',
+        'com.fasterxml.jackson.core:jackson-core:jar:2.0.6',
+        'com.fasterxml.jackson.core:jackson-databind:jar:2.0.6']
+BOUNCYCASTLE = 'bouncycastle:bcprov-jdk16:jar:140'
+
 
 download artifact(MONGO) =>
 'https://github.com/downloads/mongodb/mongo-java-driver/mongo-2.9.1.jar'
@@ -28,7 +33,8 @@ define "jnomics-manager" do
   project.version = VERSION_NUMBER
   project.group = GROUP
   manifest["Implementation-Vendor"] = COPYRIGHT
-  compile.with COMMONS_CLI, THRIFT, HADOOP_CORE, JNOMICS_JAR, SLF4J, MONGO, COMMONS_CODEC
+  compile.with [COMMONS_CLI, THRIFT, HADOOP_CORE, JNOMICS_JAR, SLF4J, MONGO, COMMONS_CODEC, JACKSON,
+               BOUNCYCASTLE]  
 
   package(:jar)
 
