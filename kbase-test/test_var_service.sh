@@ -24,8 +24,8 @@ function jmessage {
 
 #remove local files
 jmessage "Removing stale files"
-rm -f yeastrename.1.fq yeastrename.2.fq 
-rm -f yeastrename_test.vcf
+rm -f yeast_sim.1.fq.gz yeast_sim.2.fq.gz 
+rm -f yeast_sim.vcf
 
 #run new stuff
 jmessage "Downloading test data"
