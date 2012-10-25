@@ -44,7 +44,7 @@ def compile(recur = 0):
         return compile(1)
 
     #run thrift compiler
-    runordie("thrift --gen java -o %s %s" % (PATHS['SRC'],PATHS['THRIFT_FILE']))
+    runordie("thrift --gen java -out %s %s" % (PATHS['SRC'],PATHS['THRIFT_FILE']))
 
     CLASSPATH = ":".join(map(lambda x: os.path.join(PATHS['LIB'], x), LIBRARIES))
     
@@ -108,11 +108,34 @@ def clean():
     os.system("rm -rf %s " % os.path.join(PATHS['SRC'],"edu/cshl/schatz/jnomics/manager/api"))
     
 
+def buildclientpackage():
+
+    outdir = "jnomics-client-0.3"
+
+    files = ["bin/jkbase", "cert/truststore.jks",
+             "jnomics-manager-0.3.jar",
+             "conf/jnomics-kbase-client.properties",
+             "docs/kbase-client-tutorial.txt"
+             ]
+
+    basedirs = map(lambda x: os.path.dirname(x),files)
+
+    #mkdirs
+    map(lambda x: os.system("mkdir -p %s" % os.path.join(outdir,x)), basedirs)
+
+    #copy files
+    map(lambda x: os.system("cp %s %s" % (x,os.path.join(outdir,x))),files)
+        
+    os.system("tar czvf %s %s" % ( outdir+".tar.gz", outdir))
+
+    os.system("rm -rf %s" % outdir)
+
 
 TASKS = { 'compile' : compile,
           'clean' : clean,
           'help' : help,
-          'jar' : jar
+          'jar' : jar,
+          'package': buildclientpackage
           }
 
 
