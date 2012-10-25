@@ -11,8 +11,13 @@ PATHS = {
     'OUT': "target",
     'LIB': "lib",
     'CLASSPATH': '',
-    'OUT_JAR': 'jnomics-manager-0.3.jar'
+    'OUT_JAR': 'jnomics-manager-0.3.jar',
+    'THRIFT_FILE' : 'thrift/jnomics_thrift_api.thrift'
 }
+
+def runordie(cmd):
+    if(os.system(cmd) != 0):
+        sys.exit(1)
 
 def compile_jnomics():
     print "Compiling Jnomics"
@@ -38,9 +43,10 @@ def compile(recur = 0):
         compile_jnomics()
         return compile(1)
 
-    CLASSPATH = ":".join(map(lambda x: os.path.join(PATHS['LIB'], x), LIBRARIES))
+    #run thrift compiler
+    runordie("thrift --gen java -o %s %s" % (PATHS['SRC'],PATHS['THRIFT_FILE']))
 
-    print CLASSPATH
+    CLASSPATH = ":".join(map(lambda x: os.path.join(PATHS['LIB'], x), LIBRARIES))
     
     SRC_FILE_TREE = []
 
@@ -58,9 +64,7 @@ def compile(recur = 0):
 
     cmd = "javac -d %s -cp %s %s" % (PATHS['OUT'], CLASSPATH, SRC_FILES)
     print "Compiling %d files into %s" % (len(SRC_FILE_TREE), PATHS['OUT'])
-    if(os.system(cmd) != 0):
-        sys.exit(1)
-
+    runordie(cmd)
 
 def jar():
     if not os.path.exists(PATHS['OUT']):
@@ -99,6 +103,10 @@ def clean():
 
     print "Cleaning Jnomics"
     os.system('cd ./jnomics; ./build.py clean')
+
+    print "Cleaning Thrift"
+    os.system("rm -rf %s " % os.path.join(PATHS['SRC'],"edu/cshl/schatz/jnomics/manager/api"))
+    
 
 
 TASKS = { 'compile' : compile,
