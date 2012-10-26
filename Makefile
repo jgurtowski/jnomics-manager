@@ -36,10 +36,12 @@ make-dest-dir:
 	mkdir -p $(CLIENT_CERT_DIR)
 
 build-jnomics:
-	ant jar
+	git submodule init
+	git submodule update
+	python build.py jar
 
 deploy-jnomics: make-dest-dir build-jnomics
-	cp bin/jnomics.jar $(SERVICE_LIB_DIR)
+	cp jnomics-manager*.jar $(SERVICE_LIB_DIR)
 	cp bin/jnomics.jar $(CLIENT_LIB_DIR)
 	cp conf/jnomics-kbase-client.properties $(CLIENT_CONF_DIR)
 	cp conf/jnomics-kbase-server.properties $(SERVICE_CONF_DIR)
