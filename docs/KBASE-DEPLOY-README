@@ -1,8 +1,0 @@
-
-Run:
- 
- make deploy 
-
-in root of the jnomics project
-
-Add ../bin/jkbase to your PATH to interact with the cluster

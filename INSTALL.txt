@@ -1,7 +1,0 @@
-Jnomics uses Ant and Ivy for compilation
-
-http://ant.apache.org/ivy/
-
-Run 
-make deploy
-

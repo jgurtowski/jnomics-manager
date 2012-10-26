@@ -1,3 +1,0 @@
-This directory contains libraries that we need to link against, but dont want to include in the fat jar
-
-For now, there are none so just include an empty directory
