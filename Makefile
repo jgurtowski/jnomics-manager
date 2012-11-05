@@ -41,13 +41,10 @@ build-jnomics:
 	python build.py jar
 
 deploy-jnomics: make-dest-dir build-jnomics
-	cp jnomics-manager*.jar $(SERVICE_LIB_DIR)
-	cp bin/jnomics.jar $(CLIENT_LIB_DIR)
+	cp jnomics-manager*.jar $(CLIENT_LIB_DIR)
 	cp conf/jnomics-kbase-client.properties $(CLIENT_CONF_DIR)
 	cp conf/jnomics-kbase-server.properties $(SERVICE_CONF_DIR)
 	cp bin/jkbase $(CLIENT_BIN_DIR)
-	cp bin/start-service.sh $(SERVICE_BIN_DIR)
 	cp bin/start-data-server.sh $(SERVICE_BIN_DIR)
 	cp bin/start-compute-server.sh $(SERVICE_BIN_DIR)
-	cp docs/KBASE-DEPLOY-README $(CLIENT_DOCS_DIR)/JNOMICS-CLIENT-README
 	cp cert/truststore.jks $(CLIENT_CERT_DIR)
