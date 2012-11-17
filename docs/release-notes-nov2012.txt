@@ -1,0 +1,24 @@
+Variation Service
+November 26, 2012
+James Gurtowski (gurtowsk@cshl.edu) and Michael Schatz (mschatz@cshl.edu)
+
+The main functionality of the variation service is to identify genome variations
+in a genome resequening project. This includes support for ingesting large
+quantities of sequencing reads into the HDFS, mapping those reads to a reference
+genome (using Bowtie2 or BWA), scanning the alignments for variants (using
+SAMTools), and then exporting the variants in VCF format. The backend of the
+service is implemented on Hadoop for high scalability and parallelism.
+
+In this release we have: the client API described in the thrift spec, the client
+command line program, server daemons, backend sequence analysis code and
+supporting utilities for manipulating data in the HDFS. The Makefile has
+correctly working targets defined for make deploy and make test. The tutorial is
+available in the docs directory. Executing the client requires a functioning
+server daemon and hadoop cluster which is available at ORNL.
+
+In the next release we intend to improve the batch processing capabilities,
+enhance support for IRIS, the narrative interface, and the Shock uploading
+system by providing program metadata. We will also include new sequence
+analysis features for reporting sample quality, and functional analysis
+of the identified variants.
+
