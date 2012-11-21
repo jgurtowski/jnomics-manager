@@ -67,7 +67,13 @@ public class GlobusPasswordPrompter {
         HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
         conn.setRequestProperty("Authorization","Basic " + up_encoded );
 
-        InputStream inStream = conn.getInputStream();
+        InputStream inStream = null;
+        try{
+            inStream = conn.getInputStream();
+        }catch(Exception e){
+            System.out.println("Bad username/password");
+            System.exit(1);
+        }
         String data = readData(inStream);
         DBObject jobject = (DBObject) JSON.parse(data);
                 
