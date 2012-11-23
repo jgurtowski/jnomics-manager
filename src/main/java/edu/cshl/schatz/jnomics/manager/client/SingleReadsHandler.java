@@ -14,10 +14,10 @@ import java.util.Properties;
  * User: james
  */
 
-public class ClientSingleReadsHandler extends ClientHandler{
+public class SingleReadsHandler extends HandlerBase {
 
 
-    public ClientSingleReadsHandler(){
+    public SingleReadsHandler(){
 
     }
 
@@ -29,7 +29,7 @@ public class ClientSingleReadsHandler extends ClientHandler{
     }
 
     @Override
-    public void handle(List<String> args) throws Exception {
+    public void handle(List<String> args, Properties properties) throws Exception {
         HelpFormatter formatter = new HelpFormatter();
         Options options = getOptions();
         CommandLine cli = null;
@@ -40,8 +40,8 @@ public class ClientSingleReadsHandler extends ClientHandler{
             return;
         }
 
-        JnomicsCompute.Client client = JnomicsThriftClient.getComputeClient();
-        Authentication auth = JnomicsThriftClient.getAuthentication();
+        JnomicsCompute.Client client = JnomicsThriftClient.getComputeClient(properties);
+        Authentication auth = JnomicsThriftClient.getAuthentication(properties);
 
         JnomicsThriftJobID jobID = client.singleReads(cli.getOptionValue("file"),
                 cli.getOptionValue("out"),auth);

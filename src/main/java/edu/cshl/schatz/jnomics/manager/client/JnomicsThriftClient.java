@@ -21,17 +21,14 @@ import java.util.Properties;
  */
 public class JnomicsThriftClient {
 
-    public static Authentication getAuthentication() throws Exception {
-        Properties properties = JnomicsApiConfig.getClientProperties();
+    public static Authentication getAuthentication(Properties properties) throws Exception {
         String username = properties.getProperty("username");
         String password = properties.getProperty("password");
         String token = properties.getProperty("token");
         return new Authentication(username,password,token);
     }
     
-    public static JnomicsData.Client getFsClient() throws Exception, TTransportException {
-
-        Properties properties = JnomicsApiConfig.getClientProperties();
+    public static JnomicsData.Client getFsClient(Properties properties) throws Exception, TTransportException {
         String thriftDataHost = properties.getProperty("data-server-host");
         int thriftDataPort = Integer.parseInt(properties.getProperty("data-server-port"));
         String trustStore = System.getProperty("jkclient_truststore");
@@ -50,9 +47,7 @@ public class JnomicsThriftClient {
         return client;
     }
 
-    public static JnomicsCompute.Client getComputeClient() throws Exception, TTransportException{
-
-        Properties properties = JnomicsApiConfig.getClientProperties();
+    public static JnomicsCompute.Client getComputeClient(Properties properties) throws Exception, TTransportException{
         String thriftComputeHost = properties.getProperty("compute-server-host");
         int thriftComputePort = Integer.parseInt(properties.getProperty("compute-server-port"));
         String trustStore = System.getProperty("jkclient_truststore");
@@ -72,8 +67,7 @@ public class JnomicsThriftClient {
     }
     
 
-    public static JnomicsCompute.AsyncClient getAsyncComputeClient() throws Exception, TTransportException{
-        Properties properties = JnomicsApiConfig.getClientProperties();
+    public static JnomicsCompute.AsyncClient getAsyncComputeClient(Properties properties) throws Exception, TTransportException{
 
         String thriftComputeHost = properties.getProperty("compute-server-host");
         int thriftComputePort = Integer.parseInt(properties.getProperty("compute-server-port"));

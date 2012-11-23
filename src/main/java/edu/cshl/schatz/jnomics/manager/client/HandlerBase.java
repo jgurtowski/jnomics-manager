@@ -3,15 +3,16 @@ package edu.cshl.schatz.jnomics.manager.client;
 import org.apache.commons.cli.*;
 
 import java.util.List;
+import java.util.Properties;
 
 /**
  * User: james
  */
-public abstract class ClientHandler {
+public abstract class HandlerBase {
 
     private final Options options = new Options();
 
-    public abstract void handle(List<String> args) throws Exception;
+    public abstract void handle(List<String> args, Properties properties) throws Exception;
 
     public String getDescription(){
         return "";
@@ -24,7 +25,7 @@ public abstract class ClientHandler {
         return new JnomicsArgument[0];
     }
 
-    public ClientHandler(){
+    public HandlerBase(){
         //setup arguments
         for(JnomicsArgument arg: getArguments()){
             options.addOption(arg.getName(), arg.hasArguments(), arg.getDescription());

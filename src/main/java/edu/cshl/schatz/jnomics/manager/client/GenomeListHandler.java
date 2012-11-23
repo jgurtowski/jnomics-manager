@@ -1,22 +1,18 @@
 package edu.cshl.schatz.jnomics.manager.client;
 
 import edu.cshl.schatz.jnomics.manager.api.Authentication;
-import edu.cshl.schatz.jnomics.manager.api.JnomicsCompute;
 import edu.cshl.schatz.jnomics.manager.api.JnomicsData;
-import edu.cshl.schatz.jnomics.manager.api.JnomicsThriftJobID;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
 
 import java.util.List;
+import java.util.Properties;
 
 /**
  * User: james
  */
 
-public class ClientGenomeListHandler extends ClientHandler{
+public class GenomeListHandler extends HandlerBase {
 
-    public ClientGenomeListHandler(){
+    public GenomeListHandler(){
 
     }
 
@@ -25,10 +21,9 @@ public class ClientGenomeListHandler extends ClientHandler{
     }
 
     @Override
-    public void handle(List<String> args) throws Exception {
-
-        JnomicsData.Client client = JnomicsThriftClient.getFsClient();
-        Authentication auth = JnomicsThriftClient.getAuthentication();
+    public void handle(List<String> args, Properties properties) throws Exception {
+        JnomicsData.Client client = JnomicsThriftClient.getFsClient(properties);
+        Authentication auth = JnomicsThriftClient.getAuthentication(properties);
         List<String> genomes = client.listGenomes(auth);
         System.out.println("Available Genomes:");
         if(0 == genomes.size()){

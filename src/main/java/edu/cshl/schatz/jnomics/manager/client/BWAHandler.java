@@ -14,9 +14,9 @@ import java.util.Properties;
  * User: james
  */
 
-public class ClientSnpHandler extends ClientHandler{
+public class BWAHandler extends HandlerBase {
 
-    public ClientSnpHandler(){
+    public BWAHandler(){
 
     }
 
@@ -24,12 +24,14 @@ public class ClientSnpHandler extends ClientHandler{
         return new JnomicsArgument[]{
                 new JnomicsArgument("in",true,true,"Input file"),
                 new JnomicsArgument("out",true,true,"Output dir"),
-                new JnomicsArgument("organism",true,true,"Organism for alignment index")
+                new JnomicsArgument("organism",true,true,"Organism for alignment index"),
+                new JnomicsArgument("align_opts",false,true,"Pass options to BWA align"),
+                new JnomicsArgument("sampe_opts",false,true,"Pass options to BWA sampe")
         };
     }
 
     @Override
-    public void handle(List<String> args) throws Exception {
+    public void handle(List<String> args, Properties properties) throws Exception {
         HelpFormatter formatter = new HelpFormatter();
         Options options = getOptions();
         CommandLine cli = null;
@@ -40,12 +42,14 @@ public class ClientSnpHandler extends ClientHandler{
             return;
         }
 
-        JnomicsCompute.Client client = JnomicsThriftClient.getComputeClient();
-        Authentication auth = JnomicsThriftClient.getAuthentication();
+        JnomicsCompute.Client client = JnomicsThriftClient.getComputeClient(properties);
+        Authentication auth = JnomicsThriftClient.getAuthentication(properties);
 
-        JnomicsThriftJobID jobID = client.snpSamtools(cli.getOptionValue("in"),
+        JnomicsThriftJobID jobID = client.alignBWA(cli.getOptionValue("in"),
                 cli.getOptionValue("organism"),
                 cli.getOptionValue("out"),
+                nullToString(cli.getOptionValue("align_opts")),
+                nullToString(cli.getOptionValue("sampe_opts")),
                 auth);
 
         System.out.println("Submitted Job: " + jobID.getJob_id());
@@ -53,6 +57,6 @@ public class ClientSnpHandler extends ClientHandler{
 
     @Override
     public String getDescription() {
-        return "Call SNPs with Samtools";
+        return "Run BWA aligner";
     }
 }

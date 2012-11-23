@@ -14,23 +14,23 @@ import java.util.Properties;
  * User: james
  */
 
-public class ClientPairReadsHandler extends ClientHandler{
+public class BowtieHandler extends HandlerBase {
 
-    public ClientPairReadsHandler(){
-
+    public BowtieHandler(){
 
     }
 
     public JnomicsArgument[] getArguments(){
         return new JnomicsArgument[]{
-                new JnomicsArgument("1",true,true,"First file in pair"),
-                new JnomicsArgument("2",true,true,"Second file in pair"),
-                new JnomicsArgument("out",true,true,"Converted File")
+                new JnomicsArgument("in",true,true,"Input file"),
+                new JnomicsArgument("out",true,true,"Output dir"),
+                new JnomicsArgument("organism",true,true,"Organism for alignment index"),
+                new JnomicsArgument("opts",false,true,"Pass Alignment options to bowite")
         };
     }
 
     @Override
-    public void handle(List<String> args) throws Exception {
+    public void handle(List<String> args, Properties properties) throws Exception {
         HelpFormatter formatter = new HelpFormatter();
         Options options = getOptions();
         CommandLine cli = null;
@@ -40,17 +40,21 @@ public class ClientPairReadsHandler extends ClientHandler{
             formatter.printHelp(e.toString(),options);
             return;
         }
-        JnomicsCompute.Client client = JnomicsThriftClient.getComputeClient();
-        Authentication auth = JnomicsThriftClient.getAuthentication();
 
-        JnomicsThriftJobID jobID = client.pairReads(cli.getOptionValue("1"),
-                cli.getOptionValue("2"),cli.getOptionValue("out"),auth);
+        JnomicsCompute.Client client = JnomicsThriftClient.getComputeClient(properties);
+        Authentication auth = JnomicsThriftClient.getAuthentication(properties);
+        
+        JnomicsThriftJobID jobID = client.alignBowtie(cli.getOptionValue("in"),
+                cli.getOptionValue("organism"),
+                cli.getOptionValue("out"),
+                nullToString(cli.getOptionValue("opts")),
+                auth);
 
         System.out.println("Submitted Job: " + jobID.getJob_id());
     }
 
     @Override
     public String getDescription() {
-        return "Join paired end read files";
+        return "Run Bowtie aligner";
     }
 }

@@ -2,4 +2,4 @@
 
 SCRIPT_PATH=`dirname "$0"`
 
-java -Djkclient_truststore=${SCRIPT_PATH}/../cert/truststore.jks -cp ${SCRIPT_PATH}/../jnomics-manager-0.3.jar:${SCRIPT_PATH}/../lib/jnomics-manager-0.3.jar:${SCRIPT_PATH}/../conf edu.cshl.schatz.jnomics.manager.client.JnomicsKbaseClient $*
+java -Djkclient_truststore=${SCRIPT_PATH}/../cert/truststore.jks -cp ${SCRIPT_PATH}/../jnomics-manager-0.3.jar:${SCRIPT_PATH}/../lib/jnomics-manager-0.3.jar:${SCRIPT_PATH}/../conf edu.cshl.schatz.jnomics.manager.client.Entry $*

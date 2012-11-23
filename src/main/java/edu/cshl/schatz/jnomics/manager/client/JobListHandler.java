@@ -5,21 +5,22 @@ import edu.cshl.schatz.jnomics.manager.api.JnomicsCompute;
 import edu.cshl.schatz.jnomics.manager.api.JnomicsThriftJobStatus;
 
 import java.util.List;
+import java.util.Properties;
 
 /**
  * User: james
  */
 
-public class ClientJobListHandler extends ClientHandler {
+public class JobListHandler extends HandlerBase {
 
-    public ClientJobListHandler(){
+    public JobListHandler(){
 
     }
 
     @Override
-    public void handle(List<String> args) throws Exception {
-        JnomicsCompute.Client client = JnomicsThriftClient.getComputeClient();
-        Authentication auth = JnomicsThriftClient.getAuthentication();
+    public void handle(List<String> args, Properties properties) throws Exception {
+        JnomicsCompute.Client client = JnomicsThriftClient.getComputeClient(properties);
+        Authentication auth = JnomicsThriftClient.getAuthentication(properties);
 
         for(JnomicsThriftJobStatus status : client.getAllJobs(auth)){
             System.out.println(status);

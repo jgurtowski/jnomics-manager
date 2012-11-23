@@ -9,14 +9,15 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 
 import java.util.List;
+import java.util.Properties;
 
 /**
  * User: james
  */
 
-public class ClientJobStatusHandler extends ClientHandler{
+public class JobStatusHandler extends HandlerBase {
 
-    public ClientJobStatusHandler(){
+    public JobStatusHandler(){
 
     }
 
@@ -27,7 +28,7 @@ public class ClientJobStatusHandler extends ClientHandler{
     }
 
     @Override
-    public void handle(List<String> args) throws Exception {
+    public void handle(List<String> args, Properties properties) throws Exception {
         HelpFormatter formatter = new HelpFormatter();
         Options options = getOptions();
         CommandLine cli = null;
@@ -38,8 +39,8 @@ public class ClientJobStatusHandler extends ClientHandler{
             return;
         }
 
-        JnomicsCompute.Client client = JnomicsThriftClient.getComputeClient();
-        Authentication auth = JnomicsThriftClient.getAuthentication();
+        JnomicsCompute.Client client = JnomicsThriftClient.getComputeClient(properties);
+        Authentication auth = JnomicsThriftClient.getAuthentication(properties);
 
         JnomicsThriftJobStatus status = client.getJobStatus(
                 new JnomicsThriftJobID(cli.getOptionValue("job")),

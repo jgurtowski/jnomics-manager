@@ -7,15 +7,15 @@ import edu.cshl.schatz.jnomics.manager.api.JnomicsThriftFileStatus;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
-import org.apache.hadoop.fs.Path;
 
 import java.util.List;
+import java.util.Properties;
 
 /**
  * User: james
  */
 
-public class ClientGatkHandler extends ClientHandler{
+public class ClientGatkHandler extends HandlerBase {
 
     public ClientGatkHandler(){
 
@@ -30,7 +30,7 @@ public class ClientGatkHandler extends ClientHandler{
     }
 
     @Override
-    public void handle(List<String> args) throws Exception {
+    public void handle(List<String> args, Properties properties) throws Exception {
 
 
         HelpFormatter formatter = new HelpFormatter();
@@ -43,8 +43,8 @@ public class ClientGatkHandler extends ClientHandler{
             return;
         }
 
-        JnomicsData.Client dataClient = JnomicsThriftClient.getFsClient();
-        Authentication auth = JnomicsThriftClient.getAuthentication();
+        JnomicsData.Client dataClient = JnomicsThriftClient.getFsClient(properties);
+        Authentication auth = JnomicsThriftClient.getAuthentication(properties);
 
         String in = cli.getOptionValue("in");
         String out = cli.getOptionValue("out");
@@ -53,7 +53,7 @@ public class ClientGatkHandler extends ClientHandler{
         if (dataClient.listStatus(out,auth).size() > 0)
             throw new Exception("Output Directory already exists");
         dataClient.mkdir(out,auth);
-        JnomicsCompute.Client computeClient = JnomicsThriftClient.getComputeClient();
+        JnomicsCompute.Client computeClient = JnomicsThriftClient.getComputeClient(properties);
         
         
         System.out.println("Realigning Reads");

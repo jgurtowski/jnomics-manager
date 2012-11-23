@@ -4,25 +4,26 @@ import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * User: james
  */
-public class ClientComputeHandler extends ClientHandler {
+public class ComputeHandler extends HandlerBase {
 
-    private static final Map<String,Class<? extends ClientHandler>> taskMap = new HashMap<String, Class<? extends ClientHandler>>();
+    private static final Map<String,Class<? extends HandlerBase>> taskMap = new HashMap<String, Class<? extends HandlerBase>>();
     static{
-        taskMap.put("bowtie", ClientBowtieHandler.class);
-        taskMap.put("bwa", ClientBWAHandler.class);
-        taskMap.put("snp", ClientSnpHandler.class);
-        taskMap.put("status", ClientJobStatusHandler.class);
-        taskMap.put("list_jobs", ClientJobListHandler.class);
-        taskMap.put("pair_reads", ClientPairReadsHandler.class);
-        taskMap.put("single_reads", ClientSingleReadsHandler.class);
+        taskMap.put("bowtie", BowtieHandler.class);
+        taskMap.put("bwa", BWAHandler.class);
+        taskMap.put("snp", SnpHandler.class);
+        taskMap.put("status", JobStatusHandler.class);
+        taskMap.put("list_jobs", JobListHandler.class);
+        taskMap.put("pair_reads", PairReadsHandler.class);
+        taskMap.put("single_reads", SingleReadsHandler.class);
         taskMap.put("gatk", ClientGatkHandler.class);
-        taskMap.put("vcf_merge", ClientMergeVCFHandler.class);
-        taskMap.put("list_genomes", ClientGenomeListHandler.class);
-        taskMap.put("samtools_pipeline", ClientSamtoolsPipelineHandler.class);
+        taskMap.put("vcf_merge", MergeVCFHandler.class);
+        taskMap.put("list_genomes", GenomeListHandler.class);
+        taskMap.put("samtools_pipeline", SamtoolsPipelineHandler.class);
     }
     
     private String[] getHelpOrder(){
@@ -52,12 +53,12 @@ public class ClientComputeHandler extends ClientHandler {
     }
 
     @Override
-    public void handle(List<String> args) throws Exception {
+    public void handle(List<String> args, Properties properties) throws Exception {
         if(args.size() >= 1 && taskMap.containsKey(args.get(0))){
             Constructor ctor = taskMap.get(args.get(0)).getDeclaredConstructor();
-            ClientHandler handler = (ClientHandler)ctor.newInstance();
+            HandlerBase handler = (HandlerBase)ctor.newInstance();
             args.remove(args.get(0));
-            handler.handle(args);
+            handler.handle(args, properties);
         }else{
             System.out.println("Available Tasks:");
             System.out.println();

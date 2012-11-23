@@ -4,6 +4,7 @@ import com.mongodb.DBObject;
 import com.mongodb.util.JSON;
 import org.apache.commons.codec.binary.Base64;
 
+import javax.management.BadAttributeValueExpException;
 import javax.net.ssl.*;
 import java.io.*;
 import java.net.URL;
@@ -50,9 +51,8 @@ public class GlobusPasswordPrompter {
         
         getPasswordFromUser(username,passwd);
     }
-    
-    public static void getPasswordFromUser(String user, String passwd) throws Exception{
 
+    public static String getTokenForUser(String user, String passwd) throws Exception{
         URL url = new URL(GLOBUS_API_URL);
 
         SSLContext sc = SSLContext.getInstance("SSL");
@@ -71,14 +71,27 @@ public class GlobusPasswordPrompter {
         try{
             inStream = conn.getInputStream();
         }catch(Exception e){
-            System.out.println("Bad username/password");
-            System.exit(1);
+            throw new Exception("Bad username/password");
         }
         String data = readData(inStream);
         DBObject jobject = (DBObject) JSON.parse(data);
-                
+
         String token = (String)jobject.get("access_token");
 
+        return token;
+    }
+    
+    
+    public static void getPasswordFromUser(String user, String passwd) throws Exception{
+
+        String token = null;
+        try{
+            token = getTokenForUser(user,passwd);
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+            System.exit(-1);
+        }
+        
         File jconf_dir = JnomicsClientEnvironment.USER_CONF_DIR;
         if(!jconf_dir.exists()){
             jconf_dir.mkdir();
@@ -88,11 +101,12 @@ public class GlobusPasswordPrompter {
         Properties properties = new Properties();
 
         if(!auth_file.exists()){
-            System.out.println(auth_file);
+            System.out.println("Created: " + auth_file);
             auth_file.createNewFile();
         }else{
             properties.load(new FileInputStream(auth_file));            
         }
+        
         properties.setProperty("token",token);
         properties.store(new FileOutputStream(auth_file),"Globus Online Authentication Token");
     }

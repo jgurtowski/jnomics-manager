@@ -16,21 +16,21 @@ public class JnomicsApiConfig {
     private static String SERVER_PROP_FILE = "jnomics-kbase-server.properties";
     private static String CLIENT_PROP_FILE = "jnomics-kbase-client.properties";
 
-    public static Properties getClientProperties() throws Exception {
-        Properties prop = new Properties();
+    public static void getClientProperties(Properties prop) throws Exception {
         try{
             prop.load(ClassLoader.getSystemResourceAsStream(CLIENT_PROP_FILE));
         }catch(Exception e){
             throw new IOException("Could not find " + CLIENT_PROP_FILE);
         }
-        File authFile = JnomicsClientEnvironment.USER_AUTH_FILE;
-        try{
-            prop.load(new FileInputStream(authFile));
-        }catch(Exception e){
-            GlobusPasswordPrompter.getPasswordFromUser();
-            prop.load(new FileInputStream(authFile));
+        if(prop.getProperty("token") == null){
+            File authFile = JnomicsClientEnvironment.USER_AUTH_FILE;
+            try{
+                prop.load(new FileInputStream(authFile));
+            }catch(Exception e){
+                GlobusPasswordPrompter.getPasswordFromUser();
+                prop.load(new FileInputStream(authFile));
+            }
         }
-        return prop;
     }
     
     public static Properties getServerProperties() throws IOException{

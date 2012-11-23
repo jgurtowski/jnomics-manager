@@ -5,40 +5,28 @@ import edu.cshl.schatz.jnomics.manager.fs.JnomicsThriftFileSystem;
 import edu.cshl.schatz.jnomics.manager.api.*;
 import edu.cshl.schatz.jnomics.ob.ReadCollectionWritable;
 import edu.cshl.schatz.jnomics.ob.ReadWritable;
-import edu.cshl.schatz.jnomics.ob.SAMRecordWritable;
 import edu.cshl.schatz.jnomics.tools.PairedEndLoader;
-import edu.cshl.schatz.jnomics.util.*;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
-import org.apache.hadoop.fs.FileUtil;
-import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.util.Progressable;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
 
 import java.io.*;
-import java.net.URI;
 import java.nio.ByteBuffer;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
 /**
   * User: james
  */
-public class ClientFSHandler extends ClientHandler{
+public class FSHandler extends HandlerBase {
 
     private static final Options opts = new Options();
-    private Properties properties;
 
     static{
         opts.addOption("ls",false,"list contents of directory");
@@ -53,11 +41,7 @@ public class ClientFSHandler extends ClientHandler{
         opts.addOption("mv",false,"Move file or directory");
     }
 
-    public ClientFSHandler(Properties prop){
-        properties = prop;
-    }
-
-    public void handle(List<String> args) throws Exception {
+    public void handle(List<String> args, Properties properties) throws Exception {
 
         HelpFormatter f = new HelpFormatter();
         
@@ -65,14 +49,14 @@ public class ClientFSHandler extends ClientHandler{
             f.printHelp("Help",opts);
             return;
         }
-        final JnomicsData.Client client = JnomicsThriftClient.getFsClient();
+        final JnomicsData.Client client = JnomicsThriftClient.getFsClient(properties);
 
         String username = properties.getProperty("username");
         String password = properties.getProperty("password");
         String token = properties.getProperty("token");
         final Authentication auth = new Authentication(username,password,token);
-
         BasicParser parser = new BasicParser();
+
         CommandLine cl = parser.parse(opts,args.toArray(new String[0]));
 
         @SuppressWarnings("unchecked")

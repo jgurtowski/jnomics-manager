@@ -7,17 +7,17 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.fs.Path;
-import org.apache.thrift.async.AsyncMethodCallback;
 
 import java.util.List;
+import java.util.Properties;
 
 /**
  * User: james
  */
 
-public class ClientSamtoolsPipelineHandler extends ClientHandler{
+public class SamtoolsPipelineHandler extends HandlerBase {
 
-    public ClientSamtoolsPipelineHandler(){
+    public SamtoolsPipelineHandler(){
 
     }
 
@@ -30,7 +30,7 @@ public class ClientSamtoolsPipelineHandler extends ClientHandler{
     }
 
     @Override
-    public void handle(List<String> args) throws Exception {
+    public void handle(List<String> args, Properties properties) throws Exception {
         HelpFormatter formatter = new HelpFormatter();
         Options options = getOptions();
         CommandLine cli = null;
@@ -41,8 +41,8 @@ public class ClientSamtoolsPipelineHandler extends ClientHandler{
             return;
         }
 
-        JnomicsData.Client dataClient = JnomicsThriftClient.getFsClient();
-        Authentication auth = JnomicsThriftClient.getAuthentication();
+        JnomicsData.Client dataClient = JnomicsThriftClient.getFsClient(properties);
+        Authentication auth = JnomicsThriftClient.getAuthentication(properties);
 
         String in = cli.getOptionValue("in");
         String out = cli.getOptionValue("out");
@@ -53,7 +53,7 @@ public class ClientSamtoolsPipelineHandler extends ClientHandler{
         dataClient.mkdir(out,auth);
 
         //JnomicsCompute.AsyncClient computeClient = JnomicsThriftClient.getAsyncComputeClient();
-        JnomicsCompute.Client computeClient = JnomicsThriftClient.getComputeClient();
+        JnomicsCompute.Client computeClient = JnomicsThriftClient.getComputeClient(properties);
 
         computeClient.runSNPPipeline(in,organism,out,auth);
         /*computeClient.runSNPPipeline(in,organism,out,auth,new AsyncMethodCallback<JnomicsCompute.AsyncClient.runSNPPipeline_call>() {
