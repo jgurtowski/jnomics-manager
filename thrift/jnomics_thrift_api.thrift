@@ -1,3 +1,5 @@
+//for documentation view jnomics_thrift_api.hpp
+
 namespace java edu.cshl.schatz.jnomics.manager.api
 
 struct Authentication{
@@ -38,26 +40,42 @@ struct JnomicsThriftJobStatus{
        9: double reduceProgress
 }
 
+
 exception JnomicsThriftException{
        1: string msg
 }
 
+
 service JnomicsCompute{
+        
         JnomicsThriftJobID alignBowtie (1: string inPath, 2: string organism, 3: string outPath, 4: string opts, 5: Authentication auth) throws (1: JnomicsThriftException je),
+ 
         JnomicsThriftJobID alignBWA (1: string inPath, 2: string organism, 3: string outPath, 4: string alignOpts, 5: string sampeOpts, 6: Authentication auth) throws (1: JnomicsThriftException je),
+
+
+
         JnomicsThriftJobID snpSamtools (1: string inPath, 2: string organism, 3: string outPath, 4: Authentication auth) throws (1: JnomicsThriftException je),
+
+
        	JnomicsThriftJobStatus getJobStatus(1: JnomicsThriftJobID jobID, 3: Authentication auth) throws (1: JnomicsThriftException je),
+
 	list<JnomicsThriftJobStatus> getAllJobs(1: Authentication auth) throws (1: JnomicsThriftException je),
-        JnomicsThriftJobID pairReads(1: string file1, 2: string file2, 3: string outFile, 4: Authentication auth) throws (1: JnomicsThriftException je),
-        JnomicsThriftJobID singleReads(1: string file, 2: string outFile, 3: Authentication auth) throws (1: JnomicsThriftException je),
+        
+
         bool mergeVCF(1: string inDir, 2: string inAlignments, 3: string outVCF, 4: Authentication auth) throws (1: JnomicsThriftException je),
+       
         bool mergeCovariate(1: string inDir, 2: string outCov, 3: Authentication auth) throws (1: JnomicsThriftException je),
         JnomicsThriftJobID gatkRealign (1: string inPath, 2: string organism, 3: string outPath, 4: Authentication auth) throws (1: JnomicsThriftException je),
         JnomicsThriftJobID gatkCallVariants (1: string inPath, 2: string organism, 3: string outPath, 4: Authentication auth) throws (1:JnomicsThriftException je),
         JnomicsThriftJobID gatkCountCovariates (1: string inPath, 2: string organism, 3: string vcfMask, 4: string outPath, 5: Authentication auth) throws (1:JnomicsThriftException je),
         JnomicsThriftJobID gatkRecalibrate (1: string inPath, 2: string organism, 3: string recalFile, 4: string outPath, 5: Authentication auth) throws (1: JnomicsThriftException je),
         JnomicsThriftJobID runSNPPipeline(1: string inPath, 2: string organism, 3: string outPath, 4: Authentication auth) throws (1: JnomicsThriftException je)
+
+        JnomicsThriftJobID pairReads(1: string file1, 2: string file2, 3: string outFile, 4: Authentication auth) throws (1: JnomicsThriftException je),
+        JnomicsThriftJobID singleReads(1: string file, 2: string outFile, 3: Authentication auth) throws (1: JnomicsThriftException je),
+
 }
+
 
 service JnomicsData{
         JnomicsThriftHandle create (1: string path, 2: Authentication auth) throws (1: JnomicsThriftException je),

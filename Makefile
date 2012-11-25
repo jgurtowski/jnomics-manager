@@ -11,7 +11,7 @@ CLIENT_CERT_DIR=$(DEPLOYMENT_DIR)/cert
 SERVICE_BIN_DIR=$(SERVICE_DIR)/bin
 SERVICE_CONF_DIR=$(SERVICE_DIR)/conf
 SERVICE_LIB_DIR=$(SERVICE_DIR)/lib
-
+SERVICE_DOCS_DIR=$(SERVICE_DIR)/docs
 
 JAVA_HOME:=/kb/runtime/java
 ANT_HOME:=/kb/runtime/ant
@@ -24,6 +24,10 @@ deploy: deploy-jnomics
 
 test:
 	cd kbase-test && ./test_var_service.sh
+
+deploy-docs:
+	doxygen
+	cp -r docs/html $(SERVICE_DOCS_DIR)
 
 make-dest-dir:
 	mkdir -p $(SERVICE_BIN_DIR)
