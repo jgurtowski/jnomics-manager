@@ -3,6 +3,7 @@ package edu.cshl.schatz.jnomics.manager.client;
 import edu.cshl.schatz.jnomics.manager.api.Authentication;
 import edu.cshl.schatz.jnomics.manager.api.JnomicsCompute;
 import edu.cshl.schatz.jnomics.manager.api.JnomicsThriftJobID;
+import edu.cshl.schatz.jnomics.manager.common.KBaseIDTranslator;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
@@ -43,9 +44,9 @@ public class BowtieHandler extends HandlerBase {
 
         JnomicsCompute.Client client = JnomicsThriftClient.getComputeClient(properties);
         Authentication auth = JnomicsThriftClient.getAuthentication(properties);
-        
+        String organism = KBaseIDTranslator.translate(cli.getOptionValue("organism"));
         JnomicsThriftJobID jobID = client.alignBowtie(cli.getOptionValue("in"),
-                cli.getOptionValue("organism"),
+                organism,
                 cli.getOptionValue("out"),
                 nullToString(cli.getOptionValue("opts")),
                 auth);

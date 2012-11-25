@@ -17,7 +17,11 @@ public class GenomeListHandler extends HandlerBase {
     }
 
     public JnomicsArgument[] getArguments(){
-        return new JnomicsArgument[0];
+        return new JnomicsArgument[]{
+                new JnomicsArgument("a",false,false,"list all genomes"),
+                new JnomicsArgument("kb",false,false,"list only kbase genomes"),
+                new JnomicsArgument("h", false,false, "help")
+        };
     }
 
     @Override
@@ -25,12 +29,35 @@ public class GenomeListHandler extends HandlerBase {
         JnomicsData.Client client = JnomicsThriftClient.getFsClient(properties);
         Authentication auth = JnomicsThriftClient.getAuthentication(properties);
         List<String> genomes = client.listGenomes(auth);
+        boolean all = false, kbase =false;
+        if(args.contains("-a")){
+            all = true;
+        }
+        if(args.contains("-kb")){
+            kbase = true;
+        }
+        if(args.contains("-h")){
+            for(JnomicsArgument arg: getArguments()){
+                System.out.println("-"+arg.getName()+"\t"+arg.getDescription());
+            }
+            System.exit(1);
+        }
+        
+        
         System.out.println("Available Genomes:");
         if(0 == genomes.size()){
             System.out.println("None available");
         }else{
             for(String g: genomes){
-                System.out.println(g);
+                if(!all && !kbase && g.startsWith("kb_"))
+                    continue;
+                if(kbase && !g.startsWith("kb_"))
+                    continue;
+                if(g.startsWith("kb_")){
+                    System.out.println(g.replace("kb_","kb|"));
+                }else{
+                    System.out.println(g);
+                }
             }
         }
     }
