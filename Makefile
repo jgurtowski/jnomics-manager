@@ -11,7 +11,7 @@ CLIENT_CERT_DIR=$(DEPLOYMENT_DIR)/cert
 SERVICE_BIN_DIR=$(SERVICE_DIR)/bin
 SERVICE_CONF_DIR=$(SERVICE_DIR)/conf
 SERVICE_LIB_DIR=$(SERVICE_DIR)/lib
-SERVICE_DOCS_DIR=$(SERVICE_DIR)/docs
+SERVICE_DOCS_DIR=$(SERVICE_DIR)/webroot
 
 JAVA_HOME:=/kb/runtime/java
 ANT_HOME:=/kb/runtime/ant
@@ -27,7 +27,7 @@ test:
 
 deploy-docs:
 	doxygen
-	cp -r docs/html $(SERVICE_DOCS_DIR)
+	cp -r docs/html/* $(SERVICE_DOCS_DIR)
 
 make-dest-dir:
 	mkdir -p $(SERVICE_BIN_DIR)
@@ -38,6 +38,7 @@ make-dest-dir:
 	mkdir -p $(CLIENT_CONF_DIR)
 	mkdir -p $(CLIENT_DOCS_DIR)
 	mkdir -p $(CLIENT_CERT_DIR)
+	mkdir -p $(SERVICE_DOCS_DIR)
 
 build-jnomics:
 	git submodule init
