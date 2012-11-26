@@ -19,6 +19,6 @@ server daemon and hadoop cluster which is available at ORNL.
 In the next release we intend to improve the batch processing capabilities,
 enhance support for IRIS, the narrative interface, and the Shock uploading
 system by providing program metadata. We will also include new sequence
-analysis features for reporting sample quality, and start development of
-functional analysis of the identified variants.
+analysis features for reporting sample quality, basic functional analysis 
+of the identified variants, and begin work on the RNA-seq analysis pipelines.
 
