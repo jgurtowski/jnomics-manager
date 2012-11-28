@@ -1,3 +1,32 @@
+Jnomics - High Throughput Sequencing Analysis
 
+The code found in this repository contains the 
+client and server code for the jnomics-manager.
+The code is dependent on the core jnomics package
+which is held as a submodule in the 'jnomics'
+subdirectory at the root of the package.
 
-make deploy
+The jnomics-manager is responsible for handling
+authenticaton and workflows. It is the interface
+to the backend hadoop cluster.
+
+Building:
+	To build the barebones package, run:
+	 $> ./build compile
+	 $> ./build jar
+	
+	You can now access the driver commandline
+	client using:
+	 $> ./bin/jkbase
+	 
+Kbase Deployment:
+      Kbase deployment makes use of the Makefile
+      in the root of the package. The primary
+      target is 'deploy'.
+
+      	$> make deploy
+
+      This should deploy all code to the 
+      kbase deployment path.
+
+   
