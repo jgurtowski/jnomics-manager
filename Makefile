@@ -20,7 +20,7 @@ PATH:=${JAVA_HOME}/bin:${ANT_HOME}/bin:${THRIFT_HOME}/bin:${PATH}
 
 all:
 
-deploy: deploy-jnomics
+deploy: deploy-jnomics deploy-docs
 
 test:
 	cd kbase-test && ./test_var_service.sh
