@@ -27,7 +27,7 @@ deploy: deploy-jnomics deploy-docs deploy-libs
 test:
 	cd kbase-test && ./test_var_service.sh
 
-deploy-docs:
+deploy-docs: make-dest-dir
 	doxygen
 	cp -r docs/html/* $(SERVICE_DOCS_DIR)
 
