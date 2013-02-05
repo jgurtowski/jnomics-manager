@@ -46,7 +46,7 @@ build-jnomics:
 	git submodule init
 	git submodule update
 	python build.py jar
-	java -cp jnomics-manger*.jar edu.cshl.schatz.jnomics.manager.client.CreateKbaseScripts bin
+	java -cp jnomics-manager-*.jar edu.cshl.schatz.jnomics.manager.client.CreateKbaseScripts jk bin
 
 deploy-jnomics: deploy-libs
 	cp conf/jnomics-kbase-client.properties $(CLIENT_CONF_DIR)

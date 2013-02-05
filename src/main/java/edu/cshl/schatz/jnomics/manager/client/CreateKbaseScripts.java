@@ -23,7 +23,6 @@ public class CreateKbaseScripts {
         }
     };
 
-    private static final String LEAD_PREFIX = "jk";
     
     private static final String SCRIPT_TEMPLATE = "#!/bin/bash \n" +
             "SCRIPT_PATH=`dirname \"$0\"`\n" +
@@ -32,18 +31,19 @@ public class CreateKbaseScripts {
     
     public static void main(String []args) throws Exception{
 
-        if(1 != args.length ){
-            System.out.println("CreateKbaseScripts output_dir");
+        if(2 != args.length ){
+            System.out.println("CreateKbaseScripts prefix output_dir");
             return;
         }
 
-        String outputDir = args[0];
+        String leadPrefix = args[0];
+        String outputDir = args[1];
         
         for(Class<? extends ClientFunctionHandler> c : exportedClasses){
 
             KbaseScript kann = c.getAnnotation(KbaseScript.class);
             for(String field : kann.exportFields()){
-                String[] scriptName = new String[]{LEAD_PREFIX,kann.prefix(),field};
+                String[] scriptName = new String[]{leadPrefix,kann.prefix(),field};
                 Field f = c.getField(field);
                 Flag flag = f.getAnnotation(Flag.class);
                 File outFile = new File(outputDir, StringUtils.join(scriptName,"_"));
