@@ -84,7 +84,7 @@ public class Utility {
             }else if(null != (param = field.getAnnotation(Parameter.class))){
                 int j = 0;
                 for(String a : args){
-                    if(a.startsWith(param.shortForm() + "=") || a.startsWith(param.longForm()+"==")){
+                    if(a.startsWith(param.shortForm() + "=") || a.startsWith(param.longForm()+"=")){
                         String value = a.substring(a.indexOf("=")+1);
                         field.set(c,value);
                         del_idxs.put(j,true);
