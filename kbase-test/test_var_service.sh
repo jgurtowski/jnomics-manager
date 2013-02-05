@@ -42,30 +42,30 @@ jkbase fs -put_pe yeast_sim.1.fq.gz yeast_sim.2.fq.gz ${TEST_DIR}/yeast_sim
 
 jmessage "Aligning reads"
 #run alignment
-align_jobid=`jkbase compute bwa -in ${TEST_DIR}/yeast_sim.pe -out ${TEST_DIR}/yeast_sim_bwa -organism yeast | cut -d ':' -f 2`
-echo "alignment job: ${align_jobid}"
+align_jobid=`jkbase compute bwa -in=${TEST_DIR}/yeast_sim.pe -out=${TEST_DIR}/yeast_sim_bwa -org=yeast | cut -d ':' -f 2 | sed "s/^[ \t]*//"`
+echo "alignment job:${align_jobid}"
 
-while [ `jkbase compute status -job $align_jobid | grep Complete | awk '{print $2}'` == "false" ]
+while [ `jkbase compute status -job=${align_jobid} | grep Complete | awk '{print $2}'` == "false" ]
 do
     sleep 10
-    jkbase compute status -job ${align_jobid}
+    jkbase compute status -job=${align_jobid}
 done
 
 jmessage "Calling snps"
 #run snp
-snp_jobid=`jkbase compute snp -in ${TEST_DIR}/yeast_sim_bwa -out ${TEST_DIR}/yeast_sim_snp -organism yeast | cut -d ':' -f 2`
+snp_jobid=`jkbase compute samtools_snp -in=${TEST_DIR}/yeast_sim_bwa -out=${TEST_DIR}/yeast_sim_snp -org=yeast | cut -d ':' -f 2 | sed "s/^[ \t]*//"`
 echo "snp job: ${snp_jobid}"
 
-while [ `jkbase compute status -job $snp_jobid | grep Complete | awk '{print $2}'` == "false" ]
+while [ `jkbase compute status -job=$snp_jobid | grep Complete | awk '{print $2}'` == "false" ]
 do
     sleep 10
-    jkbase compute status -job $snp_jobid
+    jkbase compute status -job=$snp_jobid
 done
 
 jmessage "Merging vcf files"
 
 #merge vcf
-jkbase compute vcf_merge -alignments ${TEST_DIR}/yeast_sim_bwa -in ${TEST_DIR}/yeast_sim_snp -out ${TEST_DIR}/yeast_sim.vcf
+jkbase compute vcf_merge -aln=${TEST_DIR}/yeast_sim_bwa -in=${TEST_DIR}/yeast_sim_snp -out=${TEST_DIR}/yeast_sim.vcf
 
 jmessage "Downloading complete vcf"
 

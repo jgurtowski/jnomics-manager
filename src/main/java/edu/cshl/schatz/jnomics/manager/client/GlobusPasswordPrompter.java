@@ -4,7 +4,6 @@ import com.mongodb.DBObject;
 import com.mongodb.util.JSON;
 import org.apache.commons.codec.binary.Base64;
 
-import javax.management.BadAttributeValueExpException;
 import javax.net.ssl.*;
 import java.io.*;
 import java.net.URL;
