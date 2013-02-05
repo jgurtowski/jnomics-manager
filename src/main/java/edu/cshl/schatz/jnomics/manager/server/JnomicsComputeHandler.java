@@ -440,7 +440,8 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
     @Override
     public JnomicsThriftJobID gatkCallVariants(String inPath, String organism, String outPath, Authentication auth)
             throws JnomicsThriftException, TException {
-        String username;
+        return null;
+        /*String username;
         if(null == (username = authenticator.authenticate(auth))){
             throw new JnomicsThriftException("Permission Denied");
         }
@@ -455,14 +456,15 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         }catch(Exception e){
             throw new JnomicsThriftException(e.toString());
         }
-        return launchJobAs(username, conf);
+        return launchJobAs(username, conf);*/
     }
 
     @Override
     public JnomicsThriftJobID gatkCountCovariates(String inPath, String organism, String vcfMask,
                                                   String outPath, Authentication auth)
             throws JnomicsThriftException, TException {
-        String username;
+        return null;
+        /*String username;
         if(null == (username = authenticator.authenticate(auth))){
             throw new JnomicsThriftException("Permission Denied");
         }
@@ -481,13 +483,14 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         }catch(Exception e){
             throw new JnomicsThriftException(e.toString());
         }
-        return launchJobAs(username,conf);
+        return launchJobAs(username,conf);*/
     }
 
     @Override
     public JnomicsThriftJobID gatkRecalibrate(String inPath, String organism, String recalFile, String outPath, Authentication auth)
             throws JnomicsThriftException, TException {
-        String username;
+        return null;
+        /*String username;
         if(null == (username = authenticator.authenticate(auth))){
             throw new JnomicsThriftException("Permission Denied");
         }
@@ -506,7 +509,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         }catch(Exception e){
             throw new JnomicsThriftException(e.toString());
         }
-        return launchJobAs(username,conf);
+        return launchJobAs(username,conf);*/
     }
 
     @Override
