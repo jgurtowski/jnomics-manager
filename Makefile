@@ -22,7 +22,7 @@ all:
 
 deploy-client: deploy
 
-deploy: deploy-jnomics deploy-docs deploy-libs
+deploy: deploy-jnomics deploy-libs
 
 test:
 	cd kbase-test && ./test_var_service.sh
