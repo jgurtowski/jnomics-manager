@@ -18,7 +18,7 @@ import java.util.*;
 
 public class JnomicsDataHandler implements JnomicsData.Iface {
 
-    private final org.slf4j.Logger log = LoggerFactory.getLogger(JnomicsComputeHandler.class);
+    private final org.slf4j.Logger log = LoggerFactory.getLogger(JnomicsDataHandler.class);
     private final Map<UUID, JnomicsFsHandle> handleMap = Collections.synchronizedMap(new HashMap<UUID, JnomicsFsHandle>());
     private Properties properties;
 
@@ -52,7 +52,24 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
             e.printStackTrace();
             throw new JnomicsThriftException(e.toString());
         }
+
         FileSystem fs = null;
+        /**Check if the user has a home directory**/
+        Path userHome = new Path("/user", username);
+        try {
+            fs = FileSystem.get(uri,new Configuration(), "hdfs");
+            FileStatus[] stats = fs.listStatus(userHome);
+            if(null == stats){ //create user's home directory
+                fs.create(userHome);
+                fs.setOwner(userHome,username,"kbase");
+            }
+            fs.close();
+        } catch (Exception e) {
+            log.error("Error Creating Filesystem");
+            e.printStackTrace();
+            throw new JnomicsThriftException(e.toString());
+        }
+
         try{
             fs = FileSystem.get(uri, new Configuration(), username);
         } catch(Exception e){
@@ -60,6 +77,8 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
             e.printStackTrace();
             throw new JnomicsThriftException(e.toString());
         }
+
+
 
         return fs;
     }

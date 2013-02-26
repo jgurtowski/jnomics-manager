@@ -23,5 +23,6 @@ public class FSBase implements ClientFunctionHandler {
         String password = properties.getProperty("password");
         String token = properties.getProperty("token");
         auth = new Authentication(username,password,token);
+
     }
 }
