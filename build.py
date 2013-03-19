@@ -115,7 +115,24 @@ def buildclientpackage():
     files = ["bin/jkbase", "cert/truststore.jks",
              "jnomics-manager-0.3.jar",
              "conf/jnomics-kbase-client.properties",
-             "docs/kbase-client-tutorial.txt"
+             "docs/kbase-client-tutorial.txt",
+             "bin/jk_compute_bowtie",
+             "bin/jk_compute_bwa",
+             "bin/jk_compute_job_status",
+             "bin/jk_compute_list_genomes",
+             "bin/jk_compute_list_jobs",
+             "bin/jk_compute_samtools_snp",
+             "bin/jk_compute_vcf_merge",
+             "bin/jk_fs_get",
+             "bin/jk_fs_ls",
+             "bin/jk_fs_mkdir",
+             "bin/jk_fs_mv",
+             "bin/jk_fs_put",
+             "bin/jk_fs_put_pe",
+             "bin/jk_fs_put_pe_i",
+             "bin/jk_fs_put_se",
+             "bin/jk_fs_rm",
+             "bin/jk_fs_rmr"
              ]
 
     basedirs = map(lambda x: os.path.dirname(x),files)
