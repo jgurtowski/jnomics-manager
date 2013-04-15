@@ -7,12 +7,9 @@ Build jnomics using the procedure in the INSTALL file
 ## Aligning reads to a reference genome
 ####
 
-The `jkbase` script is the command line interface to the service.
-The first step in most genomic analysis is the alignment of sequencing
-reads to a reference genome. 
-
 This tutorial will focus on paired-end illumina sequencing files. Single-end
 experiments will work as well by substituting `se` for `pe` in the commands below. 
+Ensure the `bin` directory in this package is in your path.
 
 1. First, import the experiment reads into your home directory on the cluster. 
 Paired-end reads should be kept together during alignment so there is a special
@@ -21,32 +18,36 @@ with paired reads in fastq format, the files can be either plain text, gzip'd
 or bzip2'd. If you do not have reads of your own you can download them from the 
 cluster with the following command:
 
-       $> jkbase fs -get /share/example/yeast_sim.1.fq.gz
-       $> jkbase fs -get /share/example/yeast_sim.2.fq.gz
+       $> jk_fs_get /share/example/yeast_sim.1.fq.gz
+       $> jk_fs_get /share/example/yeast_sim.2.fq.gz
 
 Now that we have some data, lets upload it to our home directory.
 
-       $> jkbase fs -put_pe yeast_sim.1.fq.gz yeast_sim.2.fq.gz yeast
+       $> jk_fs_put_pe yeast_sim.1.fq.gz yeast_sim.2.fq.gz yeast
 
 This will pair the reads and upload them to the cluster. The last argument is the base
 name of the file that will be found in your home directory on the cluster. Because
 this is a paired-end experiment the extension `.pe` will be added automatically.
 After the upload process is complete, a file named yeast.pe should be your home directory.
 
-Standard filesystem commands can be listed with `jkbase fs`.
+Standard filesystem commands begin with the previx jk_fs_*
+
+        $> jk_fs_ls
+        $> jk_fs_get yeast.pe
+        $> jk_fs_mkdir my_dir
 
 
 2. Align with Bowtie2:
    
    To align the reads to a reference genome simply call jkbase compute with the bowtie argument.
     
-      $> jkbase compute bowtie -in yeast.pe -organism yeast -out yeast_bowtie_align
+      $> jk_compute_bowtie -in=yeast.pe -org=yeast -out=yeast_bowtie_align
    
    The organism flag selects the reference used in alignment. The organism must be supported by
 the kbase infrastructure as a part of the controlled genome vocabulary. To list the available
 genomes/organisms use:
 
-      $> jkbase compute list_genomes
+      $> jk_compute_list_genomes -a
 
 
 3. Check status of running Job 
@@ -54,7 +55,7 @@ genomes/organisms use:
    When the alignment task it started, the command will immediately return with a job reference id.
 This reference id can be used to poll the status of the job using the commandline client.
    
-      $> jkbase compute status -job <jobID>
+      $> jk_compute_job_status -job=<jobID>
 
 
 #####
@@ -63,20 +64,20 @@ This reference id can be used to poll the status of the job using the commandlin
 
  1. Calling SNPs takes the output from the alignment steps above and calls SNPs using the selected reference.
 
-       $> jkbase compute snp -in yeast_bowtie_align -organism yeast -out yeast_snps
+       $> jk_compute_samtools_snp -in=yeast_bowtie_align -org=yeast -out=yeast_snps
 
        
  2. Because SNPs are called in parallel across the genome multiple files are created by the previous command.
     To join the SNPs into a single VCF file use jkbase's vcfmerge function
 
-       $> jkbase compute vcf_merge -in yeast_snps -alignments yeast_bowtie_align -out yeast.vcf
+       $> jk_compute_vcf_merge -in=yeast_snps --alignments=yeast_bowtie_align -out=yeast.vcf
 
 
  3. Download the combined vcf file to the client machine for local viewing.
 
-       $> jkbase fs -get yeast.vcf
+       $> jk_fs_get yeast.vcf
 
-
+       
  A local file named reads.vcf will be created containing all of the SNPs called by the pipeline.
 
 
