@@ -32,7 +32,6 @@ public class ListGenomes extends FSBase {
         }
 
         List<String> genomes = client.listGenomes(auth);
-        boolean all = false, kbase =false;
 
         System.out.println("Available Genomes:");
         if(0 == genomes.size()){
