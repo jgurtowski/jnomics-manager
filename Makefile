@@ -44,6 +44,7 @@ make-dest-dir:
 build-jnomics:
 	git submodule init
 	git submodule update
+	python build.py compile
 	python build.py jar
 	java -cp jnomics-manager-*.jar edu.cshl.schatz.jnomics.manager.client.CreateKbaseScripts jk bin
 
@@ -58,3 +59,6 @@ deploy-jnomics: deploy-libs
 
 deploy-libs: make-dest-dir build-jnomics
 	cp jnomics-manager*.jar $(CLIENT_LIB_DIR)
+
+clean: 
+	rm -rf target
