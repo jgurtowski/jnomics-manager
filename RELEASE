@@ -1,6 +1,22 @@
+OVERVIEW - Variation Service 
+-------------------------------------------------------------------------------
 
-Added jk_* script generator for IRIS compatibility
+The main functionality of the variation service is to identify genome variations
+in a genome resequening project. This includes support for ingesting large
+quantities of sequencing reads into the HDFS, mapping those reads to a reference
+genome (using Bowtie2 or BWA), scanning the alignments for variants (using
+SAMTools), and then exporting the variants in VCF format. The backend of the
+service is implemented on Hadoop for high scalability and parallelism.
 
-User Account information retrieved from IRIS Environment
+VERSION 0.0.2 (Released May 31, 2013)
+-------------------------------------
 
-Improved commandline help, added longer descriptions that are useful
+NEW FEATUES:
+
+- Added jk_* script generator for IRIS compatibility
+
+- User Account information retrieved from IRIS Environment, integration with GlobusOnline
+
+- Improved commandline help, added longer descriptions that are useful
+
+- Internal enhancements for batch processing and logging
