@@ -3,6 +3,7 @@ package edu.cshl.schatz.jnomics.manager.server;
 import edu.cshl.schatz.jnomics.manager.api.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.thrift.TException;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +61,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
             fs = FileSystem.get(uri,new Configuration(), "hdfs");
             FileStatus[] stats = fs.listStatus(userHome);
             if(null == stats){ //create user's home directory
-                fs.create(userHome);
+                fs.mkdirs(userHome,new FsPermission("755"));
                 fs.setOwner(userHome,username,"kbase");
             }
             fs.close();
@@ -77,8 +78,6 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
             e.printStackTrace();
             throw new JnomicsThriftException(e.toString());
         }
-
-
 
         return fs;
     }
