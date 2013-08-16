@@ -1,0 +1,65 @@
+<project name="Jnomics-Manager" default="dist" basedir=".">
+    <description>
+      Jnomics-Manager Build
+    </description>
+  <!-- set global properties for this build -->
+  <property name="src" location="src"/>
+  <property name="subsrc" location="${src}/main/java"/>
+  <property name="build" location="build"/>
+  <property name="thrift_file" location="thrift/jnomics_thrift_api.thrift" />
+  <property name="thrift_api_path" location="${subsrc}/edu/cshl/schatz/jnomics/manager/api" />
+  <property name="dist"  location="dist"/>
+  <property name="lib"   location="lib"/>
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${build}"/>
+    <mkdir dir="${build}/lib" />
+  </target>
+
+  <target name="compile" depends="init"
+        description="compile the source " >
+    <!-- Compile the java code from ${src} into ${build} -->
+    <exec executable="thrift">
+      <arg value="--gen" />
+      <arg value="java" />
+      <arg value="-out" />
+      <arg value="${subsrc}" />
+      <arg value="${thrift_file}" />
+    </exec>
+
+    <javac srcdir="${src}" destdir="${build}">
+      <classpath>
+	<fileset dir="${lib}">
+	  <include name="**/*.jar" />
+	</fileset>
+      </classpath>
+    </javac>
+    
+    <!-- Create a jar with a lib dir (works for hadoop) -->
+    <copy todir="${build}/lib">
+      <fileset dir="${lib}">
+	<include name="**/*.jar"/>
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="dist" depends="compile"
+        description="generate the distribution" >
+    <!-- Create the distribution directory -->
+    <mkdir dir="${dist}/lib"/>
+
+    <!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
+    <jar jarfile="${dist}/jnomics-manager-${DSTAMP}.jar" basedir="${build}"/>
+  </target>
+
+  <target name="clean"
+        description="clean up" >
+    <!-- Delete the ${build} and ${dist} directory trees -->
+    <delete dir="${build}"/>
+    <delete dir="${dist}"/>
+    <delete dir="${thrift_api_path}" />
+  </target>
+</project>
