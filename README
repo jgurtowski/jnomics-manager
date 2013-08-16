@@ -10,14 +10,15 @@ The jnomics-manager is responsible for handling
 authenticaton and workflows. It is the interface
 to the backend hadoop cluster.
 
+Dependencies:
+Thrift needs to be installed with at least the
+java bindings
+
 Building:
 	To build the barebones package, run:
-	 $> ./build compile
-	 $> ./build jar
-	
-	You can now access the driver commandline
-	client using:
-	 $> ./bin/jkbase
+	$> ant
+	A jar file dist/jnomics-manager-*.jar will
+	be created
 	 
 Kbase Deployment:
       Kbase deployment makes use of the Makefile
