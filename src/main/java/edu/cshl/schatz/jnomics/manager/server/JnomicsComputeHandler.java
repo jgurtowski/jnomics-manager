@@ -4,7 +4,9 @@ import edu.cshl.schatz.jnomics.manager.api.*;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsJobBuilder;
 import edu.cshl.schatz.jnomics.tools.*;
 import edu.cshl.schatz.jnomics.util.TextUtil;
+
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -112,7 +114,15 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         }
         return launchJobAs(username,conf);
     }
-
+    public void cpyToShock(File list , Authentication auth) throws TException , JnomicsThriftException{	
+    	String username;
+    	if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+    	Class s = ShockLoad.class;
+    	JnomicsJobBuilder builder = new JnomicsJobBuilder(getGenericConf(),ShockLoad.class);
+    	
+    }
     @Override
     public JnomicsThriftJobID snpSamtools(String inPath, String organism, String outPath, Authentication auth) throws TException, JnomicsThriftException {
         String username;

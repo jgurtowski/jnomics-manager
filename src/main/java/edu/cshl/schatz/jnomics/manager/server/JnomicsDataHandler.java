@@ -1,14 +1,33 @@
 package edu.cshl.schatz.jnomics.manager.server;
 
 import edu.cshl.schatz.jnomics.manager.api.*;
+import edu.cshl.schatz.jnomics.mapreduce.JnomicsJobBuilder;
+import edu.cshl.schatz.jnomics.tools.SELoaderMap;
+import edu.cshl.schatz.jnomics.tools.ShockLoad;
+import edu.cshl.schatz.jnomics.manager.server.NLineInputFormat;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.JobID;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.thrift.TException;
 import org.slf4j.LoggerFactory;
 
+import us.kbase.shock.client.BasicShockClient;
+import us.kbase.shock.client.ShockNode;
+import us.kbase.shock.client.ShockNodeId;
+import us.kbase.shock.client.exceptions.ExpiredTokenException;
+import us.kbase.shock.client.exceptions.InvalidShockUrlException;
+import us.kbase.shock.client.exceptions.ShockHttpException;
+
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
+import java.net.MalformedURLException;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -23,14 +42,19 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
     private final Map<UUID, JnomicsFsHandle> handleMap = Collections.synchronizedMap(new HashMap<UUID, JnomicsFsHandle>());
     private Properties properties;
 
+    //private static final int SHOCK_BUFFER_SIZE = 10000000;
+    
     private JnomicsServiceAuthentication authenticator;
 
+       
     private final ThreadLocal bufferCache = new ThreadLocal(){
         @Override
         protected Object initialValue() {
             return new byte[2000000];
         }
     };
+    
+    
 
     public JnomicsDataHandler(Properties props){
         properties = props;
@@ -81,7 +105,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
 
         return fs;
     }
-    
+   
     private void closeFileSystem(FileSystem fs) throws JnomicsThriftException{
         try{
             fs.close();
@@ -95,7 +119,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
     public Map<UUID, JnomicsFsHandle> getHandleMap(){
         return handleMap;
     }
-
+    
     @Override
     public JnomicsThriftHandle create(String path, Authentication auth) throws TException, JnomicsThriftException {
         String username;
@@ -159,7 +183,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         }
         jhandle.updateLastUsed();
     }
-
+    
     @Override
     public ByteBuffer read(JnomicsThriftHandle handle, Authentication auth) throws TException, JnomicsThriftException {
         JnomicsFsHandle jhandle = handleMap.get(UUID.fromString(handle.getUuid()));
@@ -177,6 +201,141 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         return ByteBuffer.wrap(buf,0,bytesRead);
     }
 
+    @Override
+    public boolean ShockRead(String shockNodeID, String hdfsPathDest, Authentication auth) throws TException , JnomicsThriftException{	
+    	String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+    	byte[] buf;
+    	
+    	FileSystem fs = null;
+    	FSDataOutputStream stream = null;
+    	BasicShockClient base;
+    	try { 
+            URL mshadoop = new URL("http://mshadoop1.cshl.edu:7546");
+				base = new BasicShockClient(mshadoop);
+				buf = base.getFile(new ShockNodeId(shockNodeID));
+				fs = getFileSystem(username);
+    		stream = fs.create(new Path(hdfsPathDest));
+    		stream.write(buf);
+    	} catch (Exception e) {
+            throw new JnomicsThriftException(e.toString());
+        }finally{
+        
+        	closeFileSystem(fs);
+	
+        }
+    	return true;
+    }
+    
+    @Override
+    public boolean ShockWrite(String filename, String hdfsPath, Authentication auth) throws TException , JnomicsThriftException{	
+    	String username;
+    	if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        log.info("Opening file: " + hdfsPath + " for user: " + username);
+    	BasicShockClient base;
+    	FileSystem fs = null;
+    	FSDataInputStream inStream = null;
+    	List<JnomicsThriftFileStatus> stats  = listStatus(hdfsPath, auth);
+
+        long remoteLen = stats.get(0).getLength();
+    	
+    	try { 
+    		fs = getFileSystem(username);
+    		inStream = fs.open(new Path(hdfsPath));
+    		int  Length = (int)(fs.getLength(new Path(hdfsPath)));
+    		System.out.println(Length);
+			byte[] buf = new byte[Length];
+    		URL mshadoop = new URL("http://mshadoop1.cshl.edu:7546");
+			base = new BasicShockClient(mshadoop);
+			int i = 0;
+			int total = 0;
+			inStream.read(buf);
+			while(-1 != (i = inStream.read(buf))){
+		       total += i;
+		       System.out.print("\r"+total+"/"+Length+" " + ((float)total)/Length * 100 + "%");    
+		   }
+			try { 	
+					ShockNode sn = base.addNode(buf, filename);
+					log.info("Node id is "+ sn.getId().toString());
+				}	
+				catch(Exception e){
+					log.error(e.toString());
+					throw new IOException(e.getMessage());
+				}
+			inStream.close();
+    	}catch (Exception e) {
+    		log.error(e.toString());
+        }finally{
+        	closeFileSystem(fs);
+        	
+        }
+    	return true;
+    }
+    
+    public JnomicsThriftJobID ShockBatchWrite(List<String> Input_files, String Output,String hdfsPath, Authentication auth) throws TException , JnomicsThriftException{	
+    	String username;
+    	if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        log.info("Opening file: " + Input_files + " for user: " + username);
+        //JnomicsComputeHandler com;
+//    	BasicShockClient base;
+        String id = null ;
+    	FileSystem fs = null;
+    	FSDataInputStream inStream = null;
+    	Path filenamePath = new Path(hdfsPath+"/cpyfiles.txt");
+    	
+    	try { 
+    		fs = getFileSystem(username);
+    		if(fs.exists(filenamePath)){
+    			fs.delete(filenamePath); 
+    		}
+    		FSDataOutputStream outStream = fs.create(filenamePath);
+    			for(String filename : Input_files){
+    				log.info(filename+"\n");
+    				outStream.writeBytes(filename+"\n");
+    			}
+    		outStream.close();
+    		try {       
+//    			JnomicsJobBuilder builder = new JnomicsJobBuilder(com.getGenericConf(),edu.cshl.schatz.jnomics.tools.ShockLoad.Map.class);
+	            Job job = new Job();
+	            job.setJobName("jnomics-shock");
+	            System.out.println("job name is "+ job.getJobName().toString());
+	            job.setInputFormatClass(NLineInputFormat.class);
+	            job.setOutputKeyClass(Text.class);
+	            System.out.println("Check 2 \n");
+	            job.setOutputValueClass(Text.class);
+	            System.out.println("Check 3 \n");
+	            job.setJarByClass(edu.cshl.schatz.jnomics.tools.ShockLoad.class);
+	            job.setMapperClass(edu.cshl.schatz.jnomics.tools.ShockLoad.class);
+	            System.out.println("Check 5 \n"+ job.getJobName().toString());
+	            job.setNumReduceTasks(0);
+	            System.out.println("Check 6 \n"+ job.getJobName().toString());
+	            log.info("input file is " + filenamePath);
+	            NLineInputFormat.addInputPath(job, filenamePath);
+	            
+	            FileOutputFormat.setOutputPath(job,new Path(Output));
+	            job.submit();
+	            //job.waitForCompletion(true);
+	            id = job.getJobID().toString(); 
+	        }
+	        catch(Exception e){
+	        	e.printStackTrace();
+	        }
+    	}catch (Exception e) {
+    		log.error(e.toString());
+        }finally{
+        	closeFileSystem(fs);
+        	
+        }
+    	
+    	return new JnomicsThriftJobID(id);
+    }
+    
     @Override
     public void close(JnomicsThriftHandle handle, Authentication auth) throws TException, JnomicsThriftException {
         UUID u = UUID.fromString(handle.getUuid());
@@ -207,8 +366,41 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
             handleMap.remove(u);
         }
     }
-
+    
     @Override
+	public List<String> listShockStatus(String path,
+			Authentication auth) throws JnomicsThriftException, TException {
+    	String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        try { 
+        URL mshadoop = new URL("http://mshadoop1.cshl.edu:7546");
+		BasicShockClient base = new BasicShockClient(mshadoop);
+		System.out.println(base.getShockUrl());
+		Map<String,Object> filelist = base.getFileList();
+		List<String> shockfiles =  new ArrayList<String>();
+			for( Map<String,Object> file: (ArrayList<Map<String,Object>>) filelist.get("data")){
+				String fid = file.get("id").toString();
+				if( !fid.equals(null) ){
+					LinkedHashMap<String,Object> name = (LinkedHashMap<String,Object>)file.get("file");
+					if(!name.get("name").equals("")){
+						shockfiles.add(fid + "\t" + name.get("name") + "\t" + name.get("size"));
+					}	
+
+				}
+					
+			}
+		return shockfiles;
+        }
+        catch(Exception  e){
+        	log.error("Could not open Shock");
+        	throw new JnomicsThriftException(e.getMessage());
+        }
+        
+	}
+
+	@Override
     public List<JnomicsThriftFileStatus> listStatus(String path, Authentication auth) throws TException, JnomicsThriftException {
         String username;
         if(null == (username = authenticator.authenticate(auth))){
@@ -274,14 +466,12 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         return state;
     }
 
-
     @Override
     public boolean mkdir(String path, Authentication auth) throws JnomicsThriftException, TException {
         String username;
         if(null == (username = authenticator.authenticate(auth))){
             throw new JnomicsThriftException("Permission Denied");
         }
-        
         log.info("Making directory "+ path + " for user " + username);
         
         FileSystem fs = getFileSystem(username);
@@ -346,8 +536,6 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
 
         return genomeList;
     }
-
-
 
 
 }

@@ -77,13 +77,17 @@ service JnomicsCompute{
 }
 
 
-service JnomicsData{
+service JnomicsData{	
         JnomicsThriftHandle create (1: string path, 2: Authentication auth) throws (1: JnomicsThriftException je),
         JnomicsThriftHandle open (1: string path, 2: Authentication auth) throws (1: JnomicsThriftException je),
         void write (1: JnomicsThriftHandle handle, 2: binary data, 3:Authentication auth) throws (1: JnomicsThriftException je),
         binary read (1: JnomicsThriftHandle handle, 2: Authentication auth) throws (1: JnomicsThriftException je),
+        bool ShockRead (1: string nodeId , 2: string inPath,3: Authentication auth) throws (1: JnomicsThriftException je),
+        bool ShockWrite (1: string filename , 2: string inPath,3: Authentication auth) throws (1: JnomicsThriftException je),
+        JnomicsThriftJobID ShockBatchWrite (1: list<string> filenames , 2: string outPath,3: string inPath,4: Authentication auth) throws (1: JnomicsThriftException je),
         void close(1: JnomicsThriftHandle handle, 2: Authentication auth) throws (1: JnomicsThriftException je),
         list<JnomicsThriftFileStatus> listStatus(1: string path, 2:Authentication auth) throws (1: JnomicsThriftException je),
+	list<string> listShockStatus(1: string path, 2:Authentication auth) throws (1: JnomicsThriftException je),
         bool remove(1: string path, 2: bool recursive, 3: Authentication auth) throws (1: JnomicsThriftException je),
         bool mkdir(1: string path, 2: Authentication auth) throws (1: JnomicsThriftException je),
         bool mv(1: string path, 2: string dest, 3:Authentication auth) throws (1: JnomicsThriftException je),
