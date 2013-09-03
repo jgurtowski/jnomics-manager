@@ -67,52 +67,15 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         return b;
     }
 
-    private FileSystem getFileSystem(String username) throws JnomicsThriftException {
-        URI uri;
-        String fsName = properties.getProperty("hdfs-default-name");
-        try{
-            uri = new URI(fsName);
-        }catch(Exception e){
-            log.error("probleming initializing hdfs");
-            e.printStackTrace();
-            throw new JnomicsThriftException(e.toString());
-        }
-
-        FileSystem fs = null;
-        /**Check if the user has a home directory**/
-        Path userHome = new Path("/user", username);
-        try {
-            fs = FileSystem.get(uri,new Configuration(), "hdfs");
-            FileStatus[] stats = fs.listStatus(userHome);
-            if(null == stats){ //create user's home directory
-                fs.mkdirs(userHome,new FsPermission("755"));
-                fs.setOwner(userHome,username,"kbase");
-            }
-            fs.close();
-        } catch (Exception e) {
-            log.error("Error Creating Filesystem");
-            e.printStackTrace();
-            throw new JnomicsThriftException(e.toString());
-        }
-
-        try{
-            fs = FileSystem.get(uri, new Configuration(), username);
-        } catch(Exception e){
-            log.error("Problem creating filesystem");
-            e.printStackTrace();
-            throw new JnomicsThriftException(e.toString());
-        }
-
-        return fs;
-    }
+     private FileSystem getFileSystem(String username) throws JnomicsThriftException {
+    	 return JnomicsFileSystem.getFileSystem(properties, username);
+     }
    
-    private void closeFileSystem(FileSystem fs) throws JnomicsThriftException{
-        try{
-            fs.close();
+     private void  closeFileSystem(FileSystem fs) throws JnomicsThriftException{
+    	 try{
+    	   JnomicsFileSystem.closeFileSystem(fs);
         }catch(Exception e){
-            log.error("Problem closing fs");
-            e.printStackTrace();
-            throw new JnomicsThriftException(e.toString());
+           throw new JnomicsThriftException(e.toString());
         }
     }
     
@@ -204,28 +167,28 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
     @Override
     public boolean ShockRead(String shockNodeID, String hdfsPathDest, Authentication auth) throws TException , JnomicsThriftException{	
     	String username;
-        if(null == (username = authenticator.authenticate(auth))){
-            throw new JnomicsThriftException("Permission Denied");
-        }
+    	if(null == (username = authenticator.authenticate(auth))){
+    		throw new JnomicsThriftException("Permission Denied");
+    	}
     	byte[] buf;
-    	
+
     	FileSystem fs = null;
     	FSDataOutputStream stream = null;
     	BasicShockClient base;
     	try { 
-            URL mshadoop = new URL("http://mshadoop1.cshl.edu:7546");
-				base = new BasicShockClient(mshadoop);
-				buf = base.getFile(new ShockNodeId(shockNodeID));
-				fs = getFileSystem(username);
+    		URL mshadoop = new URL("http://mshadoop1.cshl.edu:7546");
+    		base = new BasicShockClient(mshadoop);
+    		buf = base.getFile(new ShockNodeId(shockNodeID));
+    		fs = getFileSystem(username);
     		stream = fs.create(new Path(hdfsPathDest));
     		stream.write(buf);
     	} catch (Exception e) {
-            throw new JnomicsThriftException(e.toString());
-        }finally{
-        
-        	closeFileSystem(fs);
-	
-        }
+    		throw new JnomicsThriftException(e.toString());
+    	}finally{
+
+    		closeFileSystem(fs);
+
+    	}
     	return true;
     }
     
@@ -233,107 +196,44 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
     public boolean ShockWrite(String filename, String hdfsPath, Authentication auth) throws TException , JnomicsThriftException{	
     	String username;
     	if(null == (username = authenticator.authenticate(auth))){
-            throw new JnomicsThriftException("Permission Denied");
-        }
-        log.info("Opening file: " + hdfsPath + " for user: " + username);
+    		throw new JnomicsThriftException("Permission Denied");
+    	}
+    	log.info("Opening file: " + hdfsPath + " for user: " + username);
     	BasicShockClient base;
     	FileSystem fs = null;
     	FSDataInputStream inStream = null;
     	List<JnomicsThriftFileStatus> stats  = listStatus(hdfsPath, auth);
-
-        long remoteLen = stats.get(0).getLength();
-    	
+    	long remoteLen = stats.get(0).getLength();
     	try { 
     		fs = getFileSystem(username);
     		inStream = fs.open(new Path(hdfsPath));
     		int  Length = (int)(fs.getLength(new Path(hdfsPath)));
-    		System.out.println(Length);
-			byte[] buf = new byte[Length];
+    		byte[] buf = new byte[Length];
     		URL mshadoop = new URL("http://mshadoop1.cshl.edu:7546");
-			base = new BasicShockClient(mshadoop);
-			int i = 0;
-			int total = 0;
-			inStream.read(buf);
-			while(-1 != (i = inStream.read(buf))){
-		       total += i;
-		       System.out.print("\r"+total+"/"+Length+" " + ((float)total)/Length * 100 + "%");    
-		   }
-			try { 	
-					ShockNode sn = base.addNode(buf, filename);
-					log.info("Node id is "+ sn.getId().toString());
-				}	
-				catch(Exception e){
-					log.error(e.toString());
-					throw new IOException(e.getMessage());
-				}
-			inStream.close();
-    	}catch (Exception e) {
-    		log.error(e.toString());
-        }finally{
-        	closeFileSystem(fs);
-        	
-        }
-    	return true;
-    }
-    
-    public JnomicsThriftJobID ShockBatchWrite(List<String> Input_files, String Output,String hdfsPath, Authentication auth) throws TException , JnomicsThriftException{	
-    	String username;
-    	if(null == (username = authenticator.authenticate(auth))){
-            throw new JnomicsThriftException("Permission Denied");
-        }
-        log.info("Opening file: " + Input_files + " for user: " + username);
-        //JnomicsComputeHandler com;
-//    	BasicShockClient base;
-        String id = null ;
-    	FileSystem fs = null;
-    	FSDataInputStream inStream = null;
-    	Path filenamePath = new Path(hdfsPath+"/cpyfiles.txt");
-    	
-    	try { 
-    		fs = getFileSystem(username);
-    		if(fs.exists(filenamePath)){
-    			fs.delete(filenamePath); 
+    		base = new BasicShockClient(mshadoop);
+    		int i = 0;
+    		int total = 0;
+    		inStream.read(buf);
+    		while(-1 != (i = inStream.read(buf))){
+    			total += i;
+    			//System.out.print("\r"+total+"/"+Length+" " + ((float)total)/Length * 100 + "%");    
     		}
-    		FSDataOutputStream outStream = fs.create(filenamePath);
-    			for(String filename : Input_files){
-    				log.info(filename+"\n");
-    				outStream.writeBytes(filename+"\n");
-    			}
-    		outStream.close();
-    		try {       
-//    			JnomicsJobBuilder builder = new JnomicsJobBuilder(com.getGenericConf(),edu.cshl.schatz.jnomics.tools.ShockLoad.Map.class);
-	            Job job = new Job();
-	            job.setJobName("jnomics-shock");
-	            System.out.println("job name is "+ job.getJobName().toString());
-	            job.setInputFormatClass(NLineInputFormat.class);
-	            job.setOutputKeyClass(Text.class);
-	            System.out.println("Check 2 \n");
-	            job.setOutputValueClass(Text.class);
-	            System.out.println("Check 3 \n");
-	            job.setJarByClass(edu.cshl.schatz.jnomics.tools.ShockLoad.class);
-	            job.setMapperClass(edu.cshl.schatz.jnomics.tools.ShockLoad.class);
-	            System.out.println("Check 5 \n"+ job.getJobName().toString());
-	            job.setNumReduceTasks(0);
-	            System.out.println("Check 6 \n"+ job.getJobName().toString());
-	            log.info("input file is " + filenamePath);
-	            NLineInputFormat.addInputPath(job, filenamePath);
-	            
-	            FileOutputFormat.setOutputPath(job,new Path(Output));
-	            job.submit();
-	            //job.waitForCompletion(true);
-	            id = job.getJobID().toString(); 
-	        }
-	        catch(Exception e){
-	        	e.printStackTrace();
-	        }
+    		try { 	
+    			ShockNode sn = base.addNode(buf, filename);
+    			log.info("Node id is "+ sn.getId().toString());
+    		}	
+    		catch(Exception e){
+    			log.error(e.toString());
+    			throw new IOException(e.getMessage());
+    		}
+    		inStream.close();
     	}catch (Exception e) {
     		log.error(e.toString());
-        }finally{
-        	closeFileSystem(fs);
-        	
-        }
-    	
-    	return new JnomicsThriftJobID(id);
+    	}finally{
+    		closeFileSystem(fs);
+
+    	}
+    	return true;
     }
     
     @Override
@@ -368,37 +268,37 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
     }
     
     @Override
-	public List<String> listShockStatus(String path,
-			Authentication auth) throws JnomicsThriftException, TException {
+    public List<String> listShockStatus(String path,
+    		Authentication auth) throws JnomicsThriftException, TException {
     	String username;
-        if(null == (username = authenticator.authenticate(auth))){
-            throw new JnomicsThriftException("Permission Denied");
-        }
-        try { 
-        URL mshadoop = new URL("http://mshadoop1.cshl.edu:7546");
-		BasicShockClient base = new BasicShockClient(mshadoop);
-		System.out.println(base.getShockUrl());
-		Map<String,Object> filelist = base.getFileList();
-		List<String> shockfiles =  new ArrayList<String>();
-			for( Map<String,Object> file: (ArrayList<Map<String,Object>>) filelist.get("data")){
-				String fid = file.get("id").toString();
-				if( !fid.equals(null) ){
-					LinkedHashMap<String,Object> name = (LinkedHashMap<String,Object>)file.get("file");
-					if(!name.get("name").equals("")){
-						shockfiles.add(fid + "\t" + name.get("name") + "\t" + name.get("size"));
-					}	
+    	if(null == (username = authenticator.authenticate(auth))){
+    		throw new JnomicsThriftException("Permission Denied");
+    	}
+    	try { 
+    		URL mshadoop = new URL("http://mshadoop1.cshl.edu:7546");
+    		BasicShockClient base = new BasicShockClient(mshadoop);
+    		System.out.println(base.getShockUrl());
+    		Map<String,Object> filelist = base.getFileList();
+    		List<String> shockfiles =  new ArrayList<String>();
+    		for( Map<String,Object> file: (ArrayList<Map<String,Object>>) filelist.get("data")){
+    			String fid = file.get("id").toString();
+    			if( !fid.equals(null) ){
+    				LinkedHashMap<String,Object> name = (LinkedHashMap<String,Object>)file.get("file");
+    				if(!name.get("name").equals("")){
+    					shockfiles.add(fid + "\t" + name.get("name") + "\t" + name.get("size"));
+    				}	
 
-				}
-					
-			}
-		return shockfiles;
-        }
-        catch(Exception  e){
-        	log.error("Could not open Shock");
-        	throw new JnomicsThriftException(e.getMessage());
-        }
-        
-	}
+    			}
+
+    		}
+    		return shockfiles;
+    	}
+    	catch(Exception  e){
+    		log.error("Could not open Shock");
+    		throw new JnomicsThriftException(e.getMessage());
+    	}
+
+    }
 
 	@Override
     public List<JnomicsThriftFileStatus> listStatus(String path, Authentication auth) throws TException, JnomicsThriftException {

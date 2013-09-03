@@ -39,6 +39,8 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
     private static final int NUM_REDUCE_TASKS = 1024;
     
     private JnomicsServiceAuthentication authenticator;
+
+	private JnomicsDataHandler jdhandle;
     
     public JnomicsComputeHandler(Properties systemProperties){
         properties = systemProperties;
@@ -114,14 +116,40 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
         }
         return launchJobAs(username,conf);
     }
-    public void cpyToShock(File list , Authentication auth) throws TException , JnomicsThriftException{	
+    public JnomicsThriftJobID ShockBatchWrite(List<String> inPath ,String outPath, Authentication auth)throws TException, JnomicsThriftException{	
     	String username;
     	if(null == (username = authenticator.authenticate(auth))){
-            throw new JnomicsThriftException("Permission Denied");
-        }
-    	Class s = ShockLoad.class;
-    	JnomicsJobBuilder builder = new JnomicsJobBuilder(getGenericConf(),ShockLoad.class);
-    	
+    		throw new JnomicsThriftException("Permission Denied");
+    	}
+    	FileSystem fs = null;
+    	Path filenamePath;
+    	Configuration conf = null;
+    	try {
+    		fs = JnomicsFileSystem.getFileSystem(properties, username);
+    		URI hdfspath = fs.getUri();
+    		filenamePath = new Path(hdfspath+"/user/"+ username + "/cpyfiles.txt"); 
+    		if(fs.exists(filenamePath)){
+    			fs.delete(filenamePath);
+    		}
+    		FSDataOutputStream outStream = fs.create(filenamePath);
+    		for(String filename : inPath){
+    			outStream.writeBytes(filename+"\n");
+    		}
+    		outStream.close();
+    		JnomicsJobBuilder builder = new JnomicsJobBuilder(getGenericConf(),ShockLoad.class);
+    		builder.setInputPath(filenamePath.toString())
+    		.setOutputPath(outPath);
+    		conf = builder.getJobConf();
+    	}catch (Exception e){
+    		throw new JnomicsThriftException(e.toString());
+    	} finally{
+    		try {
+    			JnomicsFileSystem.closeFileSystem(fs);
+    		} catch (Exception e) {
+    			e.printStackTrace();
+    		}
+    	}
+    	return launchJobAs(username, conf);	
     }
     @Override
     public JnomicsThriftJobID snpSamtools(String inPath, String organism, String outPath, Authentication auth) throws TException, JnomicsThriftException {

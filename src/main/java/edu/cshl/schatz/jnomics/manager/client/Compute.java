@@ -17,7 +17,7 @@ import java.util.Properties;
         "There are also a number of utility functions that help with monitoring\n"
 )
 @KbaseScript(prefix = "compute",
-        exportFields = {"bowtie","bwa","list_genomes","vcf_merge","list_jobs","job_status","samtools_snp"})
+        exportFields = {"bowtie","bwa","shock_batch_write","list_genomes","vcf_merge","list_jobs","job_status","samtools_snp"})
 public class Compute implements ClientFunctionHandler {
  
     @Flag(shortForm = "bowtie", longForm = "bowtie", description = "Run Bowtie Aligner",group="Alignment")
@@ -25,7 +25,10 @@ public class Compute implements ClientFunctionHandler {
 
     @Flag(shortForm = "bwa", longForm = "bwa", description = "Run BWA Aligner",group="Alignment")
     public boolean bwa;
-
+    
+    @Flag(shortForm = "shock_batch_write", longForm = "--shockBatchWrite", description = "Copy Cluster files to Shock- Batch mode")
+    public boolean shock_batch_write ;
+    
     @Flag(shortForm ="list_genomes", longForm = "list_genomes", description = "List available genomes", group="Utility")
     public boolean list_genomes;
 
@@ -51,6 +54,8 @@ public class Compute implements ClientFunctionHandler {
             handlerClass = Bowtie.class;
         }else if(bwa){
             handlerClass = BWA.class;
+        }else if(shock_batch_write){
+            handlerClass = ShockBatchWrite.class;
         }else if(list_genomes){
             handlerClass = ListGenomes.class;
         }else if(vcf_merge){

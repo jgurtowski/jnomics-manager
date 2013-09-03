@@ -11,36 +11,29 @@ import java.util.Properties;
  */
 public class ShockLs extends FSBase {
 
-    @Flag(shortForm = "-h", longForm = "--help")
-    public boolean help;
+	@Flag(shortForm = "-h", longForm = "--help")
+	public boolean help;
 
-    @Override
-    public void handle(List<String> remainingArgs, Properties properties) throws Exception {
-        super.handle(remainingArgs,properties);
+	@Override
+	public void handle(List<String> remainingArgs, Properties properties) throws Exception {
+		super.handle(remainingArgs,properties);
 
-        if(help){
-            System.out.println("-shock_ls");
-            return;
-        }
+		if(help){
+			System.out.println("-shock_ls");
+			return;
+		}
 
-        String dest = ".";
-        if(remainingArgs.size() >= 1){
-            dest = remainingArgs.get(0);
-        }
+		String dest = ".";
+		if(remainingArgs.size() >= 1){
+			dest = remainingArgs.get(0);
+		}
 
-        List<String> stats = client.listShockStatus(dest,auth);
-      
-        System.out.println("Found "+ stats.size() + " items");
-        for(String status: stats){
-            System.out.println(status);
-        	/*System.out.printf("%s\t%2d\t%s\t%s\t%14d\t%s\n",
-                    status.getPermission(),
-                    status.getReplication(),
-                    status.getOwner(),
-                    status.getGroup(),
-                    status.getLength(),
-                    status.getPath());*/
-        }
-    }
+		List<String> stats = client.listShockStatus(dest,auth);
+
+		System.out.println("Found "+ stats.size() + " items");
+		for(String status: stats){
+			System.out.println(status);
+		}
+	}
 
 }

@@ -17,7 +17,7 @@ import java.util.Properties;
         "These functions provide a method for managing a user's\n"+
         "workspace on the Cluster.\n"
 )
-@KbaseScript(prefix = "fs", exportFields = {"ls","shock_ls","shock_write","shock_batch_write","mv","put","stage_shock","get","rm","rmr","put_pe","put_pe_i","put_se","mkdir"})
+@KbaseScript(prefix = "fs", exportFields = {"ls","shock_ls","shock_write","mv","put","stage_shock","get","rm","rmr","put_pe","put_pe_i","put_se","mkdir"})
 public class FS implements ClientFunctionHandler{
 
     @Flag(shortForm = "-ls", longForm = "--listfiles", description = "List files and directories on Cluster")
@@ -37,10 +37,7 @@ public class FS implements ClientFunctionHandler{
     
     @Flag(shortForm = "-shock_write", longForm = "--shockWrite", description = "Copy Cluster files to Shock")
     public boolean shock_write;
-    
-    @Flag(shortForm = "-shock_batch_write", longForm = "--shockBatchWrite", description = "Copy Cluster files to Shock- Batch mode")
-    public boolean shock_batch_write ;
-    
+  
     @Flag(shortForm = "-get", longForm = "--get", description = "Copy files on Cluster to local computer")
     public boolean get;
 
@@ -92,8 +89,6 @@ public class FS implements ClientFunctionHandler{
         	handlerClass = ShockStage.class;
         }else if(shock_write){
         	handlerClass = ShockWrite.class;
-        }else if(shock_batch_write){
-        	handlerClass = ShockBatchWrite.class;
         }else{
             System.out.println(Utility.helpFromParameters(this.getClass()));
         }
