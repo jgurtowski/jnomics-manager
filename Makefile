@@ -43,7 +43,7 @@ make-dest-dir:
 
 build-jnomics:
 	ant
-	java -cp `find dist/jnomics-manager-*.jar` edu.cshl.schatz.jnomics.manager.client.CreateKbaseScripts jk bin
+	bin/make_scripts.sh jk bin
 
 deploy-jnomics: deploy-libs
 	cp conf/jnomics-kbase-client.properties $(CLIENT_CONF_DIR)
