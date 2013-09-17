@@ -43,10 +43,10 @@ public class CreateKbaseScripts {
 
             KbaseScript kann = c.getAnnotation(KbaseScript.class);
             for(String field : kann.exportFields()){
-                String[] scriptName = new String[]{leadPrefix,kann.prefix(),field};
+                String[] scriptName = new String[]{leadPrefix,kann.prefix(),field.replace('_', '-')};
                 Field f = c.getField(field);
                 Flag flag = f.getAnnotation(Flag.class);
-                File outFile = new File(outputDir, StringUtils.join(scriptName,"_"));
+                File outFile = new File(outputDir, StringUtils.join(scriptName,"-"));
                 FileOutputStream outStream = new FileOutputStream(outFile);
                 String scriptContent = String.format(SCRIPT_TEMPLATE, kann.prefix(), flag.shortForm());
                 outStream.write(scriptContent.getBytes());
