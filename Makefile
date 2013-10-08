@@ -55,7 +55,7 @@ deploy-jnomics: deploy-libs
 	cp cert/truststore.jks $(CLIENT_CERT_DIR)
 
 deploy-libs: make-dest-dir build-jnomics
-	cp jnomics-manager*.jar $(CLIENT_LIB_DIR)
+	cp dist/jnomics-manager-*.jar $(CLIENT_LIB_DIR)
 
 clean: 
-	rm -rf target
+	ant clean
