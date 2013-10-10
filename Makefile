@@ -56,6 +56,10 @@ deploy-jnomics: deploy-libs
 
 deploy-libs: make-dest-dir build-jnomics
 	cp dist/jnomics-manager-*.jar $(CLIENT_LIB_DIR)
+	cp lib/*.jar $(CLIENT_LIB_DIR)
+	cp dist/jnomics-manager-*.jar $(SERVICE_LIB_DIR)
+	cp lib/*.jar $(SERVICE_LIB_DIR)
+
 
 clean: 
 	ant clean
