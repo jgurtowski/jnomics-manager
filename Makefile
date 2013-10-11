@@ -13,10 +13,10 @@ SERVICE_CONF_DIR=$(SERVICE_DIR)/conf
 SERVICE_LIB_DIR=$(SERVICE_DIR)/lib
 SERVICE_DOCS_DIR=$(SERVICE_DIR)/webroot
 
-JAVA_HOME:=/kb/runtime/java
-ANT_HOME:=/kb/runtime/ant
-THRIFT_HOME:=/kb/runtime/thrift
-PATH:=${JAVA_HOME}/bin:${ANT_HOME}/bin:${THRIFT_HOME}/bin:${PATH}
+#JAVA_HOME:=/kb/runtime/java
+#ANT_HOME:=/kb/runtime/ant
+#THRIFT_HOME:=/kb/runtime/thrift
+#PATH:=${JAVA_HOME}/bin:${ANT_HOME}/bin:${THRIFT_HOME}/bin:${PATH}
 
 all:
 
