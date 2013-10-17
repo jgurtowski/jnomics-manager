@@ -19,8 +19,9 @@ import org.slf4j.LoggerFactory;
 import us.kbase.shock.client.BasicShockClient;
 import us.kbase.shock.client.ShockNode;
 import us.kbase.shock.client.ShockNodeId;
+
 import us.kbase.auth.TokenExpiredException;
-//import us.kbase.shock.client.exceptions.TokenExpiredException;
+
 import us.kbase.shock.client.exceptions.InvalidShockUrlException;
 import us.kbase.shock.client.exceptions.ShockHttpException;
 
@@ -272,7 +273,9 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
     @Override
     public List<String> listShockStatus(String path,
     		Authentication auth) throws JnomicsThriftException, TException {
-    	String username;
+    	/***Requires changes to WorkspaceDeluxe
+
+	  String username;
     	if(null == (username = authenticator.authenticate(auth))){
     		throw new JnomicsThriftException("Permission Denied");
     	}
@@ -299,8 +302,9 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
     	catch(Exception  e){
     		log.error("Could not open Shock");
     		throw new JnomicsThriftException(e.getMessage());
-    	}
-
+		}*/
+	
+	return new ArrayList<String>();
     }
 
 	@Override

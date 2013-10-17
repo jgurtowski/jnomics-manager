@@ -13,10 +13,10 @@ SERVICE_CONF_DIR=$(SERVICE_DIR)/conf
 SERVICE_LIB_DIR=$(SERVICE_DIR)/lib
 SERVICE_DOCS_DIR=$(SERVICE_DIR)/webroot
 
-JAVA_HOME:=/kb/runtime/java
-ANT_HOME:=/kb/runtime/ant
-THRIFT_HOME:=/kb/runtime/thrift
-PATH:=${JAVA_HOME}/bin:${ANT_HOME}/bin:${THRIFT_HOME}/bin:${PATH}
+#JAVA_HOME:=/kb/runtime/java
+#ANT_HOME:=/kb/runtime/ant
+#THRIFT_HOME:=/kb/runtime/thrift
+#PATH:=${JAVA_HOME}/bin:${ANT_HOME}/bin:${THRIFT_HOME}/bin:${PATH}
 
 all:
 
@@ -43,19 +43,23 @@ make-dest-dir:
 
 build-jnomics:
 	ant
-	java -cp `find dist/jnomics-manager-*.jar` edu.cshl.schatz.jnomics.manager.client.CreateKbaseScripts jk bin
+	bin/make_scripts.sh jk bin
 
 deploy-jnomics: deploy-libs
 	cp conf/jnomics-kbase-client.properties $(CLIENT_CONF_DIR)
 	cp conf/jnomics-kbase-server.properties $(SERVICE_CONF_DIR)
-	cp bin/jk_* $(CLIENT_BIN_DIR)
+	cp bin/jk-* $(CLIENT_BIN_DIR)
 	cp bin/jkbase $(CLIENT_BIN_DIR)
 	cp bin/start-data-server.sh $(SERVICE_BIN_DIR)
 	cp bin/start-compute-server.sh $(SERVICE_BIN_DIR)
 	cp cert/truststore.jks $(CLIENT_CERT_DIR)
 
 deploy-libs: make-dest-dir build-jnomics
-	cp jnomics-manager*.jar $(CLIENT_LIB_DIR)
+	cp dist/jnomics-manager-*.jar $(CLIENT_LIB_DIR)
+	cp lib/*.jar $(CLIENT_LIB_DIR)
+	cp dist/jnomics-manager-*.jar $(SERVICE_LIB_DIR)
+	cp lib/*.jar $(SERVICE_LIB_DIR)
+
 
 clean: 
-	rm -rf target
+	ant clean
