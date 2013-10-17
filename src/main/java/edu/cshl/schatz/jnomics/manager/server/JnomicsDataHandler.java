@@ -19,7 +19,8 @@ import org.slf4j.LoggerFactory;
 import us.kbase.shock.client.BasicShockClient;
 import us.kbase.shock.client.ShockNode;
 import us.kbase.shock.client.ShockNodeId;
-import us.kbase.shock.client.exceptions.ExpiredTokenException;
+import us.kbase.auth.TokenExpiredException;
+//import us.kbase.shock.client.exceptions.TokenExpiredException;
 import us.kbase.shock.client.exceptions.InvalidShockUrlException;
 import us.kbase.shock.client.exceptions.ShockHttpException;
 
@@ -174,10 +175,11 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
 
     	FileSystem fs = null;
     	FSDataOutputStream stream = null;
+    	URL shockurl = null;
     	BasicShockClient base;
     	try { 
-    		URL mshadoop = new URL("http://mshadoop1.cshl.edu:7546");
-    		base = new BasicShockClient(mshadoop);
+    		shockurl = new URL(properties.getProperty("shock-url"));
+    		base = new BasicShockClient(shockurl);
     		buf = base.getFile(new ShockNodeId(shockNodeID));
     		fs = getFileSystem(username);
     		stream = fs.create(new Path(hdfsPathDest));
@@ -202,15 +204,15 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
     	BasicShockClient base;
     	FileSystem fs = null;
     	FSDataInputStream inStream = null;
+    	URL shockurl = null;
     	List<JnomicsThriftFileStatus> stats  = listStatus(hdfsPath, auth);
-    	long remoteLen = stats.get(0).getLength();
     	try { 
     		fs = getFileSystem(username);
     		inStream = fs.open(new Path(hdfsPath));
     		int  Length = (int)(fs.getLength(new Path(hdfsPath)));
     		byte[] buf = new byte[Length];
-    		URL mshadoop = new URL("http://mshadoop1.cshl.edu:7546");
-    		base = new BasicShockClient(mshadoop);
+    		shockurl = new URL(properties.getProperty("shock-url"));
+    		base = new BasicShockClient(shockurl);
     		int i = 0;
     		int total = 0;
     		inStream.read(buf);
@@ -274,9 +276,10 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
     	if(null == (username = authenticator.authenticate(auth))){
     		throw new JnomicsThriftException("Permission Denied");
     	}
+    	URL shockurl = null;
     	try { 
-    		URL mshadoop = new URL("http://mshadoop1.cshl.edu:7546");
-    		BasicShockClient base = new BasicShockClient(mshadoop);
+    		shockurl = new URL(properties.getProperty("shock-url"));
+    		BasicShockClient base = new BasicShockClient(shockurl);
     		System.out.println(base.getShockUrl());
     		Map<String,Object> filelist = base.getFileList();
     		List<String> shockfiles =  new ArrayList<String>();

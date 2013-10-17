@@ -17,7 +17,7 @@ import java.util.Properties;
         "There are also a number of utility functions that help with monitoring\n"
 )
 @KbaseScript(prefix = "compute",
-        exportFields = {"bowtie","bwa","shock_batch_write","list_genomes","vcf_merge","list_jobs","job_status","samtools_snp"})
+        exportFields = {"bowtie","bwa","tophat","cufflinks","cuffmerge","cuffdiff","cuffcompare","shock_batch_write","list_genomes","vcf_merge","list_jobs","job_status","grid_job_status","samtools_snp"})
 public class Compute implements ClientFunctionHandler {
  
     @Flag(shortForm = "bowtie", longForm = "bowtie", description = "Run Bowtie Aligner",group="Alignment")
@@ -25,6 +25,21 @@ public class Compute implements ClientFunctionHandler {
 
     @Flag(shortForm = "bwa", longForm = "bwa", description = "Run BWA Aligner",group="Alignment")
     public boolean bwa;
+    
+    @Flag(shortForm = "tophat", longForm = "tophat", description = "Run Tophat Aligner",group="Alignment")
+    public boolean tophat;
+    
+    @Flag(shortForm = "cufflinks", longForm = "cufflinks", description = "Run cufflinks Assembler",group="Alignment")
+    public boolean cufflinks;
+    
+    @Flag(shortForm = "cuffmerge", longForm = "cuffmerge", description = "Run cuffmerge Assembler",group="Alignment")
+    public boolean cuffmerge;
+    
+    @Flag(shortForm = "cuffdiff", longForm = "cuffdiff", description = "Run cuffdiff",group="Alignment")
+    public boolean cuffdiff;
+    
+    @Flag(shortForm = "cuffcompare", longForm = "cuffcompare", description = "Run cuffcompare ",group="Alignment")
+    public boolean cuffcompare;
     
     @Flag(shortForm = "shock_batch_write", longForm = "--shockBatchWrite", description = "Copy Cluster files to Shock- Batch mode")
     public boolean shock_batch_write ;
@@ -41,6 +56,9 @@ public class Compute implements ClientFunctionHandler {
     @Flag(shortForm = "status", longForm ="job_status", description="List the status of a running job",group="Utility")
     public boolean job_status;
 
+    @Flag(shortForm = "grid_job_status", longForm ="grid_job_status", description="List the status of a job on Grid engine",group="Utility")
+    public boolean grid_job_status;
+    
     @Flag(shortForm = "samtools_snp", longForm = "samtools_snp", description="Run Samtools Variation pipeline",group="Variation Detection")
     public boolean samtools_snp;
 
@@ -54,6 +72,16 @@ public class Compute implements ClientFunctionHandler {
             handlerClass = Bowtie.class;
         }else if(bwa){
             handlerClass = BWA.class;
+        }else if(tophat){
+            handlerClass = Tophat.class;
+        }else if(cufflinks){
+            handlerClass = Cufflinks.class;
+        }else if(cuffmerge){
+            handlerClass = Cuffmerge.class;
+        }else if(cuffdiff){
+            handlerClass = Cuffdiff.class;
+        }else if(cuffcompare){
+            handlerClass = Cuffcompare.class;
         }else if(shock_batch_write){
             handlerClass = ShockBatchWrite.class;
         }else if(list_genomes){
@@ -64,6 +92,8 @@ public class Compute implements ClientFunctionHandler {
             handlerClass = ListJobs.class;
         }else if(job_status){
             handlerClass = JobStatus.class;
+        }else if(grid_job_status){
+            handlerClass = GridJobStatus.class;
         }else if(samtools_snp){
             handlerClass = SamtoolsSnp.class;
         }else{

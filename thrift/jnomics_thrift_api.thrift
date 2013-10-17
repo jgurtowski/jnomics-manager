@@ -52,13 +52,24 @@ service JnomicsCompute{
  
         JnomicsThriftJobID alignBWA (1: string inPath, 2: string organism, 3: string outPath, 4: string alignOpts, 5: string sampeOpts, 6: Authentication auth) throws (1: JnomicsThriftException je),
 
+		JnomicsThriftJobID alignTophat(1: string ref_genome, 2: string inPath ,3: string gtffile, 4: string outPath, 5: string alignOpts,6: string workingdir, 7: Authentication auth)throws (1: JnomicsThriftException je),
+		
+		JnomicsThriftJobID callCufflinks( 1: string inPath ,2: string outpath, 3: string alignOpts,4: string workingdir, 5: Authentication auth)throws (1: JnomicsThriftException je),
+		
+		JnomicsThriftJobID callCuffmerge( 1: string inPath ,2: string ref_genome,3: string outpath, 4: string alignOpts , 5: string gtffile ,6: string workingdir, 7: Authentication auth)throws (1: JnomicsThriftException je),
+		
+		JnomicsThriftJobID callCuffdiff( 1: string inPath , 2: string outpath, 3: string ref_genome,4: string alignOpts, 5: string condn_labels, 6: string merged_gtf, 7: string workingdir, 8: Authentication auth)throws (1: JnomicsThriftException je),
+	
+		JnomicsThriftJobID callCuffcompare( 1: string inPath ,2: string outpath, 3: string alignOpts , 4: string gtffile ,5: string workingdir, 6: Authentication auth)throws (1: JnomicsThriftException je),
+	
 		JnomicsThriftJobID ShockBatchWrite (1: list<string> inPath , 2: string outPath,3: Authentication auth) throws (1: JnomicsThriftException je),
 
         JnomicsThriftJobID snpSamtools (1: string inPath, 2: string organism, 3: string outPath, 4: Authentication auth) throws (1: JnomicsThriftException je),
 
-
        	JnomicsThriftJobStatus getJobStatus(1: JnomicsThriftJobID jobID, 3: Authentication auth) throws (1: JnomicsThriftException je),
-
+       	
+		string getGridJobStatus(1: JnomicsThriftJobID jobID, 2: Authentication auth) throws (1: JnomicsThriftException je) ,
+	
 	list<JnomicsThriftJobStatus> getAllJobs(1: Authentication auth) throws (1: JnomicsThriftException je),
         
 
