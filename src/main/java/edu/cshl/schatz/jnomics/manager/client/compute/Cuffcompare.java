@@ -61,12 +61,12 @@ public class Cuffcompare extends ComputeBase {
             System.out.println("missing -ref_gtf parameter");    
         }else{
 //            String clean_org = KBaseIDTranslator.translate(organism);
-//            List<JnomicsThriftFileStatus> stats  = client.listStatus(organism, auth);
+//            List<JnomicsThriftFileStatus> stats  = client.listStatus(in, auth);
 //            StringBuilder sb = new StringBuilder();
 //            for(String opts : align_opts){
 //            	sb.append(" " + opts);
 //            }
-            System.out.println("Assebly_opts : " + assembly_opts + " Input :  " + in + "Outpath : " + out );
+            System.out.println("Assebly_opts : " + assembly_opts + " Input :  " + in + " Outpath : " + out );
             JnomicsThriftJobID jobID = client.callCuffcompare(
                     in,
                     out,

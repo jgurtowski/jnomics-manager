@@ -33,7 +33,7 @@ public class GridJobStatus extends ComputeBase{
         }else if(null == job){
             System.out.println("Missing -job parameter");
         }else{
-        	System.out.println(" Hey I am  entering this else with job id" + job );
+        	
         	  String stat = client.getGridJobStatus(new JnomicsThriftJobID(job),auth);
 //            JnomicsThriftJobStatus status = client.getJobStatus(new JnomicsThriftJobID(job), auth);
 //
@@ -43,7 +43,7 @@ public class GridJobStatus extends ComputeBase{
 //            System.out.printf("%30s %30s\n","Running State:",status.getRunning_state());
 //            System.out.printf("%30s %30s\n","Map Progress:",status.getMapProgress());
 //            System.out.printf("%30s %30s\n","Reduce Progress:",status.getReduceProgress());
-              System.out.println("Job is " + job + " " + stat);
+              System.out.println("Job id : " + job + " - " + stat);
         	  return ;
         }
 

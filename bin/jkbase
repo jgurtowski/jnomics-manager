@@ -1,6 +1,0 @@
-#!/bin/bash
-
-SCRIPT_PATH=`dirname "$0"`
-
-classp=`find ${SCRIPT_PATH}/../lib/*.jar ${SCRIPT_PATH}/../dist/*.jar 2> /dev/null | awk  '{ s=s$1":"} END{print s}'`
-java -Djkclient_truststore=${SCRIPT_PATH}/../cert/truststore.jks -cp ${SCRIPT_PATH}/../conf:${classp} edu.cshl.schatz.jnomics.manager.client.EntryPoint $*

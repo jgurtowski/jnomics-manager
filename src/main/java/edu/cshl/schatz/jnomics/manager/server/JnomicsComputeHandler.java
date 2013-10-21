@@ -310,9 +310,6 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 	    	 String gtf_file, String alignOpts, String workingdir, Authentication auth)
 	    				throws TException, JnomicsThriftException {
 	    	String username;
-	    	//FileSystem fs = null;
-	    	//FSDataOutputStream fout= null;
-			logger.info(properties.toString());
 			logger.info("cufflinks_binary is" + properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
 			logger.info("outpath is " + outPath);
 			logger.info("alignOpts " + alignOpts);
