@@ -65,7 +65,7 @@ public class Tophat extends ComputeBase {
             System.out.println("missing -out parameter");
         }else{
             String clean_org = KBaseIDTranslator.translate(organism);
-            //System.out.println("align_opts is " +  align_opts);
+            System.out.println("organism  is " +  clean_org);
             JnomicsThriftJobID jobID = client.alignTophat(
                     clean_org,
                     in,
