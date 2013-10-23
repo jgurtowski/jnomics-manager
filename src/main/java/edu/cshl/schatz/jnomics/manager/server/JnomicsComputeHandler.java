@@ -41,11 +41,9 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 	private Properties properties;
 
 	private static final int NUM_REDUCE_TASKS = 1024;
-	private static final String tempdir = "/tmp";
 
 	private JnomicsServiceAuthentication authenticator;
 
-	private JnomicsDataHandler jdhandle;
 
 	public JnomicsComputeHandler(Properties systemProperties){
 		properties = systemProperties;
@@ -54,12 +52,15 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 
 	private Configuration getGenericConf(){
 		Configuration conf = new Configuration();
+		
 		//if you don't give Path's it will not load the files
 		conf.addResource(new Path(properties.getProperty("core-site-xml")));
 		conf.addResource(new Path(properties.getProperty("mapred-site-xml")));
 		conf.addResource(new Path(properties.getProperty("hdfs-site-xml")));
 		conf.set("fs.default.name", properties.getProperty("hdfs-default-name"));
 		conf.set("mapred.jar", properties.getProperty("jnomics-jar-path"));
+		conf.set("grid-script-path", properties.getProperty("grid-script-path"));
+		logger.info("returning from the get configuartion");
 		return conf;
 	}
 
@@ -130,22 +131,24 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		String jobname =username+"-tophat-"+inPath.substring(inPath.lastIndexOf('/') + 1).replaceAll("[.]", "_");
 		Configuration conf = null;
 		OutputStream out = null;
-		try{
-			logger.info("tophat_binary is" + properties.getProperty("hdfs-index-repo")+"/tophat_v7.tar");
+	
+			logger.info("tophat_binary is "+ properties.getProperty("hdfs-index-repo")+"/tophat_v7.tar");
 			JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
+			logger.info("builder is set");
 			builder.setInputPath(inPath)
 			.setOutputPath(outPath)
 			.setParam("tophat_align_opts",alignOpts)
 			.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
 			.setParam("grid_working_dir", workingdir)
 			.setJobName(jobname)
-			.setParam("grid_class_path",properties.getProperty("jnomics-class-path"))
-			.setParam("grid_jar_file",properties.getProperty("jnomics-jar-path"))
+//			.setParam("grid_class_path",properties.getProperty("jnomics-class-path"))
+//			.setParam("grid_jar_file",properties.getProperty("jnomics-jar-path"))
 			.setParam("tophat_ref_genome",properties.getProperty("hdfs-index-repo")+"/"+ref_genome)
 			.setParam("tophat_binary",properties.getProperty("hdfs-index-repo")+"/tophat_v7.tar");
 			//.scriptCommandbuilder()
 			//.createjobScript();
-
+			logger.info("conf properties are set");
+		try{
 			conf = builder.getJobConf();
 			out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
 			conf.writeXml(out);
@@ -173,7 +176,6 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 			Configuration conf = null;
 			OutputStream out = null;
 
-			try{
 				logger.info("cufflinks_binary is" + properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
 				logger.info("outpath is " + outPath);
 				logger.info("alignOpts " + alignOpts);
@@ -185,12 +187,13 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 				.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
 				.setParam("grid_working_dir", workingdir)
 				.setJobName(jobname)
-				.setParam("grid_class_path",properties.getProperty("jnomics-class-path"))
-				.setParam("grid_jar_file",properties.getProperty("jnomics-jar-path"))
+//				.setParam("grid_class_path",properties.getProperty("jnomics-class-path"))
+//				.setParam("grid_jar_file",properties.getProperty("jnomics-jar-path"))
 				.setParam("cufflinks_binary",properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
 				//.scriptCommandbuilder()
 				//.createjobScript();
-
+				logger.info("conf properties are set");
+			try{
 				conf = builder.getJobConf();
 				out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
 				conf.writeXml(out);
@@ -221,8 +224,6 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 			String jobname = username+"-cuffmerge-"+inPath.substring(inPath.lastIndexOf('/') + 1).replaceAll("[.]", "_");
 			Configuration conf = null;
 			OutputStream out = null;
-
-			try{
 				logger.info("cufflinks_binary is" + properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
 				JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
 				builder.setInputPath(properties.getProperty("hdfs-index-repo")+"/"+inPath)
@@ -232,13 +233,15 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 				.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
 				.setParam("grid_working_dir", workingdir)
 				.setJobName(jobname)
-				.setParam("grid_class_path",properties.getProperty("jnomics-class-path"))
-				.setParam("grid_jar_file",properties.getProperty("jnomics-jar-path"))
+//				.setParam("grid_class_path",properties.getProperty("jnomics-class-path"))
+//				.setParam("grid_jar_file",properties.getProperty("jnomics-jar-path"))
 				.setParam("cuffmerge_ref_genome",properties.getProperty("hdfs-index-repo")+"/"+ref_genome)
 				.setParam("cufflinks_binary",properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
 				//.scriptCommandbuilder()
 				//.createjobScript();
-
+				
+				logger.info("conf properties are set");
+			try{
 				conf = builder.getJobConf();
 				out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
 				conf.writeXml(out);
@@ -272,7 +275,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 			String jobname = username+"-cuffdiff-"+infiles.substring(infiles.lastIndexOf('/') + 1).replaceAll("[.]", "_");
 			Configuration conf = null;
 			OutputStream out = null;
-			try{
+			
 				logger.info("cufflinks_binary is" + properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
 				JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
 				builder.setParam("input_files", infiles)
@@ -282,14 +285,14 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 				.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
 				.setParam("grid_working_dir", workingdir)
 				.setJobName(jobname)
-				.setParam("grid_class_path",properties.getProperty("jnomics-class-path"))
-				.setParam("grid_jar_file",properties.getProperty("jnomics-jar-path"))
+//				.setParam("grid_class_path",properties.getProperty("jnomics-class-path"))
+//				.setParam("grid_jar_file",properties.getProperty("jnomics-jar-path"))
 				.setParam("cuffdiff_merged_gtf",properties.getProperty("hdfs-index-repo")+"/"+merged_gtf)
 				.setParam("cuffdiff_ref_genome",properties.getProperty("hdfs-index-repo")+"/"+ref_genome)
 				.setParam("cufflinks_binary",properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
 				//.scriptCommandbuilder()
 				//.createjobScript();
-
+			try{
 				conf = builder.getJobConf();
 				out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
 				conf.writeXml(out);
@@ -321,7 +324,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 			OutputStream out = null;
 			String jobname = username+"-cuffcompare-"+inPath.substring(inPath.lastIndexOf('/') + 1).replaceAll("[.]", "_");
 			//Path confPath = null;
-			try{
+			
 				logger.info("cufflinks_binary is" + properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
 				JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
 				builder.setInputPath(properties.getProperty("hdfs-index-repo")+"/"+inPath)
@@ -331,19 +334,12 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 				.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
 				.setParam("grid_working_dir", workingdir)
 				.setJobName(jobname)
-				.setParam("grid_class_path",properties.getProperty("jnomics-class-path"))
-				.setParam("grid_jar_file",properties.getProperty("jnomics-jar-path"))
+//				.setParam("grid_class_path",properties.getProperty("jnomics-class-path"))
+//				.setParam("grid_jar_file",properties.getProperty("jnomics-jar-path"))
 				.setParam("cufflinks_binary",properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
-				//.scriptCommandbuilder()
-				//.createjobScript();
-
+				logger.info("Conf properties are set");
+			try{
 				conf = builder.getJobConf();
-				//fs = JnomicsFileSystem.getFileSystem(properties, username);
-				//confPath = new Path(fs.getHomeDirectory()+ "/" + jobname +".xml");
-				//if(fs.exists(confPath)){
-				//	fs.delete(confPath);
-				//}
-				//fout = fs.create(confPath);
 				out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
 				conf.writeXml(out);
 				builder.LaunchGridJob(conf);
