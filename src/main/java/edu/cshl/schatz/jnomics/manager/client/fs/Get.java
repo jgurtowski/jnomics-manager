@@ -30,7 +30,7 @@ public class Get extends FSBase{
             String remoteFile = remainingArgs.get(0);
             List<JnomicsThriftFileStatus> stats  = client.listStatus(remoteFile, auth);
             if(1 != stats.size())
-                throw new Exception("remote must be a single file");
+                throw new Exception("Remote file does not exist or is not a single file");
 
             long remoteLen = stats.get(0).getLength();
 
