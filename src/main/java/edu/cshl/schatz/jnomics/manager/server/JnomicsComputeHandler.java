@@ -285,7 +285,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
 		.setParam("grid_working_dir", workingdir)
 		.setJobName(jobname)
-		.setParam("cuffdiff_merged_gtf",properties.getProperty("hdfs-index-repo")+"/"+merged_gtf)
+		.setParam("cuffdiff_merged_gtf",merged_gtf)
 		.setParam("cuffdiff_ref_genome",properties.getProperty("hdfs-index-repo")+"/"+ref_genome)
 		.setParam("cufflinks_binary",cufflinks_binary);
 
