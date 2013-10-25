@@ -19,10 +19,9 @@ import java.util.Properties;
 
 
 @FunctionDescription(description = "Cufflinks Transcript Assembler\n"+
-        "Align Short reads to an organism's reference genome.\n"+
-        "Organism can be specified with the -org flag. Input and \n"+
-        "Output must reside on the Cluster's filesystem. \n"+
-        "Optional additonal arguments may be supplied to both\n"+
+        "Assembles transcripts for each sample.\n"+
+        "Input and Output must reside on the Cluster's filesystem. \n"+
+        "Optional additonal arguments may be supplied to \n"+
         "cufflinks. These options are passed as a string to cufflinks and should include hyphens(-)\n"+
         "if necessary.\n"
 )
@@ -54,6 +53,10 @@ public class Cufflinks extends ComputeBase {
             System.out.println("missing -in parameter");
         }else if(null == out){
             System.out.println("missing -out parameter");
+        }else if(!fsclient.checkFileStatus(in, auth)){
+        	System.out.println("ERROR : " + in + " file does'nt exist ");
+        }else if(fsclient.checkFileStatus(out, auth)){
+    		System.out.println("ERROR : Output directory already exists");
         }else{
 //            String clean_org = KBaseIDTranslator.translate(organism);
 //            List<JnomicsThriftFileStatus> stats  = client.listStatus(organism, auth);
@@ -61,7 +64,7 @@ public class Cufflinks extends ComputeBase {
 //            for(String opts : align_opts){
 //            	sb.append(" " + opts);
 //            }
-            System.out.println("align_opts is " + assembly_opts + " in path is " + "outpath is " + out + "workingdir is " + working_dir);
+//            System.out.println("align_opts is " + assembly_opts + " in path is " + "outpath is " + out + "workingdir is " + working_dir);
             JnomicsThriftJobID jobID = client.callCufflinks(
                     in,
                     out,

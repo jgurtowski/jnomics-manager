@@ -349,7 +349,29 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         
         return Arrays.asList(thriftStatuses);
     }
-
+	@Override
+	public boolean checkFileStatus(String path, Authentication auth) throws TException, JnomicsThriftException {
+        String username;
+        if(null == (username = authenticator.authenticate(auth))){
+            throw new JnomicsThriftException("Permission Denied");
+        }
+        
+        log.info("Getting file status of "+ path + " for user "+ username);
+        
+        FileSystem fs = getFileSystem(username);
+        boolean ret; 
+        try{
+            ret = fs.exists(new Path(path));
+        }catch(Exception e){
+            log.error("Could not open filesystem in checkFileStatus");
+            e.printStackTrace();
+            throw new JnomicsThriftException(e.toString());
+        }finally{
+            closeFileSystem(fs);
+        }
+        return ret;
+	}
+	
     @Override
     public boolean remove(String path, boolean recursive, Authentication auth) throws JnomicsThriftException, TException {
         String username;

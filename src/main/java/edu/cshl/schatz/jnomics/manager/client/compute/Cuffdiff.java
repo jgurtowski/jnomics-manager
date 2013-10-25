@@ -19,12 +19,12 @@ import java.util.Properties;
  */
 
 
-@FunctionDescription(description = "Cufflinks Transcript Assembler\n"+
-        "Align Short reads to an organism's reference genome.\n"+
-        "Organism can be specified with the -org flag. Input and \n"+
+@FunctionDescription(description = "Cuffdiff\n"+
+        "identify differentially Expressed genes and transcripts .\n"+
+        "Organism can be specified with the -ref flag. Input and \n"+
         "Output must reside on the Cluster's filesystem. \n"+
-        "Optional additonal arguments may be supplied to both\n"+
-        "cufflinks. These options are passed as a string to cufflinks and should include hyphens(-)\n"+
+        "Optional additonal arguments may be supplied to \n"+
+        "cuffdiff. These options are passed as a string to cuffdiff and should include hyphens(-)\n"+
         "if necessary.\n"
 )
 public class Cuffdiff extends ComputeBase {
@@ -32,7 +32,7 @@ public class Cuffdiff extends ComputeBase {
     @Flag(shortForm = "-h",longForm = "--help")
     public boolean help;
     
-    @Parameter(shortForm = "-in", longForm = "--input", description = "Transcript files")
+    @Parameter(shortForm = "-in", longForm = "--input", description = "Multiple Transcript files (comma seperated)")
     public String in;
     
     @Parameter(shortForm = "-out", longForm= "--output", description = "output (directory)")
@@ -41,7 +41,7 @@ public class Cuffdiff extends ComputeBase {
     @Parameter(shortForm = "-ref", longForm= "--ref_genome", description = "reference genome")
     public String ref;
     
-    @Parameter(shortForm = "-assembly_opts", longForm = "--assembly_options", description = "options to pass to Cufflinks (optional)")
+    @Parameter(shortForm = "-assembly_opts", longForm = "--assembly_options", description = "options to pass to Cuffdiff (optional)")
     public String assembly_opts;
     
     @Parameter(shortForm = "-condn_labels", longForm = "--condition_labels", description = "Conditional labels to pass to Cuffdiff (optional)")
@@ -57,6 +57,8 @@ public class Cuffdiff extends ComputeBase {
     public void handle(List<String> remainingArgs,Properties properties) throws Exception {
 
         super.handle(remainingArgs,properties);
+        List<String> input = Arrays.asList(in.split(","));
+        
         if(help){
             System.out.println(Utility.helpFromParameters(this.getClass()));
             return;
@@ -66,16 +68,19 @@ public class Cuffdiff extends ComputeBase {
             System.out.println("missing -out parameter");
         }else if(null == merged_gtf){
             System.out.println("missing -merged_gtf parameter");
+        }else if(fsclient.checkFileStatus(out, auth)){
+        	System.out.println("ERROR : Output directory already exists");
+        }else if(!fsclient.checkFileStatus(merged_gtf, auth)){
+        	System.out.println("ERROR : Merged gtf does'nt exists");
         }else{
-        	//List<String> inputfiles = Arrays.asList(in.split("\\s*,\\s*"));
-//            String clean_org = KBaseIDTranslator.translate(organism);
-//            List<JnomicsThriftFileStatus> stats  = client.listStatus(organism, auth);
-//            StringBuilder sb = new StringBuilder();
-//            for(String opts : align_opts){
-//            	sb.append(" " + opts);
-//            }
-            System.out.println("assembly_opts is " + assembly_opts + " in path is " +  in  + "outpath is " + out + "merged gtf " + merged_gtf + " workingdir is " + working_dir);
-            JnomicsThriftJobID jobID = client.callCuffdiff(
+//            System.out.println("assembly_opts is " + assembly_opts + " in path is " +  in  + "outpath is " + out + "merged gtf " + merged_gtf + " workingdir is " + working_dir);
+        	 for(String file : input) {
+             	if(!fsclient.checkFileStatus(file, auth)){
+             		System.out.println("ERROR : " + file + " does'nt exist");
+             		return;
+             	}
+             }
+        	JnomicsThriftJobID jobID = client.callCuffdiff(
                     in,
                     out,
                     ref,

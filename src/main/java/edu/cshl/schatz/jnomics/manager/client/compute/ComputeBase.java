@@ -17,11 +17,13 @@ import java.util.Properties;
 public class ComputeBase implements ClientFunctionHandler {
 
     protected JnomicsCompute.Client client;
+    protected JnomicsData.Client fsclient;
     protected Authentication auth;
 
     @Override
     public void handle(List<String> remainingArgs, Properties properties) throws Exception {
         client = JnomicsThriftClient.getComputeClient(properties);
+        fsclient = JnomicsThriftClient.getFsClient(properties);
         auth = JnomicsThriftClient.getAuthentication(properties);
     }
 }
