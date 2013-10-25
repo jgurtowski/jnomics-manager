@@ -52,7 +52,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 
 	private Configuration getGenericConf(){
 		Configuration conf = new Configuration();
-		
+
 		//if you don't give Path's it will not load the files
 		conf.addResource(new Path(properties.getProperty("core-site-xml")));
 		conf.addResource(new Path(properties.getProperty("mapred-site-xml")));
@@ -129,25 +129,24 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 			throw new JnomicsThriftException("Permission Denied");
 		}
 		String jobname =username+"-tophat-"+inPath.substring(inPath.lastIndexOf('/') + 1).replaceAll("[.]", "_");
+		String tophatbinary =  properties.getProperty("hdfs-index-repo")+"/tophat_v7.tar";
+		String refGenome = properties.getProperty("hdfs-index-repo")+"/"+ref_genome;
+	
 		Configuration conf = null;
 		OutputStream out = null;
-	
-			logger.info("tophat_binary is "+ properties.getProperty("hdfs-index-repo")+"/tophat_v7.tar");
-			JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
-			logger.info("builder is set");
-			builder.setInputPath(inPath)
-			.setOutputPath(outPath)
-			.setParam("tophat_align_opts",alignOpts)
-			.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
-			.setParam("grid_working_dir", workingdir)
-			.setJobName(jobname)
-//			.setParam("grid_class_path",properties.getProperty("jnomics-class-path"))
-//			.setParam("grid_jar_file",properties.getProperty("jnomics-jar-path"))
-			.setParam("tophat_ref_genome",properties.getProperty("hdfs-index-repo")+"/"+ref_genome)
-			.setParam("tophat_binary",properties.getProperty("hdfs-index-repo")+"/tophat_v7.tar");
-			//.scriptCommandbuilder()
-			//.createjobScript();
-			logger.info("conf properties are set");
+		
+		logger.info("tophat_binary is "+ tophatbinary );
+		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
+		logger.info("builder is set");
+		builder.setInputPath(inPath)
+		.setOutputPath(outPath)
+		.setParam("tophat_align_opts",alignOpts)
+		.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
+		.setParam("grid_working_dir", workingdir)
+		.setJobName(jobname)
+		.setParam("tophat_ref_genome",refGenome)
+		.setParam("tophat_binary",tophatbinary);
+		logger.info("conf properties are set");
 		try{
 			conf = builder.getJobConf();
 			out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
@@ -165,197 +164,195 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		return new JnomicsThriftJobID(conf.get("grid_jobId"));	
 	}
 
-	    public JnomicsThriftJobID callCufflinks(String inPath, String outPath, 
-	    		String alignOpts, String workingdir,Authentication auth)
-	    				throws TException, JnomicsThriftException {
-	    	String username;
-			if(null == (username = authenticator.authenticate(auth))){
-				throw new JnomicsThriftException("Permission Denied");
-			}
-			String jobname = username+"-cufflinks-"+inPath.substring(inPath.lastIndexOf('/') + 1).replaceAll("[.]", "_");
-			Configuration conf = null;
-			OutputStream out = null;
+	public JnomicsThriftJobID callCufflinks(String inPath, String outPath, 
+			String alignOpts, String workingdir,Authentication auth)
+					throws TException, JnomicsThriftException {
+		String username;
+		if(null == (username = authenticator.authenticate(auth))){
+			throw new JnomicsThriftException("Permission Denied");
+		}
+		String jobname = username+"-cufflinks-"+inPath.substring(inPath.lastIndexOf('/') + 1).replaceAll("[.]", "_");
+		String cufflinks_binary =  properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar";
+		Configuration conf = null;
+		OutputStream out = null;
 
-				logger.info("cufflinks_binary is" + properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
-				logger.info("outpath is " + outPath);
-				logger.info("alignOpts " + alignOpts);
-				logger.info("working dir is " + workingdir);
-				JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
-				builder.setInputPath(properties.getProperty("hdfs-index-repo")+"/"+inPath)
-				.setOutputPath(outPath)
-				.setParam("cufflinks_opts",alignOpts)
-				.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
-				.setParam("grid_working_dir", workingdir)
-				.setJobName(jobname)
-//				.setParam("grid_class_path",properties.getProperty("jnomics-class-path"))
-//				.setParam("grid_jar_file",properties.getProperty("jnomics-jar-path"))
-				.setParam("cufflinks_binary",properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
-				//.scriptCommandbuilder()
-				//.createjobScript();
-				logger.info("conf properties are set");
-			try{
-				conf = builder.getJobConf();
-				out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
-				conf.writeXml(out);
-				builder.LaunchGridJob(conf);
-			}catch(Exception e){
-				throw new JnomicsThriftException(e.toString());
-			}finally{
-				try {
-					out.close();
-				} catch (Exception e) {
-					throw new JnomicsThriftException(e.toString());
-				}
-			}
-			return new JnomicsThriftJobID(conf.get("grid_jobId"));	
-	    }
-	    public JnomicsThriftJobID callCuffmerge(String inPath,String ref_genome, String outPath, 
-	    		String alignOpts, String gtf_file, String workingdir, Authentication auth)
-	    				throws TException, JnomicsThriftException {
-	    	String username;
-			logger.info(properties.toString());
-			logger.info("cufflinks_binary is" + properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
-			logger.info("outpath is " + outPath);
-			logger.info("alignOpts " + alignOpts);
-			logger.info("working dir is " + workingdir);
-			if(null == (username = authenticator.authenticate(auth))){
-				throw new JnomicsThriftException("Permission Denied");
-			}
-			String jobname = username+"-cuffmerge-"+inPath.substring(inPath.lastIndexOf('/') + 1).replaceAll("[.]", "_");
-			Configuration conf = null;
-			OutputStream out = null;
-				logger.info("cufflinks_binary is" + properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
-				JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
-				builder.setInputPath(properties.getProperty("hdfs-index-repo")+"/"+inPath)
-				.setOutputPath(outPath)
-				.setParam("cuffmerge_opts",alignOpts)
-				.setParam("cuffmerge_gtf", gtf_file)
-				.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
-				.setParam("grid_working_dir", workingdir)
-				.setJobName(jobname)
-//				.setParam("grid_class_path",properties.getProperty("jnomics-class-path"))
-//				.setParam("grid_jar_file",properties.getProperty("jnomics-jar-path"))
-				.setParam("cuffmerge_ref_genome",properties.getProperty("hdfs-index-repo")+"/"+ref_genome)
-				.setParam("cufflinks_binary",properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
-				//.scriptCommandbuilder()
-				//.createjobScript();
-				
-				logger.info("conf properties are set");
-			try{
-				conf = builder.getJobConf();
-				out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
-				conf.writeXml(out);
-				builder.LaunchGridJob(conf);
-			}catch(Exception e){
-				throw new JnomicsThriftException(e.toString());
-			}finally{
-				try {
-					out.close();
-				} catch (Exception e) {
-					throw new JnomicsThriftException(e.toString());
-				}
-			}
-			return new JnomicsThriftJobID(conf.get("grid_jobId"));	
-	    }
+		logger.info("cufflinks_binary -" + cufflinks_binary);
+		logger.info("outpath - " + outPath);
+		logger.info("alignOpts - " + alignOpts);
+		logger.info("working dir -  " + workingdir);
 
-	    public JnomicsThriftJobID callCuffdiff(String infiles, String outPath, String ref_genome,
-	    		String assemblyOpts, String condn_labels, String merged_gtf, String workingdir, Authentication auth)
-	    				throws TException, JnomicsThriftException {
-	    	String username;
-			logger.info(properties.toString());
-			logger.info("cufflinks_binary is" + properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
-			logger.info("outpath is " + outPath);
-			logger.info("assemblyOpts " + assemblyOpts);
-			logger.info("condn_labels " + condn_labels);
-			logger.info("merged_gtf is " + merged_gtf);
-			logger.info("working dir is " + workingdir);
-			if(null == (username = authenticator.authenticate(auth))){
-				throw new JnomicsThriftException("Permission Denied");
-			}
-			String jobname = username+"-cuffdiff-"+infiles.substring(infiles.lastIndexOf('/') + 1).replaceAll("[.]", "_");
-			Configuration conf = null;
-			OutputStream out = null;
-			
-				logger.info("cufflinks_binary is" + properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
-				JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
-				builder.setParam("input_files", infiles)
-				.setOutputPath(outPath)
-				.setParam("cuffdiff_opts",assemblyOpts)
-				.setParam("cuffdiff_condn_labels", condn_labels)
-				.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
-				.setParam("grid_working_dir", workingdir)
-				.setJobName(jobname)
-//				.setParam("grid_class_path",properties.getProperty("jnomics-class-path"))
-//				.setParam("grid_jar_file",properties.getProperty("jnomics-jar-path"))
-				.setParam("cuffdiff_merged_gtf",properties.getProperty("hdfs-index-repo")+"/"+merged_gtf)
-				.setParam("cuffdiff_ref_genome",properties.getProperty("hdfs-index-repo")+"/"+ref_genome)
-				.setParam("cufflinks_binary",properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
-				//.scriptCommandbuilder()
-				//.createjobScript();
-			try{
-				conf = builder.getJobConf();
-				out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
-				conf.writeXml(out);
-				builder.LaunchGridJob(conf);
-			}catch(Exception e){
+		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
+		builder.setInputPath(inPath)
+		.setOutputPath(outPath)
+		.setParam("cufflinks_opts",alignOpts)
+		.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
+		.setParam("grid_working_dir", workingdir)
+		.setJobName(jobname)
+		.setParam("cufflinks_binary",cufflinks_binary);
+		logger.info("conf properties are set");
+		try{
+			conf = builder.getJobConf();
+			out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
+			conf.writeXml(out);
+			builder.LaunchGridJob(conf);
+		}catch(Exception e){
+			throw new JnomicsThriftException(e.toString());
+		}finally{
+			try {
+				out.close();
+			} catch (Exception e) {
 				throw new JnomicsThriftException(e.toString());
-			}finally{
-				try {
-					out.close();
-				} catch (Exception e) {
-					throw new JnomicsThriftException(e.toString());
-				}
 			}
-			return new JnomicsThriftJobID(conf.get("grid_jobId"));	
-	    }
+		}
+		return new JnomicsThriftJobID(conf.get("grid_jobId"));	
+	}
+	
+	public JnomicsThriftJobID callCuffmerge(String inPath,String ref_genome, String outPath, 
+			String alignOpts, String gtf_file, String workingdir, Authentication auth)
+					throws TException, JnomicsThriftException {
+		String username;
 
-	    public JnomicsThriftJobID callCuffcompare(String inPath, String outPath, 
-	    	 String gtf_file, String alignOpts, String workingdir, Authentication auth)
-	    				throws TException, JnomicsThriftException {
-	    	String username;
-			logger.info("cufflinks_binary is" + properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
-			logger.info("outpath is " + outPath);
-			logger.info("alignOpts " + alignOpts);
-			logger.info("working dir is " + workingdir);
-			if(null == (username = authenticator.authenticate(auth))){
-				throw new JnomicsThriftException("Permission Denied");
-			}
-			Configuration conf = null;
-			OutputStream out = null;
-			String jobname = username+"-cuffcompare-"+inPath.substring(inPath.lastIndexOf('/') + 1).replaceAll("[.]", "_");
-			//Path confPath = null;
-			
-				logger.info("cufflinks_binary is" + properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
-				JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
-				builder.setInputPath(properties.getProperty("hdfs-index-repo")+"/"+inPath)
-				.setOutputPath(outPath)
-				.setParam("cuffcompare_opts",alignOpts)
-				.setParam("cuffcompare_gtf", gtf_file)
-				.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
-				.setParam("grid_working_dir", workingdir)
-				.setJobName(jobname)
-//				.setParam("grid_class_path",properties.getProperty("jnomics-class-path"))
-//				.setParam("grid_jar_file",properties.getProperty("jnomics-jar-path"))
-				.setParam("cufflinks_binary",properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
-				logger.info("Conf properties are set");
-			try{
-				conf = builder.getJobConf();
-				out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
-				conf.writeXml(out);
-				builder.LaunchGridJob(conf);
-			}catch(Exception e){
+		if(null == (username = authenticator.authenticate(auth))){
+			throw new JnomicsThriftException("Permission Denied");
+		}
+		String cufflinks_binary =  properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar";
+		String jobname = username+"-cuffmerge-"+inPath.substring(inPath.lastIndexOf('/') + 1).replaceAll("[.]", "_");
+
+		logger.info("cufflinks_binary -" + cufflinks_binary );
+		logger.info("outpath - " + outPath);
+		logger.info("alignOpts - " + alignOpts);
+		logger.info("working dir - " + workingdir);
+		
+		Configuration conf = null;
+		OutputStream out = null;
+		
+		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
+		builder.setInputPath(inPath)
+		.setOutputPath(outPath)
+		.setParam("cuffmerge_opts",alignOpts)
+		.setParam("cuffmerge_gtf", gtf_file)
+		.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
+		.setParam("grid_working_dir", workingdir)
+		.setJobName(jobname)
+		.setParam("cuffmerge_ref_genome",properties.getProperty("hdfs-index-repo")+"/"+ref_genome)
+		.setParam("cufflinks_binary",cufflinks_binary);
+
+		logger.info("conf properties are set");
+		try{
+			conf = builder.getJobConf();
+			out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
+			conf.writeXml(out);
+			builder.LaunchGridJob(conf);
+		}catch(Exception e){
+			throw new JnomicsThriftException(e.toString());
+		}finally{
+			try {
+				out.close();
+			} catch (Exception e) {
 				throw new JnomicsThriftException(e.toString());
-			}finally{
-				try {
-					out.close();
-					//JnomicsFileSystem.closeFileSystem(fs);
-					//out.close();
-				} catch (Exception e) {
-					throw new JnomicsThriftException(e.toString());
-				}
 			}
-			return new JnomicsThriftJobID(conf.get("grid_jobId"));	
-	    }
+		}
+		return new JnomicsThriftJobID(conf.get("grid_jobId"));	
+	}
+
+	public JnomicsThriftJobID callCuffdiff(String infiles, String outPath, String ref_genome,
+			String assemblyOpts, String condn_labels, String merged_gtf, String workingdir, Authentication auth)
+					throws TException, JnomicsThriftException {
+		String username;
+		
+		if(null == (username = authenticator.authenticate(auth))){
+			throw new JnomicsThriftException("Permission Denied");
+		}
+		
+		String cufflinks_binary =  properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar";
+		String jobname = username+"-cuffdiff-"+infiles.substring(infiles.lastIndexOf('/') + 1).replaceAll("[.]", "_");
+
+		logger.info("cufflinks_binary - " + cufflinks_binary);
+		logger.info("outpath - " + outPath);
+		logger.info("assemblyOpts - " + assemblyOpts);
+		logger.info("condn_labels - " + condn_labels);
+		logger.info("merged_gtf - " + merged_gtf);
+		logger.info("working dir - " + workingdir);
+		
+		Configuration conf = null;
+		OutputStream out = null;
+		
+		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
+		builder.setParam("input_files", infiles)
+		.setOutputPath(outPath)
+		.setParam("cuffdiff_opts",assemblyOpts)
+		.setParam("cuffdiff_condn_labels", condn_labels)
+		.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
+		.setParam("grid_working_dir", workingdir)
+		.setJobName(jobname)
+		.setParam("cuffdiff_merged_gtf",properties.getProperty("hdfs-index-repo")+"/"+merged_gtf)
+		.setParam("cuffdiff_ref_genome",properties.getProperty("hdfs-index-repo")+"/"+ref_genome)
+		.setParam("cufflinks_binary",cufflinks_binary);
+
+		try{
+			conf = builder.getJobConf();
+			out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
+			conf.writeXml(out);
+			builder.LaunchGridJob(conf);
+		}catch(Exception e){
+			throw new JnomicsThriftException(e.toString());
+		}finally{
+			try {
+				out.close();
+			} catch (Exception e) {
+				throw new JnomicsThriftException(e.toString());
+			}
+		}
+		return new JnomicsThriftJobID(conf.get("grid_jobId"));	
+	}
+
+	public JnomicsThriftJobID callCuffcompare(String inPath, String outPath, 
+			String gtf_file, String alignOpts, String workingdir, Authentication auth)
+					throws TException, JnomicsThriftException {
+		String username;
+		
+		if(null == (username = authenticator.authenticate(auth))){
+			throw new JnomicsThriftException("Permission Denied");
+		}
+		String jobname = username+"-cuffcompare-"+inPath.substring(inPath.lastIndexOf('/') + 1).replaceAll("[.]", "_");
+		String cufflinks_binary = properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar";
+		
+		logger.info("cufflinks_binary is" + cufflinks_binary);
+		logger.info("outpath is " + outPath);
+		logger.info("alignOpts " + alignOpts);
+		logger.info("working dir is " + workingdir);
+	
+		Configuration conf = null;
+		OutputStream out = null;	
+
+		logger.info("cufflinks_binary is" + properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar");
+		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
+		builder.setInputPath(inPath)
+		.setOutputPath(outPath)
+		.setParam("cuffcompare_opts",alignOpts)
+		.setParam("cuffcompare_gtf", gtf_file)
+		.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
+		.setParam("grid_working_dir", workingdir)
+		.setJobName(jobname)
+		.setParam("cufflinks_binary",cufflinks_binary);
+		logger.info("Conf properties are set");
+		
+		try{
+			conf = builder.getJobConf();
+			out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
+			conf.writeXml(out);
+			builder.LaunchGridJob(conf);
+		}catch(Exception e){
+			throw new JnomicsThriftException(e.toString());
+		}finally{
+			try {
+				out.close();
+			} catch (Exception e) {
+				throw new JnomicsThriftException(e.toString());
+			}
+		}
+		return new JnomicsThriftJobID(conf.get("grid_jobId"));	
+	}
 
 
 	public JnomicsThriftJobID ShockBatchWrite(List<String> inPath ,String outPath, Authentication auth)throws TException, JnomicsThriftException{	
@@ -500,23 +497,23 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 			throw new JnomicsThriftException(e.toString());
 		}
 		return status ;
-//		return new JobClientRunner<JnomicsThriftJobStatus>(username,
-//				new Configuration(),properties){
-//			@Override
-//			public JnomicsThriftJobStatus jobClientTask() throws Exception {
-//
-//				RunningJob job = getJobClient().getJob(JobID.forName(jobID.getJob_id()));
-//				return new JnomicsThriftJobStatus(job.getID().toString(),
-//						username,
-//						null,
-//						job.isComplete(),
-//						job.getJobState(),
-//						0,
-//						null,
-//						job.mapProgress(),
-//						job.reduceProgress());
-//			}
-//		}.run();
+		//		return new JobClientRunner<JnomicsThriftJobStatus>(username,
+		//				new Configuration(),properties){
+		//			@Override
+		//			public JnomicsThriftJobStatus jobClientTask() throws Exception {
+		//
+		//				RunningJob job = getJobClient().getJob(JobID.forName(jobID.getJob_id()));
+		//				return new JnomicsThriftJobStatus(job.getID().toString(),
+		//						username,
+		//						null,
+		//						job.isComplete(),
+		//						job.getJobState(),
+		//						0,
+		//						null,
+		//						job.mapProgress(),
+		//						job.reduceProgress());
+		//			}
+		//		}.run();
 	}
 	@Override
 	public List<JnomicsThriftJobStatus> getAllJobs(Authentication auth) throws JnomicsThriftException, TException {
@@ -758,7 +755,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		}
 		return status;
 	}
-	
+
 	private JnomicsJobBuilder getGATKConfBuilder(String inPath, String outPath, String organism){
 		return null;
 		/**FIXME**/

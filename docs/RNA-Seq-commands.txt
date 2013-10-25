@@ -9,9 +9,9 @@ tophat
 
 cufflinks
 
-./bin/jk_compute_cufflinks -in=/t2_out/accepted_hits.bam -out=c2_out -assembly_opts=-p8 
+./bin/jk_compute_cufflinks -in=t2_out/accepted_hits.bam -out=c2_out -assembly_opts=-p8 
 
-./bin/jk_compute_cufflinks -in=/t3_out/accepted_hits.bam -out=c3_out -assembly_opts=-p8  
+./bin/jk_compute_cufflinks -in=t3_out/accepted_hits.bam -out=c3_out -assembly_opts=-p8  
 
 
 cuffmerge
@@ -21,10 +21,10 @@ cuffmerge
 
 cuffdiff
 
-./bin/jk_compute_cuffdiff -in=/t2_out/accepted_hits.bam,/t3_out/accepted_hits.bam -out=cuffdiff_out -ref=ecoli.fa -assembly_opts=-p8 -condn_labels=C2,C3 -merged_gtf=/merged_out/merged.gtf
+./bin/jk_compute_cuffdiff -in=t2_out/accepted_hits.bam,t3_out/accepted_hits.bam -out=cuffdiff_out -ref=ecoli.fa -assembly_opts=-p8 -condn_labels=C2,C3 -merged_gtf=merged_out/merged.gtf
 
 
 cuffcompare
 
-./bin/jk_compute_cuffcompare -in=assembly.txt -out=cuffcompare_out -ref_gtf=/merged_out/merged.gtf 
+./bin/jk_compute_cuffcompare -in=assembly.txt -out=cuffcompare_out -ref_gtf=merged_out/merged.gtf 
 
