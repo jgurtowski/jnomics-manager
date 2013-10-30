@@ -66,6 +66,8 @@ public class Tophat extends ComputeBase {
             System.out.println("missing -out parameter");
     	}else if(fsclient.checkFileStatus(out, auth)){
     		System.out.println("ERROR : Output directory already exists");
+    	}else if(!fsclient.checkFileStatus(organism, auth)){
+    		System.out.println("ERROR : " +  organism + " does'nt exists");	
     	}else{
             for(String file : input) {
             	if(!fsclient.checkFileStatus(file, auth)){
