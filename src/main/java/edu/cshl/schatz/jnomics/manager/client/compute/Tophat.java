@@ -54,7 +54,6 @@ public class Tophat extends ComputeBase {
     public void handle(List<String> remainingArgs,Properties properties) throws Exception {
 
         super.handle(remainingArgs,properties);
-        List<String> input = Arrays.asList(in.split(","));
         if(help){
             System.out.println(Utility.helpFromParameters(this.getClass()));
             return;
@@ -66,9 +65,10 @@ public class Tophat extends ComputeBase {
             System.out.println("missing -out parameter");
     	}else if(fsclient.checkFileStatus(out, auth)){
     		System.out.println("ERROR : Output directory already exists");
-    	}else if(!fsclient.checkFileStatus(organism, auth)){
-    		System.out.println("ERROR : " +  organism + " does'nt exists");	
+//    	}else if(!fsclient.checkFileStatus("organism_bowtie2.tar.gz", auth)){
+//    		System.out.println("ERROR : " +  organism + " does'nt exists");	
     	}else{
+            List<String> input = Arrays.asList(in.split(","));
             for(String file : input) {
             	if(!fsclient.checkFileStatus(file, auth)){
             		System.out.println("ERROR : " + file + " does'nt exist");
