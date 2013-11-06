@@ -130,14 +130,16 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		}
 		String jobname =username+"-tophat-"+inPath.substring(inPath.lastIndexOf('/') + 1).replaceAll("[.]", "_");
 		String tophatbinary =  properties.getProperty("hdfs-index-repo")+"/tophat_v7.tar";
-		String refGenome = properties.getProperty("hdfs-index-repo")+"/"+ref_genome;
+		String refGenome = properties.getProperty("hdfs-index-repo")+"/"+ref_genome+"_bowtie2.tar.gz";
 	
 		Configuration conf = null;
 		OutputStream out = null;
 		
 		logger.info("tophat_binary is "+ tophatbinary );
+		logger.info("jobname - " + jobname);
+		
 		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
-		logger.info("builder is set");
+
 		builder.setInputPath(inPath)
 		.setOutputPath(outPath)
 		.setParam("tophat_align_opts",alignOpts)
@@ -145,6 +147,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		.setParam("grid_working_dir", workingdir)
 		.setJobName(jobname)
 		.setParam("tophat_ref_genome",refGenome)
+		.setParam("tophat_gtf",gtffile)
 		.setParam("tophat_binary",tophatbinary);
 		logger.info("conf properties are set");
 		try{
@@ -171,12 +174,13 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		if(null == (username = authenticator.authenticate(auth))){
 			throw new JnomicsThriftException("Permission Denied");
 		}
-		String jobname = username+"-cufflinks-"+inPath.substring(inPath.lastIndexOf('/') + 1).replaceAll("[.]", "_");
+		String jobname = username+"-cufflinks-"+inPath.replaceAll("[./]", "_");
 		String cufflinks_binary =  properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar";
 		Configuration conf = null;
 		OutputStream out = null;
 
 		logger.info("cufflinks_binary -" + cufflinks_binary);
+		logger.info("jobname - " + jobname);
 		logger.info("outpath - " + outPath);
 		logger.info("alignOpts - " + alignOpts);
 		logger.info("working dir -  " + workingdir);
@@ -216,9 +220,12 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 			throw new JnomicsThriftException("Permission Denied");
 		}
 		String cufflinks_binary =  properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar";
-		String jobname = username+"-cuffmerge-"+inPath.substring(inPath.lastIndexOf('/') + 1).replaceAll("[.]", "_");
-
+		String jobname = username+"-cuffmerge-"+inPath.replaceAll("[./]", "_");
+		String refGenome = properties.getProperty("hdfs-index-repo")+"/"+ref_genome+"_bowtie2.tar.gz"; 
+		
 		logger.info("cufflinks_binary -" + cufflinks_binary );
+		logger.info("Reference is -" + refGenome ) ;
+		logger.info("jobname - " + jobname);
 		logger.info("outpath - " + outPath);
 		logger.info("alignOpts - " + alignOpts);
 		logger.info("working dir - " + workingdir);
@@ -234,7 +241,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
 		.setParam("grid_working_dir", workingdir)
 		.setJobName(jobname)
-		.setParam("cuffmerge_ref_genome",properties.getProperty("hdfs-index-repo")+"/"+ref_genome)
+		.setParam("cuffmerge_ref_genome",refGenome)
 		.setParam("cufflinks_binary",cufflinks_binary);
 
 		logger.info("conf properties are set");
@@ -266,8 +273,11 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		
 		String cufflinks_binary =  properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar";
 		String jobname = username+"-cuffdiff-"+infiles.substring(infiles.lastIndexOf('/') + 1).replaceAll("[.]", "_");
+		String refGenome = properties.getProperty("hdfs-index-repo")+"/"+ref_genome+"_bowtie2.tar.gz"; 
 
 		logger.info("cufflinks_binary - " + cufflinks_binary);
+		logger.info("Reference is -" + refGenome ) ;
+		logger.info("jobname - " + jobname);
 		logger.info("outpath - " + outPath);
 		logger.info("assemblyOpts - " + assemblyOpts);
 		logger.info("condn_labels - " + condn_labels);
@@ -286,7 +296,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		.setParam("grid_working_dir", workingdir)
 		.setJobName(jobname)
 		.setParam("cuffdiff_merged_gtf",merged_gtf)
-		.setParam("cuffdiff_ref_genome",properties.getProperty("hdfs-index-repo")+"/"+ref_genome)
+		.setParam("cuffdiff_ref_genome",refGenome)
 		.setParam("cufflinks_binary",cufflinks_binary);
 
 		try{
@@ -318,6 +328,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		String cufflinks_binary = properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar";
 		
 		logger.info("cufflinks_binary is" + cufflinks_binary);
+		logger.info("jobname - " + jobname);
 		logger.info("outpath is " + outPath);
 		logger.info("alignOpts " + alignOpts);
 		logger.info("working dir is " + workingdir);

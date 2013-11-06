@@ -21,7 +21,7 @@ import java.util.Properties;
 
 @FunctionDescription(description = "Tophat Aligner\n"+
         "Align Short reads to an organism's reference genome.\n"+
-        "Organism can be specified with the -org flag. Input and \n"+
+        "Organism can be specified with the -ref flag. Input and \n"+
         "Output must reside on the Cluster's filesystem. \n"+
         "Optional additonal arguments may be supplied to both\n"+
         "Tophat. These options are passed as a string to Tophat and should include hyphens(-)\n"+
@@ -63,9 +63,20 @@ public class Tophat extends ComputeBase {
             System.out.println("missing -in parameter");
         }else if(null == out){
             System.out.println("missing -out parameter");
-        }else{
+    	}else if(fsclient.checkFileStatus(out, auth)){
+    		System.out.println("ERROR : Output directory already exists");
+//    	}else if(!fsclient.checkFileStatus("organism_bowtie2.tar.gz", auth)){
+//    		System.out.println("ERROR : " +  organism + " does'nt exists");	
+    	}else{
+            List<String> input = Arrays.asList(in.split(","));
+            for(String file : input) {
+            	if(!fsclient.checkFileStatus(file, auth)){
+            		System.out.println("ERROR : " + file + " does'nt exist");
+            		return;
+            	}
+            }
             String clean_org = KBaseIDTranslator.translate(organism);
-            System.out.println("organism  is " +  clean_org);
+           // System.out.println("organism  is " +  clean_org);
             JnomicsThriftJobID jobID = client.alignTophat(
                     clean_org,
                     in,

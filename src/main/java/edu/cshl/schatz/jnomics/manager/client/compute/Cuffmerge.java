@@ -19,11 +19,11 @@ import java.util.Properties;
 
 
 @FunctionDescription(description = "Cuffmerge Transcript assembler\n"+
-        "Align Short reads to an organism's reference genome.\n"+
-        "Organism can be specified with the -org flag. Input and \n"+
+        "Merges the transcript assemblies to a single transcriptome.\n"+
+        "Organism can be specified with the -ref flag. Input and \n"+
         "Output must reside on the Cluster's filesystem. \n"+
-        "Optional additonal arguments may be supplied to both\n"+
-        "Tophat. These options are passed as a string to Tophat and should include hyphens(-)\n"+
+        "Optional additonal arguments may be supplied to \n"+
+        "cuffmerge. These options are passed as a string to cuffmerge and should include hyphens(-)\n"+
         "if necessary.\n"
 )
 public class Cuffmerge extends ComputeBase {
@@ -62,14 +62,13 @@ public class Cuffmerge extends ComputeBase {
             System.out.println("missing -in parameter");
         }else if(null == out){
             System.out.println("missing -out parameter");
+        }else if(!fsclient.checkFileStatus(in, auth)){
+        	System.out.println("ERROR : " + in +" file not present");
+        }else if(fsclient.checkFileStatus(out, auth)){
+    		System.out.println("ERROR : Output directory already exists");
         }else{
             String clean_org = KBaseIDTranslator.translate(organism);
-//            List<JnomicsThriftFileStatus> stats  = client.listStatus(organism, auth);
-//            StringBuilder sb = new StringBuilder();
-//            for(String opts : align_opts){
-//            	sb.append(" " + opts);
-//            }
-            System.out.println("align_opts is " +  assembly_opts);
+//            System.out.println("align_opts is " +  assembly_opts);
             JnomicsThriftJobID jobID = client.callCuffmerge(
                     in,
                     clean_org,
