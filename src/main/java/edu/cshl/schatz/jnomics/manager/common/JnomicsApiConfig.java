@@ -8,6 +8,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
+import us.kbase.auth.AuthService;
+
 /**
  * User: james
  */
@@ -26,11 +28,13 @@ public class JnomicsApiConfig {
             File authFile = JnomicsClientEnvironment.USER_AUTH_FILE;
             try{
                 prop.load(new FileInputStream(authFile));
+		//can throw TokenExpiredException in which case re-prompt the user
+		AuthService.validateToken(prop.getProperty("token"));
             }catch(Exception e){
                 GlobusPasswordPrompter.getPasswordFromUser();
                 prop.load(new FileInputStream(authFile));
             }
-        }
+	}
     }
     
     public static Properties getServerProperties() throws IOException{
