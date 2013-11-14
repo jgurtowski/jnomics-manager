@@ -10,6 +10,7 @@ import edu.cshl.schatz.jnomics.manager.common.KBaseIDTranslator;
 import edu.cshl.schatz.jnomics.manager.client.fs.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -23,15 +24,15 @@ import java.util.Properties;
         "Organism can be specified with the -ref flag. Input and \n"+
         "Output must reside on the Cluster's filesystem. \n"+
         "Optional additonal arguments may be supplied to \n"+
-        "cuffmerge. These options are passed as a string to cuffmerge and should include hyphens(-)\n"+
-        "if necessary.\n"
+        "cuffmerge. These options are passed as a string to cuffmerge "+ 
+        "and should include hyphens(-)if necessary.\n"
 )
 public class Cuffmerge extends ComputeBase {
 
     @Flag(shortForm = "-h",longForm = "--help")
     public boolean help;
     
-    @Parameter(shortForm = "-in", longForm = "--input", description = "input (directory,.pe,.se)")
+    @Parameter(shortForm = "-in", longForm = "--input", description = "input (.gtf files, comma seperated)")
     public String in;
     
     @Parameter(shortForm = "-ref", longForm = "--reference genome", description="reference genome(.fa)")
@@ -46,7 +47,7 @@ public class Cuffmerge extends ComputeBase {
     @Parameter(shortForm = "-gtf_opts", longForm = "--GTF file", description = "Gene model annotation file(.gtf) (optional)")
     public String gtf_opts;
     
-    @Parameter(shortForm = "-working_dir", longForm = "--working_dir", description = "workingdir (required)")
+    @Parameter(shortForm = "-working_dir", longForm = "--working_dir", description = "workingdir (optional)")
     public String working_dir;
     
     @Override
@@ -62,13 +63,20 @@ public class Cuffmerge extends ComputeBase {
             System.out.println("missing -in parameter");
         }else if(null == out){
             System.out.println("missing -out parameter");
-        }else if(!fsclient.checkFileStatus(in, auth)){
-        	System.out.println("ERROR : " + in +" file not present");
+//        }else if(!fsclient.checkFileStatus(in, auth)){
+//        	System.out.println("ERROR : " + in +" file not present");
         }else if(fsclient.checkFileStatus(out, auth)){
     		System.out.println("ERROR : Output directory already exists");
         }else{
             String clean_org = KBaseIDTranslator.translate(organism);
 //            System.out.println("align_opts is " +  assembly_opts);
+            List<String> input = Arrays.asList(in.split(","));
+            for(String file : input) {
+            	if(!fsclient.checkFileStatus(file, auth)){
+            		System.out.println("ERROR : " + file + " does'nt exist");
+            		return;
+            	}
+            }
             JnomicsThriftJobID jobID = client.callCuffmerge(
                     in,
                     clean_org,

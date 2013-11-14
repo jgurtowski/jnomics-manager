@@ -32,7 +32,7 @@ public class Cuffdiff extends ComputeBase {
 	@Flag(shortForm = "-h",longForm = "--help")
 	public boolean help;
 
-	@Parameter(shortForm = "-in", longForm = "--input", description = "Multiple Transcript files (comma seperated)")
+	@Parameter(shortForm = "-in", longForm = "--input", description = "Multiple transcript files (comma seperated)")
 	public String in;
 
 	@Parameter(shortForm = "-out", longForm= "--output", description = "output (directory)")
@@ -44,13 +44,13 @@ public class Cuffdiff extends ComputeBase {
 	@Parameter(shortForm = "-assembly_opts", longForm = "--assembly_options", description = "options to pass to Cuffdiff (optional)")
 	public String assembly_opts;
 
-	@Parameter(shortForm = "-condn_labels", longForm = "--condition_labels", description = "Conditional labels to pass to Cuffdiff (optional)")
+	@Parameter(shortForm = "-condn_labels", longForm = "--condition_labels", description = "transcripts conditional labels (comma seperated;required)")
 	public String condition_labels;
 
 	@Parameter(shortForm = "-merged_gtf", longForm = "--merged_gtf", description = "Merged gtf file for Cuffdiff ")
 	public String merged_gtf;
 
-	@Parameter(shortForm = "-working_dir", longForm = "--working_dir", description = "workingdir (required)")
+	@Parameter(shortForm = "-working_dir", longForm = "--working_dir", description = "workingdir (optional)")
 	public String working_dir;
 
 	@Override
@@ -72,8 +72,11 @@ public class Cuffdiff extends ComputeBase {
 		}else if(!fsclient.checkFileStatus(merged_gtf, auth)){
 			System.out.println("ERROR : Merged gtf does'nt exists");
 		}else{
+			List<String> lbls = Arrays.asList(condition_labels.split(","));
 			List<String> input = Arrays.asList(in.split(","));
-
+			if(lbls.size() != input.size()){
+				System.out.println("ERROR: condition_labels should match the number of input files");
+			}
 			//            System.out.println("assembly_opts is " + assembly_opts + " in path is " +  in  + "outpath is " + out + "merged gtf " + merged_gtf + " workingdir is " + working_dir);
 			for(String file : input) {
 				if(!fsclient.checkFileStatus(file, auth)){

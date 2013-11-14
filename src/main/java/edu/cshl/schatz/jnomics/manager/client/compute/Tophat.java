@@ -18,14 +18,14 @@ import java.util.Properties;
  * User: Sri
  */
 
-
 @FunctionDescription(description = "Tophat Aligner\n"+
         "Align Short reads to an organism's reference genome.\n"+
         "Organism can be specified with the -ref flag. Input and \n"+
         "Output must reside on the Cluster's filesystem. \n"+
-        "Optional additonal arguments may be supplied to both\n"+
-        "Tophat. These options are passed as a string to Tophat and should include hyphens(-)\n"+
-        "if necessary.\n"
+        "Optional additonal arguments may be supplied Tophat. \n"+
+        "For paired end alignment give the files as comma seperated "+ 
+        "arguments to the -in argument. These options are passed as a "+
+        "string to Tophat and should include hyphens(-) if necessary.\n"
 )
 public class Tophat extends ComputeBase {
 
@@ -35,7 +35,7 @@ public class Tophat extends ComputeBase {
     @Parameter(shortForm = "-ref", longForm = "--reference genome", description="reference genome(.fa)")
     public String organism;
     
-    @Parameter(shortForm = "-in", longForm = "--input", description = "input (directory,.pe,.se)")
+    @Parameter(shortForm = "-in", longForm = "--input", description = "input(files comma seperated )")
     public String in;
     
     @Parameter(shortForm = "-out", longForm= "--output", description = "output (directory)")
@@ -47,7 +47,7 @@ public class Tophat extends ComputeBase {
     @Parameter(shortForm = "-gtf_opts", longForm = "--GTF file", description = "Gene model annotation file(.gtf) (optional)")
     public String gtf_opts;
     
-    @Parameter(shortForm = "-working_dir", longForm = "--working_dir", description = "workingdir (required)")
+    @Parameter(shortForm = "-working_dir", longForm = "--working_dir", description = "workingdir (optional)")
     public String working_dir;
     
     @Override
@@ -76,7 +76,6 @@ public class Tophat extends ComputeBase {
             	}
             }
             String clean_org = KBaseIDTranslator.translate(organism);
-           // System.out.println("organism  is " +  clean_org);
             JnomicsThriftJobID jobID = client.alignTophat(
                     clean_org,
                     in,
@@ -87,7 +86,6 @@ public class Tophat extends ComputeBase {
                     auth);
             System.out.println("Submitted Job: " + jobID.getJob_id());
             return;
-            //}
         }
 
         System.out.println(Utility.helpFromParameters(this.getClass()));

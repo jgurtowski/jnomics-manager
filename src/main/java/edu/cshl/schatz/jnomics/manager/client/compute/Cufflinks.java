@@ -30,7 +30,7 @@ public class Cufflinks extends ComputeBase {
     @Flag(shortForm = "-h",longForm = "--help")
     public boolean help;
     
-    @Parameter(shortForm = "-in", longForm = "--input", description = "input (directory,.pe,.se)")
+    @Parameter(shortForm = "-in", longForm = "--input", description = "input (bam file)")
     public String in;
     
     @Parameter(shortForm = "-out", longForm= "--output", description = "output (directory)")
@@ -39,7 +39,7 @@ public class Cufflinks extends ComputeBase {
     @Parameter(shortForm = "-assembly_opts", longForm = "--assembly_options", description = "options to pass to Cufflinks (optional)")
     public String assembly_opts;
     
-    @Parameter(shortForm = "-working_dir", longForm = "--working_dir", description = "workingdir (required)")
+    @Parameter(shortForm = "-working_dir", longForm = "--working_dir", description = "workingdir (optional)")
     public String working_dir;
     
     @Override

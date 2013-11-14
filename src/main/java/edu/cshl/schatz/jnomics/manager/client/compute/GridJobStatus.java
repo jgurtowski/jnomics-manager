@@ -23,12 +23,9 @@ public class GridJobStatus extends ComputeBase{
     @Override
     public void handle(List<String> remainingArgs, Properties properties) throws Exception {
         super.handle(remainingArgs, properties);
-        
-        System.out.println(" job is +" +  job);
 
         if(help){
-        	System.out.println(" Hey entering this help " );
-           // System.out.println(Utility.helpFromParameters(this.getClass()));
+            System.out.println(Utility.helpFromParameters(this.getClass()));
             return;
         }else if(null == job){
             System.out.println("Missing -job parameter");
@@ -36,7 +33,6 @@ public class GridJobStatus extends ComputeBase{
         	
         	  String stat = client.getGridJobStatus(new JnomicsThriftJobID(job),auth);
 //            JnomicsThriftJobStatus status = client.getJobStatus(new JnomicsThriftJobID(job), auth);
-//
 //            System.out.printf("%30s %30s\n","ID:",status.getJob_id());
 //            System.out.printf("%30s %30s\n","Username:",status.getUsername());
 //            System.out.printf("%30s %30s\n","Complete:",status.isComplete());
@@ -47,6 +43,6 @@ public class GridJobStatus extends ComputeBase{
         	  return ;
         }
 
-        	//System.out.println(Utility.helpFromParameters(this.getClass())); 
+        	System.out.println(Utility.helpFromParameters(this.getClass())); 
     }
 }

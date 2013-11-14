@@ -10,6 +10,7 @@ import edu.cshl.schatz.jnomics.manager.common.KBaseIDTranslator;
 import edu.cshl.schatz.jnomics.manager.client.fs.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -17,21 +18,21 @@ import java.util.Properties;
  * User: Sri
  */
 
-
-@FunctionDescription(description = "Cuffcompare -Compare transcript Assemblies\n"+
+@FunctionDescription(description = "Cuffcompare "+
+		"Compare transcript Assemblies\n"+
         "Compare each assembly with the transcriptome \n"+
-        "Reference gtf can be specified with the -ref_gtf flag. Input and \n"+
-        "Output must reside on the Cluster's filesystem. \n"+
+        "Reference gtf can be specified with the -ref_gtf flag. " + 
+        "Input and Output must reside on the Cluster's filesystem. \n"+
         "Optional additonal arguments may be supplied to \n"+
-        "cuffcompare. These options are passed as a string to cuffcompare and should include hyphens(-)\n"+
-        "if necessary.\n"
+        "cuffcompare. These options are passed as a string to cuffcompare"+
+        " and should include hyphens(-) if necessary.\n"
 )
 public class Cuffcompare extends ComputeBase {
 
     @Flag(shortForm = "-h",longForm = "--help")
     public boolean help;
     
-    @Parameter(shortForm = "-in", longForm = "--input", description = "input (text file with transcript file paths)")
+    @Parameter(shortForm = "-in", longForm = "--input", description = "input (Multiple transcript files(.gtf),comma seperated)")
     public String in;
     
     @Parameter(shortForm = "-out", longForm= "--output", description = "output (directory)")
@@ -40,10 +41,10 @@ public class Cuffcompare extends ComputeBase {
     @Parameter(shortForm = "-ref_gtf", longForm= "--ref_gtf", description = "reference gtf")
     public String ref_gtf;
     
-    @Parameter(shortForm = "-assembly_opts", longForm = "--assembly_options", description = "options to pass to Cuffcompare (optional)")
+    @Parameter(shortForm = "-assembly_opts", longForm = "--assembly_options", description = "options to Cuffcompare (optional)")
     public String assembly_opts;
     
-    @Parameter(shortForm = "-working_dir", longForm = "--working_dir", description = "workingdir" )
+    @Parameter(shortForm = "-working_dir", longForm = "--working_dir", description = "workingdir (optional)" )
     public String working_dir;
     
     @Override
@@ -59,13 +60,20 @@ public class Cuffcompare extends ComputeBase {
             System.out.println("missing -out parameter");
         }else if(null == ref_gtf){
             System.out.println("missing -ref_gtf parameter");
-        }else if(!fsclient.checkFileStatus(in, auth)){
-    		System.out.println("ERROR : " + in + "does'nt exist");
+//        }else if(!fsclient.checkFileStatus(in, auth)){
+//    		System.out.println("ERROR : " + in + "does'nt exist");
         }else if(!fsclient.checkFileStatus(ref_gtf, auth)){
     		System.out.println("ERROR : " + ref_gtf + "does'nt exist");
         }else if(fsclient.checkFileStatus(out, auth)){
     		System.out.println("ERROR : Output directory already exists");
     	}else{
+    		List<String> input = Arrays.asList(in.split(","));
+            for(String file : input) {
+            	if(!fsclient.checkFileStatus(file, auth)){
+            		System.out.println("ERROR : " + file + " does'nt exist");
+            		return;
+            	}
+            }
 //            String clean_org = KBaseIDTranslator.translate(organism);
 //            List<JnomicsThriftFileStatus> stats  = client.listStatus(in, auth);
 //            StringBuilder sb = new StringBuilder();
@@ -83,7 +91,6 @@ public class Cuffcompare extends ComputeBase {
             System.out.println("Submitted Job: " + jobID.getJob_id());
             return;
         }
-
         System.out.println(Utility.helpFromParameters(this.getClass()));
     }
 }

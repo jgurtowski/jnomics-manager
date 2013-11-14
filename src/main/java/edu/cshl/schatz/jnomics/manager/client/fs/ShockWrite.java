@@ -30,16 +30,21 @@ public class ShockWrite extends FSBase{
     public void handle(List<String> remainingArgs, Properties properties) throws Exception {
         super.handle(remainingArgs, properties);
         
-        if(help || hdfs_file == null || hdfs_path == null){
-        	System.out.println("shock_write -hdfs_file=<Name> -hdfs_path=<Path>");
+        if(help || hdfs_file == null){
+        	System.out.println("shock_write -hdfs_file=<Name>" );
         }else{
-        	if(client.ShockWrite(hdfs_file, hdfs_path, auth)){
-        		System.out.println("Moved : " + hdfs_file + " from the Cluster to Shock Client");
-        		
+        	if(!client.checkFileStatus(hdfs_file, auth)){
+        		throw new Exception("ERROR: " + hdfs_file + "doesn't exist");
+        	}
+//        	JnomicsThriftHandle handle = client.open(hdfs_file, auth);
+        	
+        	if(client.ShockWrite2(hdfs_file, hdfs_path,auth)){
+        		System.out.println("Copied : " + hdfs_file + " to Shock Client");	
         	}
         	else {
         		System.out.println("Failed\n");
         	}
+//        	client.close(handle,auth);	
         }
         
     }
