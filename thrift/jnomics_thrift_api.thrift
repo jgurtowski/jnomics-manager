@@ -96,6 +96,7 @@ service JnomicsData{
         bool ShockRead (1: string nodeId , 2: string inPath,3: Authentication auth) throws (1: JnomicsThriftException je),
         bool ShockWrite (1: JnomicsThriftHandle handle,2: string filename,3: Authentication auth) throws (1: JnomicsThriftException je),
         bool ShockWrite2 (1: string filename,2: string hdfsPath,3: Authentication auth) throws (1: JnomicsThriftException je),
+        bool ShockWrite3 (1: JnomicsThriftHandle handle ,2: string filename,3: Authentication auth) throws (1: JnomicsThriftException je),
         void close(1: JnomicsThriftHandle handle, 2: Authentication auth) throws (1: JnomicsThriftException je),
         list<JnomicsThriftFileStatus> listStatus(1: string path, 2:Authentication auth) throws (1: JnomicsThriftException je),
         bool checkFileStatus(1: string path, 2:Authentication auth) throws (1: JnomicsThriftException je),
