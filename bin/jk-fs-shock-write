@@ -1,0 +1,3 @@
+#!/bin/bash 
+SCRIPT_PATH=`dirname "$0"`
+${SCRIPT_PATH}/jkbase fs -shock_write $*
