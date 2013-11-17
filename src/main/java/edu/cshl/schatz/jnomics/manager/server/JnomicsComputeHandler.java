@@ -19,12 +19,14 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.thrift.TException;
 import org.ggf.drmaa.DrmaaException;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+//import java.io.File;
+import java.io.*;
+//import java.io.FileNotFoundException;
+//import java.io.FileOutputStream;
+//import java.io.FileInputStream;
+//import java.io.IOException;
+//import java.io.OutputStream;
+//import java.io.InputStream;
 import java.net.URI;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
@@ -136,7 +138,9 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 
 		Configuration conf = null;
 		OutputStream out = null;
-
+		//OutputStream sout = null;
+		String jobid = null;
+		//String scontact = null;
 		logger.info("tophat_binary is "+ tophatbinary );
 		logger.info("jobname - " + jobname);
 
@@ -157,11 +161,16 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 			out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
 			conf.writeXml(out);
 			builder.LaunchGridJob(conf);
+			jobid = conf.get("grid_jobId");
+			//scontact = conf.get("grid_session");
+			//sout = new FileOutputStream(System.getProperty("user.home")+ "/" + jobid +".xml");
+			//sout.write(scontact.getBytes(),0,scontact.length());
 		}catch(Exception e){
 			throw new JnomicsThriftException(e.toString());
 		}finally{
 			try {
 				out.close();
+			//	sout.close();
 			} catch (Exception e) {
 				throw new JnomicsThriftException(e.toString());
 			}
@@ -545,8 +554,27 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		logger.info("Getting job status for user "+ username);
 		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
 		String status = null;
+		//Configuration sconf = new Configuration();
+		//String scontact = null;
+		//Path resource = null;
+		//InputStream input = null;
+		//BufferedReader in = null;
 		try {
-			status = builder.getjobstatus(jobID.getJob_id());
+		  // logger.info(System.getProperty("user.home")+"/"+jobID.getJob_id()+".xml");
+		  // resource = new Path(System.getProperty("user.home")+"/"+jobID.getJob_id()+".xml");
+		  // in = new BufferedReader(new FileReader(new File(resource.toString())));
+		  // scontact = in.readLine();
+		  // input = new FileInputStream(resource.toString());
+		  // byte[] b = input.read();
+		  // scontact = new String(b);
+		   //logger.info("resource is " + resource.toString());	
+		   //sconf.addResource(resource);
+		   //logger.info("sconf successfully loaded"); 
+		   //scontact = sconf.toString();
+		   //logger.info("scontact is" + scontact);
+		   status = builder.getjobstatus(jobID.getJob_id());
+		   //status = builder.getjobstatus(jobID.getJob_id(),scontact);
+		  
 		} catch (Exception e) {
 			throw new JnomicsThriftException(e.toString());
 		}
