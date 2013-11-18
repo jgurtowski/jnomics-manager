@@ -178,7 +178,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		return new JnomicsThriftJobID(conf.get("grid_jobId"));	
 	}
 
-	public JnomicsThriftJobID callCufflinks(String inPath, String outPath, 
+	public JnomicsThriftJobID callCufflinks(String inPath, String outPath,String ref_gtf,
 			String alignOpts, String workingdir,Authentication auth)
 					throws TException, JnomicsThriftException {
 		String username;
@@ -195,10 +195,11 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		logger.info("outpath - " + outPath);
 		logger.info("alignOpts - " + alignOpts);
 		logger.info("working dir -  " + workingdir);
-
+		
 		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
 		builder.setInputPath(inPath)
 		.setOutputPath(outPath)
+		.setParam("cufflinks_gtf", ref_gtf)
 		.setParam("cufflinks_opts",alignOpts)
 		.setParam("calling_function","edu.cshl.schatz.jnomics.tools.GridJobMain")
 		.setParam("grid_working_dir", workingdir)

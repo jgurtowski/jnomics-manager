@@ -36,6 +36,9 @@ public class Cufflinks extends ComputeBase {
     @Parameter(shortForm = "-out", longForm= "--output", description = "output (directory)")
     public String out;
     
+    @Parameter(shortForm = "-ref_gtf", longForm= "--reference_gtf", description = "reference gtf(.gtf)")
+    public String ref_gtf;
+
     @Parameter(shortForm = "-assembly_opts", longForm = "--assembly_options", description = "options to pass to Cufflinks (optional)")
     public String assembly_opts;
     
@@ -68,6 +71,7 @@ public class Cufflinks extends ComputeBase {
             JnomicsThriftJobID jobID = client.callCufflinks(
                     in,
                     out,
+                    Utility.nullToString(ref_gtf),
                     Utility.nullToString(assembly_opts),
                     Utility.nullToString(working_dir),
                     auth);

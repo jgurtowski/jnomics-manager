@@ -54,7 +54,7 @@ service JnomicsCompute{
 
 		JnomicsThriftJobID alignTophat(1: string ref_genome, 2: string inPath ,3: string gtffile, 4: string outPath, 5: string alignOpts,6: string workingdir, 7: Authentication auth)throws (1: JnomicsThriftException je),
 		
-		JnomicsThriftJobID callCufflinks( 1: string inPath ,2: string outpath, 3: string alignOpts,4: string workingdir, 5: Authentication auth)throws (1: JnomicsThriftException je),
+		JnomicsThriftJobID callCufflinks( 1: string inPath ,2: string outpath, 3: string ref_gtf, 4: string alignOpts,5: string workingdir, 6: Authentication auth)throws (1: JnomicsThriftException je),
 		
 		JnomicsThriftJobID callCuffmerge( 1: string inPath ,2: string ref_genome,3: string outpath, 4: string alignOpts , 5: string gtffile ,6: string workingdir, 7: Authentication auth)throws (1: JnomicsThriftException je),
 		
@@ -96,7 +96,7 @@ service JnomicsData{
         bool ShockRead (1: string nodeId , 2: string inPath,3: Authentication auth) throws (1: JnomicsThriftException je),
         bool ShockWrite (1: JnomicsThriftHandle handle,2: string filename,3: Authentication auth) throws (1: JnomicsThriftException je),
         bool ShockWrite2 (1: string filename,2: string hdfsPath,3: Authentication auth) throws (1: JnomicsThriftException je),
-        bool ShockWrite3 (1: JnomicsThriftHandle handle ,2: string filename,3: Authentication auth) throws (1: JnomicsThriftException je),
+        string ShockWrite3 (1: JnomicsThriftHandle handle ,2: string filename,3: Authentication auth) throws (1: JnomicsThriftException je),
         void close(1: JnomicsThriftHandle handle, 2: Authentication auth) throws (1: JnomicsThriftException je),
         list<JnomicsThriftFileStatus> listStatus(1: string path, 2:Authentication auth) throws (1: JnomicsThriftException je),
         bool checkFileStatus(1: string path, 2:Authentication auth) throws (1: JnomicsThriftException je),

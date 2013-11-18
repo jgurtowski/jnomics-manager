@@ -31,7 +31,7 @@ public class ShockWrite extends FSBase{
     @Override
     public void handle(List<String> remainingArgs, Properties properties) throws Exception {
         super.handle(remainingArgs, properties);
-        
+        String nodeid = null;
         if(help || hdfs_file == null){
         	System.out.println("shock_write -hdfs_file=<Name>" );
         }else{
@@ -42,12 +42,11 @@ public class ShockWrite extends FSBase{
         	
         	String filename = new Path(hdfs_file).getName();
 //            InputStream localStream = new FileInputStream(inFile);
-        	if(client.ShockWrite3(handle, filename,auth)){
-        		System.out.println("Copied : " + hdfs_file + " to Shock Client");	
-        	}
-        	else {
-        		System.out.println("Failed\n");
-        	}
+        	nodeid = client.ShockWrite3(handle, filename,auth);
+        	System.out.println("Copied : " + hdfs_file + " to Shock Client : " + nodeid);	
+        	
+        	
+        	
         	client.close(handle,auth);	
         }
         

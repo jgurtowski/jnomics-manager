@@ -1,0 +1,110 @@
+####
+#Setup Client
+###
+Build jnomics using the below steps:
+
+	git clone https://github.com/jgurtowski/jnomics-manager
+
+	cp conf/jnomics-kbase-server.properties.template conf/jnomics-kbase-server.properties
+
+	cp conf/jnomics-kbase-client.properties.template conf/jnomics-kbase-client.properties
+
+	ant
+
+####
+## Aligning reads to a reference genome using Tophat
+####
+This tutorial will focus on paired-end illumina sequencing files. Single-end
+experiments will also work in the commands below.
+
+Ensure the `bin` directory in this package is in your path.
+
+1) Downloading test RNA-Seq data from the repository
+	
+      $> jk-fs-get /share/example/t1.1.fq.gz
+      $> jk-fs-get /share/example/t1.2.fq.gz
+      $> jk-fs-get /share/example/t2.1.fq.gz
+      $> jk-fs-get /share/example/t2.2.fq.gz
+
+2) Uploading data into the Cluster 
+
+So we have downloaded the test data to our home directory. Let us upload the data to our Cluster workspace
+	
+      $> jk-fs-put t1.1.fq.gz ./t1.1.fq.gz
+      $> jk-fs-put t1.2.fq.gz ./t1.2.fq.gz
+      $> jk-fs-put t2.1.fq.gz ./t2.1.fq.gz
+      $> jk-fs-put t2.2.fq.gz ./t2.2.fq.gz
+
+3) Aligning the fastq reads using Tophat
+
+To align the paired end reads with tophat use the following command. You can also run single end data 
+by specifying single file to the -in flag in the commmand below.
+	
+      $> jk-compute-tophat -in=t1.1.fq.gz,t1.2.fq.gz -ref=ecoli -out=t1_tophat -align_opts=-p8
+	 Submitted Job: <jobid>
+
+      $> jk-compute-tophat -in=t2.1.fq.gz,t2.2.fq.gz -ref=ecoli -out=t2_tophat -align_opts=-p8
+  	 Submitted Job: <jobid>
+
+The -ref flag selects the reference used in alignment. The reference must be supported by
+the kbase infrastructure as a part of the controlled genome vocabulary. To list the available
+genomes/organisms use:
+
+      $> jk_compute_list_genomes 
+
+4) Check the status of the job 
+
+To ping the status of the job running on the cluster, use
+	
+      $> jk-compute-grid-job-status  -job=<jobid>
+
+You will know the job is complete when the status changes from RUNNING to UNDETERMINED. 
+Make sure you wait for the job to complete before continuing to the next step.
+
+####
+## Identify differentially expressed genes using Cufflinks package
+####
+
+5) Transcript assembly with Cufflinks
+
+
+     $> jk-compute-cufflinks -in=t1_tophat/accepted_hits.bam -out=t1_cufflinks -assembly_opts=-p8
+     	Submitted Job: <jobID>
+
+     $> jk-compute-cufflinks -in=t2_tophat/accepted_hits.bam -out=t1_cufflinks -assembly_opts=-p8
+	Submitted Job: <jobID>
+
+Here the -in flag specifies the mapped bam file to be assembled. The -out flag specifies the output directory 
+for the cufflinks output files. You can check the status of the job using the command jk-compute-grid-job-status.
+Make sure you wait until the all the cufflinks jobs complete before executing the next step.
+
+6) Merge the resulting assemblies
+Once we assemble the transcripts of independent samples we can merge them to a single merged annotation using the
+command jk-compute-cuffmerge 
+
+    $> jk-compute-cuffmerge -in=t1_cufflinks/transcripts.gtf,t2_cufflinks/transcripts.gtf -ref=ecoli -out=cuffmerge_out -assembly_opts=-p8
+ 	Submitted Job: <jobID>
+
+The -in flag specifies the transcripts.gtf file output of jk-compute-cufflinks for each of the samples separated by commas. 
+The -ref selects the reference genome and -out flag gives the output directory for the jk-compute-cuffmerge output. You may 
+have to wait until this job completes to identify differentially expressed genes.
+
+7) Identifying differentially expressed and regulated genes
+The next step is to calculate the differential expression at the gene level and transcript level for the above two samples, 
+to do this run the command 
+
+    $> jk-compute-cuffdiff -in=t1_tophat/accepted_hits.bam,t2_tophat/accepted_hits.bam -out=cuffdiff_out -ref=ecoli -assembly_opts=-p8 -condn_labels=T1,T2 -merged_gtf=cuffmerge_out/merged.gtf
+	Submitted Job: <jobID>
+
+8) Compare the assembly with known or annotated genes
+
+if you are interested in finding the new genes and new isoforms of known genes, in the assembled transcripts, 
+use the command jk-compute-cuffcompare. It takes the assembled transcripts from the jk-compute-cufflinks and 
+a reference gtf file as inputs.    
+
+    $> jk-compute-cuffcompare -in=t1_cufflinks/transcripts.gtf,t2_cufflinks/transcripts.gtf -out=cuffcompare_out -ref_gtf=cuffmerge_out/merged.gtf
+	Submitted Job: <jobID>
+
+###
+END
+###
