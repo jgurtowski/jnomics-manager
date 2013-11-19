@@ -65,15 +65,25 @@ public class Tophat extends ComputeBase {
             System.out.println("missing -out parameter");
     	}else if(fsclient.checkFileStatus(out, auth)){
     		System.out.println("ERROR : Output directory already exists");
-//    	}else if(!fsclient.checkFileStatus("organism_bowtie2.tar.gz", auth)){
-//    		System.out.println("ERROR : " +  organism + " does'nt exists");	
     	}else{
-            List<String> input = Arrays.asList(in.split(","));
+    		boolean check = false;
+    		List<String> genomes = fsclient.listGenomes(auth);
+    		List<String> input = Arrays.asList(in.split(","));
             for(String file : input) {
             	if(!fsclient.checkFileStatus(file, auth)){
             		System.out.println("ERROR : " + file + " does'nt exist");
             		return;
             	}
+            }
+            for(String genome : genomes){
+            	if(genome.equals(organism)){
+            		check = true;
+            	}
+            }
+            if(!check){
+            	System.out.println("ERROR : " + organism + " does'nt exist in the repository");
+            	System.out.println("try jk-compute-list-genomes to list the supported genomes");
+            		return;
             }
             String clean_org = KBaseIDTranslator.translate(organism);
             JnomicsThriftJobID jobID = client.alignTophat(

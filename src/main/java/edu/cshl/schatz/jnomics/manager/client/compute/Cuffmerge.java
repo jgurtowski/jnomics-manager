@@ -63,19 +63,28 @@ public class Cuffmerge extends ComputeBase {
             System.out.println("missing -in parameter");
         }else if(null == out){
             System.out.println("missing -out parameter");
-//        }else if(!fsclient.checkFileStatus(in, auth)){
-//        	System.out.println("ERROR : " + in +" file not present");
         }else if(fsclient.checkFileStatus(out, auth)){
     		System.out.println("ERROR : Output directory already exists");
         }else{
+        	boolean check = false;
             String clean_org = KBaseIDTranslator.translate(organism);
-//            System.out.println("align_opts is " +  assembly_opts);
+            List<String> genomes = fsclient.listGenomes(auth);
             List<String> input = Arrays.asList(in.split(","));
             for(String file : input) {
             	if(!fsclient.checkFileStatus(file, auth)){
             		System.out.println("ERROR : " + file + " does'nt exist");
             		return;
             	}
+            }
+            for(String genome : genomes){
+            	if(genome.equals(organism)){
+            		check = true;
+            	}
+            }
+            if(!check){
+            	System.out.println("ERROR : " + organism + " does'nt exist in the repository");
+            	System.out.println("try jk-compute-list-genomes to list the supported genomes");
+            		return;
             }
             JnomicsThriftJobID jobID = client.callCuffmerge(
                     in,

@@ -501,7 +501,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         try{
             ret = fs.exists(new Path(path));
         }catch(Exception e){
-            log.error("Could not open filesystem in checkFileStatus");
+            log.error("Could not open the filesystem");
             e.printStackTrace();
             throw new JnomicsThriftException(e.toString());
         }finally{

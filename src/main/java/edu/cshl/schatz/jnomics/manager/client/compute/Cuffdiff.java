@@ -72,6 +72,8 @@ public class Cuffdiff extends ComputeBase {
 		}else if(!fsclient.checkFileStatus(merged_gtf, auth)){
 			System.out.println("ERROR : Merged gtf does'nt exists");
 		}else{
+			boolean check = false;
+			List<String> genomes = fsclient.listGenomes(auth);
 			List<String> lbls = Arrays.asList(condition_labels.split(","));
 			List<String> input = Arrays.asList(in.split(","));
 			if(lbls.size() != input.size()){
@@ -84,6 +86,16 @@ public class Cuffdiff extends ComputeBase {
 					return;
 				}
 			}
+			for(String genome : genomes){
+            	if(genome.equals(ref)){
+            		check = true;
+            	}
+            }
+            if(!check){
+            	System.out.println("ERROR : " + ref + " does'nt exist in the repository");
+            	System.out.println("try jk-compute-list-genomes to list the supported genomes");
+            		return;
+            }
 			JnomicsThriftJobID jobID = client.callCuffdiff(
 					in,
 					out,

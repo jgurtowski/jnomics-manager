@@ -60,8 +60,6 @@ public class Cuffcompare extends ComputeBase {
             System.out.println("missing -out parameter");
         }else if(null == ref_gtf){
             System.out.println("missing -ref_gtf parameter");
-//        }else if(!fsclient.checkFileStatus(in, auth)){
-//    		System.out.println("ERROR : " + in + "does'nt exist");
         }else if(!fsclient.checkFileStatus(ref_gtf, auth)){
     		System.out.println("ERROR : " + ref_gtf + "does'nt exist");
         }else if(fsclient.checkFileStatus(out, auth)){
@@ -74,13 +72,6 @@ public class Cuffcompare extends ComputeBase {
             		return;
             	}
             }
-//            String clean_org = KBaseIDTranslator.translate(organism);
-//            List<JnomicsThriftFileStatus> stats  = client.listStatus(in, auth);
-//            StringBuilder sb = new StringBuilder();
-//            for(String opts : align_opts){
-//            	sb.append(" " + opts);
-//            }
-//            System.out.println("Assebly_opts : " + assembly_opts + " Input :  " + in + " Outpath : " + out );
             JnomicsThriftJobID jobID = client.callCuffcompare(
                     in,
                     out,
