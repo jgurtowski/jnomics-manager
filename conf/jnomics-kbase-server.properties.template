@@ -1,17 +1,27 @@
+#######################
+###Server Config
+#######################
 
+core-site-xml=/etc/core-site.xml
+mapred-site-xml=/etc/mapred-site.xml
+hdfs-site-xml=/etc/hdfs-site.xml
 
-core-site-xml=/home/jnomics/jnomics-manager-test/conf/core-site.xml
-mapred-site-xml=/home/jnomics/jnomics-manager-test/conf/mapred-site.xml
-hdfs-site-xml=/home/jnomics/jnomics-manager-test/conf/hdfs-site.xml
-hdfs-default-name=hdfs://node004:8020
-mapreduce-jobtracker-host=node004
+hdfs-default-name=hdfs://node???:8020
+mapreduce-jobtracker-host=node???
+mapreduce-jobtracker-port=8021
+hdfs-index-repo=hdfs://node???:8020/share
+jnomics-jar-path=/path/to/jnomics-0.4.jar
 
-hdfs-index-repo=hdfs://node004:8020/share
-grid-script-path=/home/jnomics/jnomics-manager-test/bin/GridJobLauncher.sh
+grid-script-path=/path/to/bin/GridJobLauncher.sh
 grid-job-slots=8
-jnomics-jar-path=/home/jnomics/jnomics-manager-test/lib/jnomics-0.4.jar
 shock-url=https://kbase.us/services/shock-api/
+
+#######################
+###Service
+#######################
+
+#port for server to start on and client to connect to
 compute-server-port=10000
-data-server-port=10001
 compute-server-host=variation.services.kbase.us
+data-server-port=10001
 data-server-host=variation.services.kbase.us
