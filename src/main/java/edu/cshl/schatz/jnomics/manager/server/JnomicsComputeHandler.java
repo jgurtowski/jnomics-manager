@@ -65,7 +65,6 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		conf.set("mapred.jar", properties.getProperty("jnomics-jar-path"));
 		conf.set("grid-script-path", properties.getProperty("grid-script-path"));
 		conf.set("grid-job-slots", properties.getProperty("grid-job-slots"));
-		logger.info("returning from the get configuartion");
 		return conf;
 	}
 
@@ -133,7 +132,9 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		if(null == (username = authenticator.authenticate(auth))){
 			throw new JnomicsThriftException("Permission Denied");
 		}
-		String jobname =username+"-tophat-"+inPath.substring(inPath.lastIndexOf('/') + 1).replaceAll("[./,]", "_");
+		String uuid = UUID.randomUUID().toString();
+		String jobname =username+"-tophat-"+uuid;
+		//String jobname =username+"-tophat-"+inPath.substring(inPath.lastIndexOf('/') + 1).replaceAll("[./,]", "_");
 		String tophatbinary =  properties.getProperty("hdfs-index-repo")+"/tophat_v2.tar.gz";
 		String refGenome = properties.getProperty("hdfs-index-repo")+"/"+ref_genome+"_bowtie.tar.gz";
 		String tophatopts = alignOpts.replaceAll(","," ").toString();
@@ -144,7 +145,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		logger.info("tophat_binary is "+ tophatbinary );
 		logger.info("jobname - " + jobname);
 		logger.info("alignopts - " + tophatopts);
-		logger.info("getting here ");
+		
 		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
 		builder.setInputPath(inPath)
 		.setOutputPath(outPath)
@@ -156,6 +157,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		.setParam("tophat_gtf",gtffile)
 		.setParam("tophat_binary",tophatbinary);
 		logger.info("conf properties are set");
+		
 		try{
 			conf = builder.getJobConf();
 			out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
@@ -185,7 +187,8 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		if(null == (username = authenticator.authenticate(auth))){
 			throw new JnomicsThriftException("Permission Denied");
 		}
-		String jobname = username+"-cufflinks-"+inPath.replaceAll("[./,]", "_");
+		String uuid = UUID.randomUUID().toString();
+		String jobname = username+"-cufflinks-"+uuid;
 		String cufflinks_binary =  properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar.gz";
 		String cuffopts = alignOpts.replaceAll(","," ").toString();
 		Configuration conf = null;
@@ -231,8 +234,9 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		if(null == (username = authenticator.authenticate(auth))){
 			throw new JnomicsThriftException("Permission Denied");
 		}
+		String uuid = UUID.randomUUID().toString();
 		String cufflinks_binary =  properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar.gz";
-		String jobname = username+"-cuffmerge-"+inPath.replaceAll("[./,]", "_");
+		String jobname = username+"-cuffmerge-"+uuid;
 		String refGenome = properties.getProperty("hdfs-index-repo")+"/"+ref_genome+"_bowtie.tar.gz"; 
 		String cuffopts = alignOpts.replaceAll(","," ").toString();
 		Path filenamepath = new Path("cuffmerge-"+jobname+".txt");
@@ -305,9 +309,9 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		if(null == (username = authenticator.authenticate(auth))){
 			throw new JnomicsThriftException("Permission Denied");
 		}
-
+		String uuid = UUID.randomUUID().toString();
 		String cufflinks_binary =  properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar.gz";
-		String jobname = username+"-cuffdiff-"+infiles.substring(infiles.lastIndexOf('/') + 1).replaceAll("[./,]", "_");
+		String jobname = username+"-cuffdiff-"+uuid;
 		String refGenome = properties.getProperty("hdfs-index-repo")+"/"+ref_genome+"_bowtie.tar.gz"; 
 		String cuffopts = assemblyOpts.replaceAll(","," ").toString();
 		
@@ -360,7 +364,8 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		if(null == (username = authenticator.authenticate(auth))){
 			throw new JnomicsThriftException("Permission Denied");
 		}
-		String jobname = username+"-cuffcompare-"+inPath.substring(inPath.lastIndexOf('/') + 1).replaceAll("[./,]", "_");
+		String uuid = UUID.randomUUID().toString();
+		String jobname = username+"-cuffcompare-"+uuid;
 		String cufflinks_binary = properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar.gz";
 		Path filenamepath = new Path("cuffcompare-"+jobname+".txt");
 		String cuffopts = alignOpts.replaceAll(","," ").toString();
