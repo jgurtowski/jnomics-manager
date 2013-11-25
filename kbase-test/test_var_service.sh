@@ -65,6 +65,7 @@ done
 jmessage "Merging vcf files"
 
 #merge vcf
+echo "jkbase compute vcf_merge -aln=${TEST_DIR}/yeast_sim_bwa -in=${TEST_DIR}/yeast_sim_snp -out=${TEST_DIR}/yeast_sim.vcf"
 jkbase compute vcf_merge -aln=${TEST_DIR}/yeast_sim_bwa -in=${TEST_DIR}/yeast_sim_snp -out=${TEST_DIR}/yeast_sim.vcf
 
 jmessage "Downloading complete vcf"
