@@ -26,6 +26,7 @@ deploy: deploy-jnomics deploy-libs deploy-docs
 
 test:
 	cd kbase-test && ./test_var_service.sh
+	cd kbase-test && ./test_rna_service.sh
 
 deploy-docs: make-dest-dir
 	cp -r docs/html/* $(SERVICE_DOCS_DIR)
