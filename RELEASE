@@ -20,3 +20,26 @@ NEW FEATUES:
 - Improved commandline help, added longer descriptions that are useful
 
 - Internal enhancements for batch processing and logging
+
+RNASeq Service
+-------------------------------------------------------------------------------
+
+RNASeq service is built on the variation service and extends capabilties to identify
+new genes and perform comprehensive expression analysis of the RNASeq data. This service 
+includes a splice junction mapper, Tophat to align the RNASeq reads to a reference genome 
+and Cufflinks, a software package to assemble transcripts and identity differential expression
+The service backend includes HDFS data store and grid engine for scheduling parallel jobs.
+
+VERSION 0.4 (Released Nov 22, 2013)
+-------------------------------------
+
+NEW FEATURES:
+
+-Integrated Tophat and Cufflinks tools to the jnomics package
+ 
+-Added functionality to schedule jobs on the grid engine
+
+-Retrieve job status from grid engine and copying log files to hdfs
+
+-Copy data between Shock and HDFS
+ 
