@@ -47,6 +47,8 @@ build-jnomics:
 	bin/make_scripts.sh jk bin
 
 deploy-jnomics: deploy-libs
+	cp conf/jnomics-kbase-client.properties.template conf/jnomics-kbase-client.properties
+	cp conf/jnomics-kbase-server.properties.template conf/jnomics-kbase-server.properties
 	cp conf/jnomics-kbase-client.properties $(CLIENT_CONF_DIR)
 	cp conf/jnomics-kbase-server.properties $(SERVICE_CONF_DIR)
 	cp bin/jk-* $(CLIENT_BIN_DIR)
