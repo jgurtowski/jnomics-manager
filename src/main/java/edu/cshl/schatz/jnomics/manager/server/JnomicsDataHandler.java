@@ -59,8 +59,6 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         }
     };
     
-    
-
     public JnomicsDataHandler(Properties props){
         properties = props;
         authenticator = new JnomicsServiceAuthentication();
@@ -168,213 +166,193 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         return ByteBuffer.wrap(buf,0,bytesRead);
     }
 
-    @Override
-    public boolean ShockRead(String shockNodeID, String hdfsPathDest, Authentication auth) throws TException , JnomicsThriftException{	
-    	String username;
-    	if(null == (username = authenticator.authenticate(auth))){
-    		throw new JnomicsThriftException("Permission Denied");
-    	}
-    	AuthToken oauth;
-    	FileSystem fs = null;
-//    	OutputStream out = null;
-    	FSDataOutputStream fsout = null;
-    	URL shockurl = null;
-	BasicShockClient base;
-    	log.info("Inside shock client read" );
-    	try{
-    		   		
-    		oauth = new AuthToken(auth.token);
-    		log.info("auth token is " + oauth);
-    		shockurl = new URL(properties.getProperty("shock-url"));
-    		log.info("shock-url is " + shockurl);
-    		base = new BasicShockClient(shockurl,oauth);
-    		log.info("calling the getFile funstion ");
-    		fs = getFileSystem(username);
-    		fsout = fs.create(new Path(hdfsPathDest));
-//    		out = fs.create(new Path(hdfsPathDest));
-    		base.getFile(new ShockNodeId(shockNodeID),fsout);
-		    
-	} catch (Exception e) {
-    		e.printStackTrace();
-    		throw new JnomicsThriftException(e.toString());
-    	}finally{
-    		closeFileSystem(fs);
-    		try {
-				fsout.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-    	}
-    	return true;
-    }
-
-    @Override
-    public boolean ShockWrite(JnomicsThriftHandle handle,String filename, Authentication auth) throws TException , JnomicsThriftException{	
-    	String username;
-    	// 	   	JnomicsFsHandle jhandle = handleMap.get(UUID.fromString(handle.getUuid()));
-    	
-    	if(null == (username = authenticator.authenticate(auth))){
-    	    		throw new JnomicsThriftException("Permission Denied");
-    	}
-    	ByteBuffer buffer;
-    	byte[] bytearr;
-    	long totalTransfer = 0;
-    	URL shockurl = null;	
-    	String file = new Path(filename).getName();
-    	log.info("Inside shock write funtion");
-    	BasicShockClient base;
-    	int cnt= 0;
-    	//    	FileSystem fs = null;
-    	//    	FSDataInputStream inStream = null;
-    	try{
-    		shockurl = new URL(properties.getProperty("shock-url"));
-    		log.info("Shock url is " + shockurl);
-    		base = new BasicShockClient(shockurl);
-    		log.info("base is " + base.getShockUrl());
-//    		while((buffer = read(handle,auth)).remaining() > 0){
-//    			log.info("Buffer read is " +  totalTransfer + " cnt is " + cnt);
-//    			totalTransfer += buffer.remaining();
-//    			log.info("buffer array length " + buffer.array().length);
-////    			ShockNode sn = base.addNode(buffer.array(),filename);
-////    			log.info("Node id is "+ sn.getId().toString());
-//    			cnt++;
-//    		}
-    	}catch(Exception e){
-    		log.error(e.toString());
-    		throw new JnomicsThriftException(e.getMessage());
-
-    	}
-    	//    	List<JnomicsThriftFileStatus> stats  = listStatus(hdfsPath, auth);
-    	//    	try { 
-    	//    		fs = getFileSystem(username);
-    	//    		inStream = fs.open(new Path(hdfsPath));
-    	//    		int  Length = (int)(fs.getLength(new Path(hdfsPath)));
-    	//    		byte[] buf = new byte[Length];
-    	//    		shockurl = new URL(properties.getProperty("shock-url"));
-    	//    		base = new BasicShockClient(shockurl);
-    	//    		int i = 0;
-    	//    		int total = 0;
-    	//    		inStream.read(buf);
-    	//    		while(-1 != (i = inStream.read(buf))){
-    	//    			total += i;
-    	//    			//System.out.print("\r"+total+"/"+Length+" " + ((float)total)/Length * 100 + "%");    
-    	//    		}
-
-    	//    			ShockNode sn = base.addNode(buf, filename);
-    	//    			log.info("Node id is "+ sn.getId().toString());
-    	//    		}	
-    	//    		catch(Exception e){
-    	//    			log.error(e.toString());
-    	//    			throw new IOException(e.getMessage());
-    	//    		}
-    	//    		inStream.close();
-    	//    	}catch (Exception e) {
-    	//    		log.error(e.toString());
-    	//    		
-    	//    	}finally{
-    	//    		closeFileSystem(fs);
-    	//
-    	//    	}
-
-    	return true;
-    }
-    
-    @Override
-    public boolean ShockWrite2(String filename, String hdfsPath, Authentication auth) throws TException , JnomicsThriftException{	
-    	String username;
-    	if(null == (username = authenticator.authenticate(auth))){
-    		throw new JnomicsThriftException("Permission Denied");
-    	}
-    	log.info("Opening file: " + hdfsPath + " for user: " + username);
-    	BasicShockClient base;
-    	FileSystem fs = null;
-    	AuthToken oauth; 
-    	FSDataInputStream inStream = null;
-    	URL shockurl = null;
-    	List<JnomicsThriftFileStatus> stats  = listStatus(hdfsPath, auth);
-    	try { 
-    		oauth =  new AuthToken(auth.token);
-    		shockurl = new URL(properties.getProperty("shock-url"));
-    		fs = getFileSystem(username);
-    		inStream = fs.open(new Path(hdfsPath));
-//    		long  Length = (long)(fs.getLength(new Path(hdfsPath)));
-    		byte[] buf = (byte[]) bufferCache.get();
-    		
-    		base = new BasicShockClient(shockurl,oauth);
-    		int i = 0;
-    		int total = 0;
-//    		inStream.read(buf);
-    		while(-1 != (i = inStream.read(buf))){
-    			total += i;
-    			//System.out.print("\r"+total+"/"+Length+" " + ((float)total)/Length * 100 + "%");    
-    		}
-    		try { 	
-    			log.info(" Calling addNode " );
-    			ShockNode sn = base.addNode(inStream, filename);
-    		}	
-    		catch(Exception e){
-    			log.error(e.toString());
-    			throw new IOException(e.getMessage());
-    		}
-    		inStream.close();
-    	}catch (Exception e) {
-    		log.error(e.toString());
-    		
-    	}finally{
-    		closeFileSystem(fs);
-
-    	}
-    	return true;
-    }
-    
-    @Override
-    public String ShockWrite3(JnomicsThriftHandle handle, String filename, Authentication auth) throws TException , JnomicsThriftException{	
-    	log.info(" Entered ShockWrite3 " );
-    	JnomicsFsHandle jhandle = handleMap.get(UUID.fromString(handle.getUuid()));
-    	String username;
-    	
-    	if(null == (username = authenticator.authenticate(auth))){
-    		throw new JnomicsThriftException("Permission Denied");
-    	}
-    	InputStream input = null;
-//    	log.info("Opening file: " + hdfsPath + " for user: " + username);
+//    
+//    public boolean ShockRead(String shockNodeID, String hdfsPathDest, Authentication auth) throws TException , JnomicsThriftException{	
+//    	String username;
+//    	if(null == (username = authenticator.authenticate(auth))){
+//    		throw new JnomicsThriftException("Permission Denied");
+//    	}
+//    	AuthToken oauth;
 //    	FileSystem fs = null;
-//   	FSDataInputStream inStream = null;
-//    	List<JnomicsThriftFileStatus> stats  = listStatus(hdfsPath, auth);
-
-    	BasicShockClient base;
-    	AuthToken oauth; 
-    	URL shockurl = null;
-    	String id = null ;
-    	try { 
-    		log.info("try block");
-    		input = jhandle.getInStream();
-    		log.info("input stream is got ");
-    		oauth =  new AuthToken(auth.token);
-    		shockurl = new URL(properties.getProperty("shock-url"));
+////    	OutputStream out = null;
+//    	FSDataOutputStream fsout = null;
+//    	URL shockurl = null;
+//	BasicShockClient base;
+//    	log.info("Inside shock client read" );
+//    	try{
+//    		   		
+//    		oauth = new AuthToken(auth.token);
+//    		log.info("auth token is " + oauth);
+//    		shockurl = new URL(properties.getProperty("shock-url"));
+//    		log.info("shock-url is " + shockurl);
+//    		base = new BasicShockClient(shockurl,oauth);
+//    		log.info("calling the getFile funstion ");
 //    		fs = getFileSystem(username);
-//    		inStream = fs.open(new Path(hdfsPath));
-//    		long  Length = (long)(fs.getLength(new Path(hdfsPath)));
-//    		byte[] buf = (byte[]) bufferCache.get();
-//    		int i = 0;
-//    		int total = 0;
-//    		inStream.read(buf);
-//    		while(-1 != (i = inStream.read(buf))){
-//    			total += i;
-    			//System.out.print("\r"+total+"/"+Length+" " + ((float)total)/Length * 100 + "%");    
-//    		}
-    		base = new BasicShockClient(shockurl,oauth);
-    		log.info(" Calling addNode " );
-    		ShockNode sn = base.addNode(input,filename );
-    		id = sn.getId().toString();
-    	}catch (Exception e) {
-    		log.error(e.toString());
-    		throw new JnomicsThriftException("ERROR Writing File to Shock" + e.toString());
-    	}
-    	return id;
-    }
+//    		fsout = fs.create(new Path(hdfsPathDest));
+////    		out = fs.create(new Path(hdfsPathDest));
+//    		base.getFile(new ShockNodeId(shockNodeID),fsout);
+//		    
+//	} catch (Exception e) {
+//    		e.printStackTrace();
+//    		throw new JnomicsThriftException(e.toString());
+//    	}finally{
+//    		closeFileSystem(fs);
+//    		try {
+//				fsout.close();
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//
+//    	}
+//    	return true;
+//    }
+//
+//    
+//    public boolean ShockWrite(JnomicsThriftHandle handle,String filename, Authentication auth) throws TException , JnomicsThriftException{	
+//    	String username;
+//    	// 	   	JnomicsFsHandle jhandle = handleMap.get(UUID.fromString(handle.getUuid()));
+//    	if(null == (username = authenticator.authenticate(auth))){
+//    	    		throw new JnomicsThriftException("Permission Denied");
+//    	}
+//    	URL shockurl = null;	
+//    	String file = new Path(filename).getName();
+//    	log.info("Inside shock write funtion");
+//    	BasicShockClient base;
+//    	int cnt= 0;
+//    	//    	FileSystem fs = null;
+//    	//    	FSDataInputStream inStream = null;
+//    	try{
+//    		shockurl = new URL(properties.getProperty("shock-url"));
+//    		log.info("Shock url is " + shockurl);
+//    		base = new BasicShockClient(shockurl);
+//    		log.info("base is " + base.getShockUrl());
+////    		while((buffer = read(handle,auth)).remaining() > 0){
+////    			log.info("Buffer read is " +  totalTransfer + " cnt is " + cnt);
+////    			totalTransfer += buffer.remaining();
+////    			log.info("buffer array length " + buffer.array().length);
+//////    			ShockNode sn = base.addNode(buffer.array(),filename);
+//////    			log.info("Node id is "+ sn.getId().toString());
+////    			cnt++;
+////    		}
+//    	}catch(Exception e){
+//    		log.error(e.toString());
+//    		throw new JnomicsThriftException(e.getMessage());
+//
+//    	}
+//    	//    	List<JnomicsThriftFileStatus> stats  = listStatus(hdfsPath, auth);
+//    	//    	try { 
+//    	//    		fs = getFileSystem(username);
+//    	//    		inStream = fs.open(new Path(hdfsPath));
+//    	//    		int  Length = (int)(fs.getLength(new Path(hdfsPath)));
+//    	//    		byte[] buf = new byte[Length];
+//    	//    		shockurl = new URL(properties.getProperty("shock-url"));
+//    	//    		base = new BasicShockClient(shockurl);
+//    	//    		int i = 0;
+//    	//    		int total = 0;
+//    	//    		inStream.read(buf);
+//    	//    		while(-1 != (i = inStream.read(buf))){
+//    	//    			total += i;
+//    	//    			//System.out.print("\r"+total+"/"+Length+" " + ((float)total)/Length * 100 + "%");    
+//    	//    		}
+//
+//    	//    			ShockNode sn = base.addNode(buf, filename);
+//    	//    			log.info("Node id is "+ sn.getId().toString());
+//    	//    		}	
+//    	//    		catch(Exception e){
+//    	//    			log.error(e.toString());
+//    	//    			throw new IOException(e.getMessage());
+//    	//    		}
+//    	//    		inStream.close();
+//    	//    	}catch (Exception e) {
+//    	//    		log.error(e.toString());
+//    	//    		
+//    	//    	}finally{
+//    	//    		closeFileSystem(fs);
+//    	//
+//    	//    	}
+//
+//    	return true;
+//    }
+//    
+//    
+////    public boolean ShockWrite2(String filename, String hdfsPath, Authentication auth) throws TException , JnomicsThriftException{	
+////    	String username;
+////    	if(null == (username = authenticator.authenticate(auth))){
+////    		throw new JnomicsThriftException("Permission Denied");
+////    	}
+////    	log.info("Opening file: " + hdfsPath + " for user: " + username);
+////    	BasicShockClient base;
+////    	FileSystem fs = null;
+////    	AuthToken oauth; 
+////    	FSDataInputStream inStream = null;
+////    	URL shockurl = null;
+////    	List<JnomicsThriftFileStatus> stats  = listStatus(hdfsPath, auth);
+////    	try { 
+////    		oauth =  new AuthToken(auth.token);
+////    		shockurl = new URL(properties.getProperty("shock-url"));
+////    		fs = getFileSystem(username);
+////    		inStream = fs.open(new Path(hdfsPath));   		
+////    		base = new BasicShockClient(shockurl,oauth);
+////    		ShockNode sn = base.addNode(inStream, filename);
+////    		inStream.close();
+////    		}	
+////    		catch(Exception e){
+////    			log.error(e.toString());
+////    			throw new JnomicsThriftException(e.getMessage());
+////    		}finally{
+////    		
+////    		closeFileSystem(fs);
+////    		}
+////    	return true;
+////    }
+//    
+//    
+//    public String ShockWrite3(JnomicsThriftHandle handle, String filename, Authentication auth) throws TException , JnomicsThriftException{	
+//    	log.info(" Entered ShockWrite3 " );
+//    	JnomicsFsHandle jhandle = handleMap.get(UUID.fromString(handle.getUuid()));
+//    	String username;
+//    	
+//    	if(null == (username = authenticator.authenticate(auth))){
+//    		throw new JnomicsThriftException("Permission Denied");
+//    	}
+//    	InputStream input = null;
+////    	log.info("Opening file: " + hdfsPath + " for user: " + username);
+////    	FileSystem fs = null;
+////   	FSDataInputStream inStream = null;
+////    	List<JnomicsThriftFileStatus> stats  = listStatus(hdfsPath, auth);
+//
+//    	BasicShockClient base;
+//    	AuthToken oauth; 
+//    	URL shockurl = null;
+//    	String id = null ;
+//    	try { 
+//    		log.info("try block");
+//    		input = jhandle.getInStream();
+//    		log.info("input stream is got ");
+//    		oauth =  new AuthToken(auth.token);
+//    		shockurl = new URL(properties.getProperty("shock-url"));
+////    		fs = getFileSystem(username);
+////    		inStream = fs.open(new Path(hdfsPath));
+////    		long  Length = (long)(fs.getLength(new Path(hdfsPath)));
+////    		byte[] buf = (byte[]) bufferCache.get();
+////    		int i = 0;
+////    		int total = 0;
+////    		inStream.read(buf);
+////    		while(-1 != (i = inStream.read(buf))){
+////    			total += i;
+//    			//System.out.print("\r"+total+"/"+Length+" " + ((float)total)/Length * 100 + "%");    
+////    		}
+//    		base = new BasicShockClient(shockurl,oauth);
+//    		log.info(" Calling addNode " );
+//    		ShockNode sn = base.addNode(input,filename );
+//    		id = sn.getId().toString();
+//    	}catch (Exception e) {
+//    		log.error(e.toString());
+//    		throw new JnomicsThriftException("ERROR Writing File to Shock" + e.toString());
+//    	}
+//    	return id;
+//    }
     @Override
     public void close(JnomicsThriftHandle handle, Authentication auth) throws TException, JnomicsThriftException {
         UUID u = UUID.fromString(handle.getUuid());
@@ -407,42 +385,43 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
     }
     
     @Override
-    public List<String> listShockStatus(String path,
+    public List<String> listShockStatus(String dest,
     		Authentication auth) throws JnomicsThriftException, TException {
     	/***Requires changes to WorkspaceDeluxe */
-//
-//	  String username;
-//    	if(null == (username = authenticator.authenticate(auth))){
-//    		throw new JnomicsThriftException("Permission Denied");
-//    	}
-//    	AuthToken oauth;
-//    	URL shockurl = null;
-//    	try { 
-//    		shockurl = new URL(properties.getProperty("shock-url"));
-//    		oauth =  new AuthToken(auth.token);
-//    		log.info("auth token is " + oauth);
-//    		BasicShockClient base = new BasicShockClient(shockurl,oauth);
-//    		System.out.println(base.getShockUrl());
-//    		Map<String,Object> filelist = base.getFileList();
-//    		List<String> shockfiles =  new ArrayList<String>();
-//    		for( Map<String,Object> file: (ArrayList<Map<String,Object>>) filelist.get("data")){
-//    			String fid = file.get("id").toString();
-//    			if( !fid.equals(null) ){
-//    				LinkedHashMap<String,Object> name = (LinkedHashMap<String,Object>)file.get("file");
-//    				if(!name.get("name").equals("")){
-//    					shockfiles.add(fid + "\t" + name.get("name") + "\t" + name.get("size"));
-//    				}	
-//
-//    			}
-//
-//    		}
-//    		return shockfiles;
-//    	}
-//    	catch(Exception  e){
-//    		log.error("Could not open Shock");
-//    		throw new JnomicsThriftException(e.getMessage());
-//		}
-	 return null;
+
+	  String username;
+    	if(null == (username = authenticator.authenticate(auth))){
+    		throw new JnomicsThriftException("Permission Denied");
+    	}
+    	AuthToken oauth;
+    	URL shockurl = null;
+    	try { 
+    		shockurl = new URL(properties.getProperty("shock-url"));
+    		oauth =  new AuthToken(auth.token);
+    		log.info("auth token is " + oauth);
+    		BasicShockClient base = new BasicShockClient(shockurl,oauth);
+    		System.out.println(base.getShockUrl());
+    		Map<String,Object> filelist = base.getFileList();
+    		System.out.println("filelist size  " + filelist.size());
+    		List<String> shockfiles =  new ArrayList<String>();
+    		for( Map<String,Object> file: (ArrayList<Map<String,Object>>) filelist.get("data")){
+    			String fid = file.get("id").toString();
+    			if( !fid.equals(null) ){
+    				LinkedHashMap<String,Object> name = (LinkedHashMap<String,Object>)file.get("file");
+    				if(!name.get("name").equals("")){
+    					shockfiles.add(fid + "\t" + name.get("name") + "\t" + name.get("size"));
+    				}	
+
+    			}
+
+    		}
+    		return shockfiles;
+    	}
+    	catch(Exception  e){
+    		log.error("Could not open Shock");
+    		throw new JnomicsThriftException(e.getMessage());
+		}
+//	 return null;
     }
 
 	@Override

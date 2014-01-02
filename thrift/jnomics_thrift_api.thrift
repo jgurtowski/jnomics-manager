@@ -61,7 +61,13 @@ service JnomicsCompute{
 		JnomicsThriftJobID callCuffdiff( 1: string inPath , 2: string outpath, 3: string ref_genome,4: string alignOpts, 5: string condn_labels, 6: string merged_gtf, 7: string workingdir, 8: Authentication auth)throws (1: JnomicsThriftException je),
 	
 		JnomicsThriftJobID callCuffcompare( 1: string inPath ,2: string outpath, 3: string alignOpts , 4: string gtffile ,5: string workingdir, 6: Authentication auth)throws (1: JnomicsThriftException je),
-	
+		
+		JnomicsThriftJobID ShockRead (1: string nodeId , 2: string inPath,3: Authentication auth) throws (1: JnomicsThriftException je),
+		
+		JnomicsThriftJobID ShockWrite (1: string filename,2: string hdfsPath,3: Authentication auth) throws (1: JnomicsThriftException je),
+		
+		JnomicsThriftJobID workspaceUpload(1: string filename, 2: string kb_id, 3: string genome_id, 4: string onto_term_id, 5: string onto_term_def, 6: string onto_term_name,7: string seq_type,8: string reference,9: Authentication auth) throws (1: JnomicsThriftException je),
+		
 		JnomicsThriftJobID ShockBatchWrite (1: list<string> inPath , 2: string outPath,3: Authentication auth) throws (1: JnomicsThriftException je),
 
         JnomicsThriftJobID snpSamtools (1: string inPath, 2: string organism, 3: string outPath, 4: Authentication auth) throws (1: JnomicsThriftException je),
@@ -93,10 +99,6 @@ service JnomicsData{
         JnomicsThriftHandle open (1: string path, 2: Authentication auth) throws (1: JnomicsThriftException je),
         void write (1: JnomicsThriftHandle handle, 2: binary data, 3:Authentication auth) throws (1: JnomicsThriftException je),
         binary read (1: JnomicsThriftHandle handle, 2: Authentication auth) throws (1: JnomicsThriftException je),
-        bool ShockRead (1: string nodeId , 2: string inPath,3: Authentication auth) throws (1: JnomicsThriftException je),
-        bool ShockWrite (1: JnomicsThriftHandle handle,2: string filename,3: Authentication auth) throws (1: JnomicsThriftException je),
-        bool ShockWrite2 (1: string filename,2: string hdfsPath,3: Authentication auth) throws (1: JnomicsThriftException je),
-        string ShockWrite3 (1: JnomicsThriftHandle handle ,2: string filename,3: Authentication auth) throws (1: JnomicsThriftException je),
         void close(1: JnomicsThriftHandle handle, 2: Authentication auth) throws (1: JnomicsThriftException je),
         list<JnomicsThriftFileStatus> listStatus(1: string path, 2:Authentication auth) throws (1: JnomicsThriftException je),
         bool checkFileStatus(1: string path, 2:Authentication auth) throws (1: JnomicsThriftException je),

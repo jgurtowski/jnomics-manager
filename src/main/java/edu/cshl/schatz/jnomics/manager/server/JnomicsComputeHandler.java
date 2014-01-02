@@ -6,6 +6,7 @@ import edu.cshl.schatz.jnomics.tools.*;
 import edu.cshl.schatz.jnomics.grid.*;
 import edu.cshl.schatz.jnomics.util.TextUtil;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -19,6 +20,16 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.thrift.TException;
 import org.ggf.drmaa.DrmaaException;
 import org.slf4j.LoggerFactory;
+
+import us.kbase.auth.AuthToken;
+import us.kbase.shock.client.BasicShockClient;
+import us.kbase.shock.client.ShockNode;
+
+
+
+
+import us.kbase.shock.client.ShockNodeId;
+
 //import java.io.File;
 import java.io.*;
 //import java.io.FileNotFoundException;
@@ -28,6 +39,7 @@ import java.io.*;
 //import java.io.OutputStream;
 //import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,6 +77,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		conf.set("mapred.jar", properties.getProperty("jnomics-jar-path"));
 		conf.set("grid-script-path", properties.getProperty("grid-script-path"));
 		conf.set("grid-job-slots", properties.getProperty("grid-job-slots"));
+		//	conf.set("shock-url", properties.getProperty("shock-url"));
 		return conf;
 	}
 
@@ -106,7 +119,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 			throw new JnomicsThriftException("Permission Denied");
 		}
 		logger.info("Starting Bwa process for user " + username);
-		
+
 		JnomicsJobBuilder builder = new JnomicsJobBuilder(getGenericConf(), BWAMap.class);
 		builder.setInputPath(inPath)
 		.setOutputPath(outPath)
@@ -138,14 +151,14 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		String tophatbinary =  properties.getProperty("hdfs-index-repo")+"/tophat_v2.tar.gz";
 		String refGenome = properties.getProperty("hdfs-index-repo")+"/"+ref_genome+"_bowtie.tar.gz";
 		String tophatopts = alignOpts.replaceAll(","," ").toString();
-		
+
 		Configuration conf = null;
 		OutputStream out = null;
 		String jobid = null;	
 		logger.info("tophat_binary is "+ tophatbinary );
 		logger.info("jobname - " + jobname);
 		logger.info("alignopts - " + tophatopts);
-		
+
 		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
 		builder.setInputPath(inPath)
 		.setOutputPath(outPath)
@@ -157,7 +170,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		.setParam("tophat_gtf",gtffile)
 		.setParam("tophat_binary",tophatbinary);
 		logger.info("conf properties are set");
-		
+
 		try{
 			conf = builder.getJobConf();
 			out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
@@ -172,7 +185,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		}finally{
 			try {
 				out.close();
-			//	sout.close();
+				//	sout.close();
 			} catch (Exception e) {
 				throw new JnomicsThriftException(e.toString());
 			}
@@ -199,7 +212,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		logger.info("outpath - " + outPath);
 		logger.info("alignOpts - " + cuffopts);
 		logger.info("working dir -  " + workingdir);
-		
+
 		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
 		builder.setInputPath(inPath)
 		.setOutputPath(outPath)
@@ -240,7 +253,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		String refGenome = properties.getProperty("hdfs-index-repo")+"/"+ref_genome+"_bowtie.tar.gz"; 
 		String cuffopts = alignOpts.replaceAll(","," ").toString();
 		Path filenamepath = new Path("cuffmerge-"+jobname+".txt");
-		
+
 		logger.info("cufflinks_binary -" + cufflinks_binary );
 		logger.info("Reference is -" + refGenome ) ;
 		logger.info("jobname - " + jobname);
@@ -314,7 +327,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		String jobname = username+"-cuffdiff-"+uuid;
 		String refGenome = properties.getProperty("hdfs-index-repo")+"/"+ref_genome+"_bowtie.tar.gz"; 
 		String cuffopts = assemblyOpts.replaceAll(","," ").toString();
-		
+
 		logger.info("cufflinks_binary - " + cufflinks_binary);
 		logger.info("Reference is -" + refGenome ) ;
 		logger.info("jobname - " + jobname);
@@ -369,7 +382,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		String cufflinks_binary = properties.getProperty("hdfs-index-repo")+"/cufflinks_v2.tar.gz";
 		Path filenamepath = new Path("cuffcompare-"+jobname+".txt");
 		String cuffopts = alignOpts.replaceAll(","," ").toString();
-		
+
 		logger.info("cufflinks_binary is" + cufflinks_binary);
 		logger.info("jobname - " + jobname);
 		logger.info("outpath is " + outPath);
@@ -427,8 +440,127 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		}
 		return new JnomicsThriftJobID(conf.get("grid_jobId"));	
 	}
+	
+	@Override
+	public JnomicsThriftJobID ShockRead(String shockNodeID, String hdfsPath, Authentication auth) throws TException , JnomicsThriftException{	
+		String username;
+		if(null == (username = authenticator.authenticate(auth))){
+			throw new JnomicsThriftException("Permission Denied");
+		}
+		AuthToken oauth;
+		FileSystem fs = null;
+		Configuration conf = null;
+		OutputStream out = null;
+	
+		logger.info("Inside shock client read" );
+		String uuid = UUID.randomUUID().toString();
+		String jobname = username+"-read-"+uuid;
+		byte[] btoken = auth.token.getBytes();
+		String etoken = Base64.encodeBase64String(btoken);		
+		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
+		builder.setInputPath(shockNodeID)
+		.setOutputPath(hdfsPath)
+		.setJobName(jobname)
+		.setParam("shock-url",properties.getProperty("shock-url"))
+		.setParam("shock-token",etoken);
+		logger.info("Conf properties are set");
+		try{
+			conf = builder.getJobConf();
+			out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
+			conf.writeXml(out);
+			builder.LaunchGridJob(conf);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new JnomicsThriftException(e.toString());
+		}finally{
+			try {
+				out.close();
+			} catch (Exception e) {
+				throw new JnomicsThriftException(e.toString());
+			}
+		}
+		return new JnomicsThriftJobID(conf.get("grid_jobId"));
+	}
+	
+	@Override
+	public JnomicsThriftJobID ShockWrite(String filename, String hdfsPath, Authentication auth) throws TException , JnomicsThriftException{	
+		String username;
+		if(null == (username = authenticator.authenticate(auth))){
+			throw new JnomicsThriftException("Permission Denied");
+		}
+		logger.info("Opening file: " + hdfsPath + " for user: " + username);
+		Configuration conf = null;
+		OutputStream out = null;
+		String uuid = UUID.randomUUID().toString();
+		String jobname = username+"-write-"+uuid;
+		byte[] btoken = auth.token.getBytes();
+		String etoken = Base64.encodeBase64String(btoken);		
+		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
+		builder.setInputPath(hdfsPath)
+		.setJobName(jobname)
+		.setParam("shock-url",properties.getProperty("shock-url"))
+		.setParam("shock-token",etoken);
+		logger.info("Conf properties are set");
+		try{
+			conf = builder.getJobConf();
+			out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
+			conf.writeXml(out);
+			builder.LaunchGridJob(conf);
+		}catch(Exception e){
+			logger.error(e.toString());
+			throw new JnomicsThriftException(e.getMessage());
+		}finally{
+			try {
+				out.close();
+			} catch (Exception e) {
+				throw new JnomicsThriftException(e.toString());
+			}
+		}
+		return new JnomicsThriftJobID(conf.get("grid_jobId"));	
+	}
 
-
+	public JnomicsThriftJobID workspaceUpload(String filename, String kb_id, String genome_id,String onto_term_id, 
+			String onto_term_def, String onto_term_name, String seq_type, String reference,
+			Authentication auth) throws TException , JnomicsThriftException{	
+		String username;
+		if(null == (username = authenticator.authenticate(auth))){
+			throw new JnomicsThriftException("Permission Denied");
+		}
+		//logger.info("Opening file: " + hdfsPath + " for user: " + username);
+		Configuration conf = null;
+		OutputStream out = null;
+		String uuid = UUID.randomUUID().toString();
+		String jobname = username+"-wsupload-"+uuid;
+//		byte[] btoken = auth.token.getBytes();
+//		String etoken = Base64.encodeBase64String(btoken);		
+		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
+		builder.setInputPath(filename)
+		.setJobName(jobname)
+		.setParam("kb_id",kb_id)
+		.setParam("genome_id",genome_id)
+		.setParam("onto_term_id", onto_term_id)
+		.setParam("onto_term_def", onto_term_def)
+		.setParam("onto_term_name", onto_term_name)
+		.setParam("sequence_type", seq_type)
+		.setParam("reference",reference);
+		logger.info("Conf properties are set");
+		try{
+			conf = builder.getJobConf();
+			out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
+			conf.writeXml(out);
+			builder.LaunchGridJob(conf);
+		}catch(Exception e){
+			logger.error(e.toString());
+			throw new JnomicsThriftException(e.getMessage());
+		}finally{
+			try {
+				out.close();
+			} catch (Exception e) {
+				throw new JnomicsThriftException(e.toString());
+			}
+		}
+		return new JnomicsThriftJobID(conf.get("grid_jobId"));	
+	}
 	public JnomicsThriftJobID ShockBatchWrite(List<String> inPath ,String outPath, Authentication auth)throws TException, JnomicsThriftException{	
 		String username;
 		if(null == (username = authenticator.authenticate(auth))){
@@ -499,6 +631,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		}
 		return launchJobAs(username, conf);	
 	}
+	
 	@Override
 	public JnomicsThriftJobID snpSamtools(String inPath, String organism, String outPath, Authentication auth) throws TException, JnomicsThriftException {
 		String username;
@@ -565,48 +698,13 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		logger.info("Getting job status for user "+ username);
 		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
 		String status = null;
-		//Configuration sconf = new Configuration();
-		//String scontact = null;
-		//Path resource = null;
-		//InputStream input = null;
-		//BufferedReader in = null;
 		try {
-		  // logger.info(System.getProperty("user.home")+"/"+jobID.getJob_id()+".xml");
-		  // resource = new Path(System.getProperty("user.home")+"/"+jobID.getJob_id()+".xml");
-		  // in = new BufferedReader(new FileReader(new File(resource.toString())));
-		  // scontact = in.readLine();
-		  // input = new FileInputStream(resource.toString());
-		  // byte[] b = input.read();
-		  // scontact = new String(b);
-		   //logger.info("resource is " + resource.toString());	
-		   //sconf.addResource(resource);
-		   //logger.info("sconf successfully loaded"); 
-		   //scontact = sconf.toString();
-		   //logger.info("scontact is" + scontact);
-		   status = builder.getjobstatus(jobID.getJob_id());
-		   //status = builder.getjobstatus(jobID.getJob_id(),scontact);
-		  
+			status = builder.getjobstatus(jobID.getJob_id());
 		} catch (Exception e) {
 			throw new JnomicsThriftException(e.toString());
 		}
 		return status ;
-		//		return new JobClientRunner<JnomicsThriftJobStatus>(username,
-		//				new Configuration(),properties){
-		//			@Override
-		//			public JnomicsThriftJobStatus jobClientTask() throws Exception {
-		//
-		//				RunningJob job = getJobClient().getJob(JobID.forName(jobID.getJob_id()));
-		//				return new JnomicsThriftJobStatus(job.getID().toString(),
-		//						username,
-		//						null,
-		//						job.isComplete(),
-		//						job.getJobState(),
-		//						0,
-		//						null,
-		//						job.mapProgress(),
-		//						job.reduceProgress());
-		//			}
-		//		}.run();
+		
 	}
 	@Override
 	public List<JnomicsThriftJobStatus> getAllJobs(Authentication auth) throws JnomicsThriftException, TException {

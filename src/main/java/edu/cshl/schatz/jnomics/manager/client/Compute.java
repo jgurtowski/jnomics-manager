@@ -17,7 +17,7 @@ import java.util.Properties;
         "There are also a number of utility functions that help with monitoring\n"
 )
 @KbaseScript(prefix = "compute",
-        exportFields = {"bowtie","bwa","tophat","cufflinks","cuffmerge","cuffdiff","cuffcompare","shock_batch_write","list_genomes","vcf_merge","list_jobs","job_status","grid_job_status","samtools_snp"})
+        exportFields = {"bowtie","bwa","tophat","cufflinks","cuffmerge","cuffdiff","cuffcompare","shock_read","shock_write","workspace_upload","shock_batch_write","list_genomes","vcf_merge","list_jobs","job_status","grid_job_status","samtools_snp"})
 public class Compute implements ClientFunctionHandler {
  
     @Flag(shortForm = "bowtie", longForm = "bowtie", description = "Run Bowtie Aligner",group="Alignment")
@@ -40,6 +40,15 @@ public class Compute implements ClientFunctionHandler {
     
     @Flag(shortForm = "cuffcompare", longForm = "cuffcompare", description = "Run cuffcompare ",group="Alignment")
     public boolean cuffcompare;
+    
+    @Flag(shortForm = "shock_read", longForm = "--shockRead", description = "Copy Shock file to Cluster")
+    public boolean shock_read ;
+    
+    @Flag(shortForm = "shock_write", longForm = "--shockWrite", description = "Copy Cluster file  to Shock")
+    public boolean shock_write ;
+    
+    @Flag(shortForm = "workspace_upload", longForm = "--workspace_upload", description = "Upload Expression data to Workspace")
+    public boolean workspace_upload ;
     
     @Flag(shortForm = "shock_batch_write", longForm = "--shockBatchWrite", description = "Copy Cluster files to Shock- Batch mode")
     public boolean shock_batch_write ;
@@ -82,6 +91,12 @@ public class Compute implements ClientFunctionHandler {
             handlerClass = Cuffdiff.class;
         }else if(cuffcompare){
             handlerClass = Cuffcompare.class;
+        }else if(shock_read){
+            handlerClass = ShockRead.class;
+        }else if(shock_write){
+            handlerClass = ShockWrite.class;
+        }else if(workspace_upload){
+            handlerClass = WorkspaceUpload.class;
         }else if(shock_batch_write){
             handlerClass = ShockBatchWrite.class;
         }else if(list_genomes){
