@@ -46,4 +46,16 @@ public class JnomicsApiConfig {
         }
         return prop;
     }
+
+    public static void setHTTPProxy(String http_proxy) throws IOException{
+
+	if(null != http_proxy && http_proxy.contains(":")){
+	    String[] arr = http_proxy.split(":");
+	    if(arr.length != 2)
+		throw new IOException("Cannot interpret http-proxy in conf");
+	    System.setProperty("https.proxyHost", arr[0]);
+	    System.setProperty("https.proxyPort", arr[1]);
+	}
+
+    }
 }

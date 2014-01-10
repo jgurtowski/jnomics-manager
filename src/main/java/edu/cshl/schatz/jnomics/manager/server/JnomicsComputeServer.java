@@ -41,6 +41,10 @@ public class JnomicsComputeServer {
         int port = Integer.parseInt(prop.getProperty("compute-server-port"));
         String host = prop.getProperty("compute-server-host");
 
+	
+	JnomicsApiConfig.setHTTPProxy(prop.getProperty("http-proxy", null));
+	
+
         String keyStore = System.getProperty("jkserver_keystore");
         if(null == keyStore || !new File(keyStore).exists()){
             throw new IOException("Cannot find key store: " + keyStore);

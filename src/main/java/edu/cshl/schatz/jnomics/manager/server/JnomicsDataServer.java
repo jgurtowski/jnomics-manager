@@ -48,6 +48,8 @@ public class JnomicsDataServer {
         if(null == keyStore || !new File(keyStore).exists()){
             throw new IOException("Cannot find key store: " + keyStore);
         }
+
+	JnomicsApiConfig.setHTTPProxy(prop.getProperty("http-proxy", null));
         
         JnomicsDataHandler handler = new JnomicsDataHandler(prop);
         Thread garbageCollectorThread = new Thread(new JnomicsHandleGarbageCollector(handler));
