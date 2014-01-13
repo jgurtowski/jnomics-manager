@@ -462,7 +462,8 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		.setOutputPath(hdfsPath)
 		.setJobName(jobname)
 		.setParam("shock-url",properties.getProperty("shock-url"))
-		.setParam("shock-token",etoken);
+		.setParam("shock-token",etoken)
+		.setParam("http_proxy",properties.getProperty("http_proxy"));
 		logger.info("Conf properties are set");
 		try{
 			conf = builder.getJobConf();
@@ -499,7 +500,8 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		builder.setInputPath(hdfsPath)
 		.setJobName(jobname)
 		.setParam("shock-url",properties.getProperty("shock-url"))
-		.setParam("shock-token",etoken);
+		.setParam("shock-token",etoken)
+		.setParam("http_proxy",properties.getProperty("http_proxy"));
 		logger.info("Conf properties are set");
 		try{
 			conf = builder.getJobConf();
