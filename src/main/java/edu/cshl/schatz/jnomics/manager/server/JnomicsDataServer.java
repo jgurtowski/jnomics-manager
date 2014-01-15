@@ -49,7 +49,7 @@ public class JnomicsDataServer {
             throw new IOException("Cannot find key store: " + keyStore);
         }
 
-	JnomicsApiConfig.setHTTPProxy(prop.getProperty("http-proxy", null));
+	//JnomicsApiConfig.setHTTPProxy(prop.getProperty("http-proxy", null));
         
         JnomicsDataHandler handler = new JnomicsDataHandler(prop);
         Thread garbageCollectorThread = new Thread(new JnomicsHandleGarbageCollector(handler));

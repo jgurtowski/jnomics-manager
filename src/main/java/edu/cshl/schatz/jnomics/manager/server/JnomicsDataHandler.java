@@ -388,40 +388,40 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
     public List<String> listShockStatus(String dest,
     		Authentication auth) throws JnomicsThriftException, TException {
     	/***Requires changes to WorkspaceDeluxe */
-
-	  String username;
-    	if(null == (username = authenticator.authenticate(auth))){
-    		throw new JnomicsThriftException("Permission Denied");
-    	}
-    	AuthToken oauth;
-    	URL shockurl = null;
-    	try { 
-    		shockurl = new URL(properties.getProperty("shock-url"));
-    		oauth =  new AuthToken(auth.token);
-    		log.info("auth token is " + oauth);
-    		BasicShockClient base = new BasicShockClient(shockurl,oauth);
-    		System.out.println(base.getShockUrl());
-    		Map<String,Object> filelist = base.getFileList();
-    		System.out.println("filelist size  " + filelist.size());
-    		List<String> shockfiles =  new ArrayList<String>();
-    		for( Map<String,Object> file: (ArrayList<Map<String,Object>>) filelist.get("data")){
-    			String fid = file.get("id").toString();
-    			if( !fid.equals(null) ){
-    				LinkedHashMap<String,Object> name = (LinkedHashMap<String,Object>)file.get("file");
-    				if(!name.get("name").equals("")){
-    					shockfiles.add(fid + "\t" + name.get("name") + "\t" + name.get("size"));
-    				}	
-
-    			}
-
-    		}
-    		return shockfiles;
-    	}
-    	catch(Exception  e){
-    		log.error("Could not open Shock");
-    		throw new JnomicsThriftException(e.getMessage());
-		}
-//	 return null;
+//
+//	  String username;
+//    	if(null == (username = authenticator.authenticate(auth))){
+//    		throw new JnomicsThriftException("Permission Denied");
+//    	}
+//    	AuthToken oauth;
+//    	URL shockurl = null;
+//    	try { 
+//    		shockurl = new URL(properties.getProperty("shock-url"));
+//    		oauth =  new AuthToken(auth.token);
+//    		log.info("auth token is " + oauth);
+//    		BasicShockClient base = new BasicShockClient(shockurl,oauth);
+//    		System.out.println(base.getShockUrl());
+//    		Map<String,Object> filelist = base.getFileList();
+//    		System.out.println("filelist size  " + filelist.size());
+//    		List<String> shockfiles =  new ArrayList<String>();
+//    		for( Map<String,Object> file: (ArrayList<Map<String,Object>>) filelist.get("data")){
+//    			String fid = file.get("id").toString();
+//    			if( !fid.equals(null) ){
+//    				LinkedHashMap<String,Object> name = (LinkedHashMap<String,Object>)file.get("file");
+//    				if(!name.get("name").equals("")){
+//    					shockfiles.add(fid + "\t" + name.get("name") + "\t" + name.get("size"));
+//    				}	
+//
+//    			}
+//
+//    		}
+//    		return shockfiles;
+//    	}
+//    	catch(Exception  e){
+//    		log.error("Could not open Shock");
+//    		throw new JnomicsThriftException(e.getMessage());
+//		}
+	 return null;
     }
 
 	@Override
@@ -582,6 +582,8 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
 
         return genomeList;
     }
+    
+    
 
 
 }
