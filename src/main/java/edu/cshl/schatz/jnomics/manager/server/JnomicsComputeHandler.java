@@ -1,6 +1,7 @@
 package edu.cshl.schatz.jnomics.manager.server;
 
 import edu.cshl.schatz.jnomics.manager.api.*;
+import edu.cshl.schatz.jnomics.manager.common.IDServer;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsJobBuilder;
 import edu.cshl.schatz.jnomics.tools.*;
 import edu.cshl.schatz.jnomics.grid.*;
@@ -29,6 +30,8 @@ import us.kbase.shock.client.ShockNode;
 
 
 import us.kbase.shock.client.ShockNodeId;
+
+
 
 //import java.io.File;
 import java.io.*;
@@ -534,7 +537,13 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		String uuid = UUID.randomUUID().toString();
 		String jobname = username+"-wsupload-"+uuid;
 //		byte[] btoken = auth.token.getBytes();
-//		String etoken = Base64.encodeBase64String(btoken);		
+//		String etoken = Base64.encodeBase64String(btoken);
+//		try {
+//			int kb_id1 = IDServer.registerId();
+//		} catch (Exception e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
 		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
 		builder.setInputPath(filename)
 		.setJobName(jobname)
