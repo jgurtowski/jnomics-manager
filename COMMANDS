@@ -1,2 +1,2 @@
-#group-name	variation	Variation Detection Scripts
+#group-name	variation	Variation Detection
 #command-set	bin/(jk.*)	variation
