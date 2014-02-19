@@ -15,6 +15,9 @@ jnomics-jar-path=/path/to/jnomics-0.4.jar
 grid-script-path=/path/to/bin/GridJobLauncher.sh
 grid-job-slots=8
 shock-url=https://kbase.us/services/shock-api/
+cdmi-url=http://kbase.us/services/cdmi_api/
+workspace-url=http://ip???:7058
+bedtools-script-path=/path/to/bin/kbasefids.sh
 kbase-b-head:proxy
 
 #######################

@@ -26,14 +26,20 @@ public class WorkspaceUpload extends ComputeBase {
     @Flag(shortForm = "-h",longForm = "--help")
     public boolean help;
     
-    @Parameter(shortForm = "-kb_id", longForm = "--kb_id", description="Kbase id")
-    public String kb_id;
-    
     @Parameter(shortForm = "-in", longForm = "--input", description = "full path of the input file")
     public String in;
     
     @Parameter(shortForm = "-genome_id", longForm= "--genome_id", description = "genome id")
     public String genome_id;
+    
+    @Parameter(shortForm = "-desc", longForm= "--description", description = "Sample description")
+    public String desc;
+    
+    @Parameter(shortForm = "-title", longForm= "--title", description = "Sample Id")
+    public String title;
+    
+    @Parameter(shortForm = "-src_date", longForm= "--ext_src_date", description = "External Source Date")
+    public String src_date;
     
     @Parameter(shortForm = "-onto_term_id", longForm = "--onto_term_id", description = "Ontology term id (optional)")
     public String onto_term_id;
@@ -60,12 +66,16 @@ public class WorkspaceUpload extends ComputeBase {
         if(help){
             System.out.println(Utility.helpFromParameters(this.getClass()));
             return;
-        }else if(null == kb_id){
-            System.out.println("missing -kb_id parameter");
         }else if(null == in){
             System.out.println("missing -in parameter");
         }else if(null == genome_id){
             System.out.println("missing -genome_id parameter");
+    	}else if(null == desc){
+            System.out.println("missing -desc parameter");
+        }else if(null == title){
+            System.out.println("missing -title parameter");
+    	}else if(null == src_date){
+            System.out.println("missing -src_date parameter");
     	}else{
             if(!fsclient.checkFileStatus(in, auth)){
             		System.out.println("ERROR : " + in + " does'nt exist");
@@ -73,14 +83,17 @@ public class WorkspaceUpload extends ComputeBase {
             }
             String clean_org = KBaseIDTranslator.translate(ref);
             JnomicsThriftJobID jobID = client.workspaceUpload(
-            		in, 
-            		kb_id, 
+            		in,  
             		genome_id,
+            		desc,
+            		title,
+            		src_date,
             		Utility.nullToString(onto_term_id),
             		Utility.nullToString(onto_term_def), 
             		Utility.nullToString(onto_term_name), 
             		Utility.nullToString(seq_type),  
             		Utility.nullToString(ref), 
+            		Utility.nullToString(working_dir),
             		auth);
 
             System.out.println("Submitted Job: " + jobID.getJob_id());
