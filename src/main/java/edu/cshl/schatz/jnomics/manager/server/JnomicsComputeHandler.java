@@ -1,6 +1,8 @@
 package edu.cshl.schatz.jnomics.manager.server;
 
 import edu.cshl.schatz.jnomics.manager.api.*;
+import edu.cshl.schatz.jnomics.manager.common.*;
+import edu.cshl.schatz.jnomics.manager.common.IDServer;
 import edu.cshl.schatz.jnomics.mapreduce.JnomicsJobBuilder;
 import edu.cshl.schatz.jnomics.tools.*;
 import edu.cshl.schatz.jnomics.grid.*;
@@ -29,6 +31,8 @@ import us.kbase.shock.client.ShockNode;
 
 
 import us.kbase.shock.client.ShockNodeId;
+
+
 
 //import java.io.File;
 import java.io.*;
@@ -440,7 +444,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		}
 		return new JnomicsThriftJobID(conf.get("grid_jobId"));	
 	}
-	
+
 	@Override
 	public JnomicsThriftJobID ShockRead(String shockNodeID, String hdfsPath, Authentication auth) throws TException , JnomicsThriftException{	
 		String username;
@@ -451,7 +455,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		FileSystem fs = null;
 		Configuration conf = null;
 		OutputStream out = null;
-	
+
 		logger.info("Inside shock client read" );
 		String uuid = UUID.randomUUID().toString();
 		String jobname = username+"-read-"+uuid;
@@ -482,7 +486,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		}
 		return new JnomicsThriftJobID(conf.get("grid_jobId"));
 	}
-	
+
 	@Override
 	public JnomicsThriftJobID ShockWrite(String filename, String hdfsPath, Authentication auth) throws TException , JnomicsThriftException{	
 		String username;
@@ -521,30 +525,49 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		return new JnomicsThriftJobID(conf.get("grid_jobId"));	
 	}
 
-	public JnomicsThriftJobID workspaceUpload(String filename, String kb_id, String genome_id,String onto_term_id, 
-			String onto_term_def, String onto_term_name, String seq_type, String reference,
+	public JnomicsThriftJobID workspaceUpload(String filename, String genome_id,String desc ,String title,String srcDate, String onto_term_id, 
+			String onto_term_def, String onto_term_name, String seq_type, String reference, String workingdir,
 			Authentication auth) throws TException , JnomicsThriftException{	
 		String username;
+		String bedtools_binary =  properties.getProperty("hdfs-index-repo")+"/bedtools_2.17.0.tar.gz";
+		String bedtools_script = properties.getProperty("bedtools-script-path");
+		
 		if(null == (username = authenticator.authenticate(auth))){
 			throw new JnomicsThriftException("Permission Denied");
 		}
-		//logger.info("Opening file: " + hdfsPath + " for user: " + username);
 		Configuration conf = null;
 		OutputStream out = null;
 		String uuid = UUID.randomUUID().toString();
 		String jobname = username+"-wsupload-"+uuid;
-//		byte[] btoken = auth.token.getBytes();
-//		String etoken = Base64.encodeBase64String(btoken);		
+		String kbaseid = null;
+		byte[] btoken = auth.token.getBytes();
+		String etoken = Base64.encodeBase64String(btoken);
+		
+		try {
+			int ret_id = IDServer.registerId();
+			kbaseid = "sample_test." + ret_id;
+		}catch( Exception e) {
+			e.toString();
+		}
 		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
 		builder.setInputPath(filename)
 		.setJobName(jobname)
-		.setParam("kb_id",kb_id)
+		.setParam("cdmi-url", properties.getProperty("cdmi-url"))
+		.setParam("workspace-url", properties.getProperty("workspace-url"))
+		.setParam("bedtools_binary",bedtools_binary)
+		.setParam("bedtools_script",bedtools_script)
+		.setParam("auth-token", etoken)
+		.setParam("kb_id",kbaseid)
 		.setParam("genome_id",genome_id)
+		.setParam("description",desc)
+		.setParam("title",title)
+		.setParam("ext_src_date",srcDate)
 		.setParam("onto_term_id", onto_term_id)
 		.setParam("onto_term_def", onto_term_def)
 		.setParam("onto_term_name", onto_term_name)
 		.setParam("sequence_type", seq_type)
-		.setParam("reference",reference);
+		.setParam("reference",reference)
+		.setParam("grid_working_dir", workingdir);
 		logger.info("Conf properties are set");
 		try{
 			conf = builder.getJobConf();
@@ -633,7 +656,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		}
 		return launchJobAs(username, conf);	
 	}
-	
+
 	@Override
 	public JnomicsThriftJobID snpSamtools(String inPath, String organism, String outPath, Authentication auth) throws TException, JnomicsThriftException {
 		String username;
@@ -706,7 +729,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 			throw new JnomicsThriftException(e.toString());
 		}
 		return status ;
-		
+
 	}
 	@Override
 	public List<JnomicsThriftJobStatus> getAllJobs(Authentication auth) throws JnomicsThriftException, TException {

@@ -42,7 +42,7 @@ public class JnomicsComputeServer {
         String host = prop.getProperty("compute-server-host");
 
 	
-	JnomicsApiConfig.setHTTPProxy(prop.getProperty("http-proxy", null));
+	//JnomicsApiConfig.setHTTPProxy(prop.getProperty("http-proxy", null));
 	
 
         String keyStore = System.getProperty("jkserver_keystore");

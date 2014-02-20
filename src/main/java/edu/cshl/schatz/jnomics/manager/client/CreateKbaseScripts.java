@@ -26,7 +26,7 @@ public class CreateKbaseScripts {
     
     private static final String SCRIPT_TEMPLATE = "#!/bin/bash \n" +
             "SCRIPT_PATH=`dirname \"$0\"`\n" +
-            "${SCRIPT_PATH}/jkbase %s %s $*\n";
+            "${SCRIPT_PATH}/jkbase %s %s \"$@\"\n";
 
     
     public static void main(String []args) throws Exception{

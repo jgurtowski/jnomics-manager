@@ -61,7 +61,7 @@ public class Cufflinks extends ComputeBase {
         }else if(fsclient.checkFileStatus(out, auth)){
     		System.out.println("ERROR : Output directory already exists");
         }else{
-//            String clean_org = KBaseIDTranslator.translate(organism);
+        	  //String clean_org = KBaseIDTranslator.translate(organism);
 //            List<JnomicsThriftFileStatus> stats  = client.listStatus(organism, auth);
 //            StringBuilder sb = new StringBuilder();
 //            for(String opts : align_opts){

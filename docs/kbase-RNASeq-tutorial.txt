@@ -58,7 +58,7 @@ To ping the status of the job running on the cluster, use
 	
       $> jk-compute-grid-job-status  -job=<jobid>
 
-You will know the job is complete when the status changes from RUNNING to UNDETERMINED. 
+You will know the job is complete when the status changes from RUNNING to DONE. 
 Make sure you wait for the job to complete before continuing to the next step.
 
 ####
