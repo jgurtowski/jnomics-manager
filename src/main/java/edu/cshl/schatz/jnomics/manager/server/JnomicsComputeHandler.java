@@ -526,15 +526,17 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 	}
 
 	public JnomicsThriftJobID workspaceUpload(String filename, String genome_id,String desc ,String title,String srcDate, String onto_term_id, 
-			String onto_term_def, String onto_term_name, String seq_type, String reference, String workingdir,
+			String onto_term_def, String onto_term_name, String seq_type, String shockid, String workingdir,
 			Authentication auth) throws TException , JnomicsThriftException{	
 		String username;
 		String bedtools_binary =  properties.getProperty("hdfs-index-repo")+"/bedtools_2.17.0.tar.gz";
 		String bedtools_script = properties.getProperty("bedtools-script-path");
-		
+		String shock_url = properties.getProperty("shock-url")+"node/"+shockid;
+	
 		if(null == (username = authenticator.authenticate(auth))){
 			throw new JnomicsThriftException("Permission Denied");
 		}
+		
 		Configuration conf = null;
 		OutputStream out = null;
 		String uuid = UUID.randomUUID().toString();
@@ -566,7 +568,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		.setParam("onto_term_def", onto_term_def)
 		.setParam("onto_term_name", onto_term_name)
 		.setParam("sequence_type", seq_type)
-		.setParam("reference",reference)
+		.setParam("shock_url",shock_url)
 		.setParam("grid_working_dir", workingdir);
 		logger.info("Conf properties are set");
 		try{

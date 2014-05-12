@@ -53,8 +53,8 @@ public class WorkspaceUpload extends ComputeBase {
     @Parameter(shortForm = "-seq_type", longForm = "--seq_type", description = "Sequence Type (Paired-End or Single-End)(optional)")
     public String seq_type;
     
-    @Parameter(shortForm = "-ref", longForm = "--reference", description = "reference genome (optional)")
-    public String ref;
+    @Parameter(shortForm = "-shock_id", longForm = "--shock_id", description = "Shockid of the original transcripts.gtf file (optional)")
+    public String shockid;
     
     @Parameter(shortForm = "-working_dir", longForm = "--working_dir", description = "workingdir (optional)")
     public String working_dir;
@@ -81,7 +81,7 @@ public class WorkspaceUpload extends ComputeBase {
             		System.out.println("ERROR : " + in + " does'nt exist");
             		return;
             }
-            String clean_org = KBaseIDTranslator.translate(ref);
+            String clean_org = KBaseIDTranslator.translate(genome_id);
             JnomicsThriftJobID jobID = client.workspaceUpload(
             		in,  
             		genome_id,
@@ -92,7 +92,7 @@ public class WorkspaceUpload extends ComputeBase {
             		Utility.nullToString(onto_term_def), 
             		Utility.nullToString(onto_term_name), 
             		Utility.nullToString(seq_type),  
-            		Utility.nullToString(ref), 
+            		Utility.nullToString(shockid), 
             		Utility.nullToString(working_dir),
             		auth);
 

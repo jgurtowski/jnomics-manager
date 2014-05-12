@@ -141,7 +141,7 @@ public class JnomicsDataHandler implements JnomicsData.Iface {
         JnomicsFsHandle jhandle = handleMap.get(UUID.fromString(handle.getUuid()));
         try {
             jhandle.getOutStream().write(data.array());
-        } catch (IOException e) {
+        } catch (IOException e){
             log.error("Problem writing to file");
             e.printStackTrace();
             throw new JnomicsThriftException(e.toString());
