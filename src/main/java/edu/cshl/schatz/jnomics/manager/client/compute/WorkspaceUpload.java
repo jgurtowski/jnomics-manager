@@ -70,10 +70,6 @@ public class WorkspaceUpload extends ComputeBase {
             System.out.println("missing -in parameter");
         }else if(null == genome_id){
             System.out.println("missing -genome_id parameter");
-    	}else if(null == desc){
-            System.out.println("missing -desc parameter");
-        }else if(null == title){
-            System.out.println("missing -title parameter");
     	}else if(null == src_date){
             System.out.println("missing -src_date parameter");
     	}else{
@@ -85,8 +81,8 @@ public class WorkspaceUpload extends ComputeBase {
             JnomicsThriftJobID jobID = client.workspaceUpload(
             		in,  
             		genome_id,
-            		desc,
-            		title,
+            		Utility.nullToString(desc),
+            		Utility.nullToString(title),
             		src_date,
             		Utility.nullToString(onto_term_id),
             		Utility.nullToString(onto_term_def), 
