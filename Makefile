@@ -42,7 +42,7 @@ make-dest-dir:
 	mkdir -p $(CLIENT_CERT_DIR)
 	mkdir -p $(SERVICE_DOCS_DIR)
 
-build-jnomics:
+build-jnomics: thrift-9
 	ant
 	bin/make_scripts.sh jk bin
 
@@ -62,6 +62,22 @@ deploy-libs: make-dest-dir build-jnomics
 	cp lib/*.jar $(CLIENT_LIB_DIR)
 	cp dist/jnomics-manager-*.jar $(SERVICE_LIB_DIR)
 	cp lib/*.jar $(SERVICE_LIB_DIR)
+
+
+thrift-9:
+        thrift_major_version=$(shell $(KB_RUNTIME)/thrift/bin/thrift -version | awk '{split($$3,a,"."); print a[2]}' )
+ifneq ($(thrift_major_version), "9")
+        CP_OLD=$CLASSPATH
+        CLASSPATH=""
+        wget http://mirror.symnds.com/software/Apache/thrift/0.9.1/thrift-0.9.1.tar.gz
+        tar zxvf thrift-0.9.1.tar.gz
+        cd thrift-0.9.1; JAVA_PREFIX=$(KB_RUNTIME)/thrift-0.9.1/lib ./configure --prefix=$(KB_RUNTIME)/thrift-0.9.1 --without-go --without-python --without-erlang --without-c_glib; cd ..
+        cd thrift-0.9.1; make -j 3; cd ..
+        cd thrift-0.9.1; make install; cd ..
+        rm -f $(KB_RUNTIME)/thrift
+        ln -s $(KB_RUNTIME)/thrift-0.9.1 $(KB_RUNTIME)/thrift
+        CLASSPATH=$CP_OLD
+endif
 
 
 clean: 
