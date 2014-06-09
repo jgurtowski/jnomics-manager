@@ -57,28 +57,26 @@ deploy-jnomics: deploy-libs
 	cp bin/start-compute-server.sh $(SERVICE_BIN_DIR)
 	cp cert/truststore.jks $(CLIENT_CERT_DIR)
 
-deploy-libs: make-dest-dir build-jnomics
+deploy-libs: build-jnomics make-dest-dir 
 	cp dist/jnomics-manager-*.jar $(CLIENT_LIB_DIR)
 	cp lib/*.jar $(CLIENT_LIB_DIR)
 	cp dist/jnomics-manager-*.jar $(SERVICE_LIB_DIR)
 	cp lib/*.jar $(SERVICE_LIB_DIR)
 
 
-thrift-9:
-        thrift_major_version=$(shell $(KB_RUNTIME)/thrift/bin/thrift -version | awk '{split($$3,a,"."); print a[2]}' )
-ifneq ($(thrift_major_version), "9")
-        CP_OLD=$CLASSPATH
-        CLASSPATH=""
-        wget http://mirror.symnds.com/software/Apache/thrift/0.9.1/thrift-0.9.1.tar.gz
-        tar zxvf thrift-0.9.1.tar.gz
-        cd thrift-0.9.1; JAVA_PREFIX=$(KB_RUNTIME)/thrift-0.9.1/lib ./configure --prefix=$(KB_RUNTIME)/thrift-0.9.1 --without-go --without-python --without-erlang --without-c_glib; cd ..
-        cd thrift-0.9.1; make -j 3; cd ..
-        cd thrift-0.9.1; make install; cd ..
-        rm -f $(KB_RUNTIME)/thrift
-        ln -s $(KB_RUNTIME)/thrift-0.9.1 $(KB_RUNTIME)/thrift
-        CLASSPATH=$CP_OLD
-endif
 
+thrift-9:
+	thrift_major_version=$(shell $(KB_RUNTIME)/thrift/bin/thrift -version | awk '{split($$3,a,"."); print a[2]}' )
+ifneq ($(thrift_major_version), "9")
+	CP_OLD=$CLASSPATH
+	CLASSPATH=""
+	wget http://mirror.symnds.com/software/Apache/thrift/0.9.1/thrift-0.9.1.tar.gz
+	tar zxvf thrift-0.9.1.tar.gz
+	cd thrift-0.9.1; JAVA_PREFIX=$(KB_RUNTIME)/thrift-0.9.1/lib ./configure --prefix=$(KB_RUNTIME)/thrift-0.9.1 --without-go --without-python --without-erlang --without-c_glib; make; make install;cd ..
+	rm -f $(KB_RUNTIME)/thrift
+	ln -s $(KB_RUNTIME)/thrift-0.9.1 $(KB_RUNTIME)/thrift
+	CLASSPATH=$CP_OLD
+endif
 
 clean: 
 	ant clean
