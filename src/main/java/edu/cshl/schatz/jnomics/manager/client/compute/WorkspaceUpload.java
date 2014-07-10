@@ -19,7 +19,7 @@ import java.util.Properties;
  * User: Sri
  */
 
-@FunctionDescription(description = "Loads RNASeq Expression Objects to Workspace"
+@FunctionDescription(description = "Generates RNASeq Expression Objects for Workspace submission"
 )
 public class WorkspaceUpload extends ComputeBase {
 
@@ -37,6 +37,9 @@ public class WorkspaceUpload extends ComputeBase {
     
     @Parameter(shortForm = "-title", longForm= "--title", description = "Sample Id")
     public String title;
+    
+    @Parameter(shortForm = "-src_id", longForm= "--ext_src_id", description = "External Source Id")
+    public String src_id;
     
     @Parameter(shortForm = "-src_date", longForm= "--ext_src_date", description = "External Source Date")
     public String src_date;
@@ -72,6 +75,8 @@ public class WorkspaceUpload extends ComputeBase {
             System.out.println("missing -genome_id parameter");
     	}else if(null == src_date){
             System.out.println("missing -src_date parameter");
+    	}else if(null == src_id){
+            System.out.println("missing -src_id parameter");
     	}else{
             if(!fsclient.checkFileStatus(in, auth)){
             		System.out.println("ERROR : " + in + " does'nt exist");
@@ -89,6 +94,7 @@ public class WorkspaceUpload extends ComputeBase {
             		Utility.nullToString(onto_term_name), 
             		Utility.nullToString(seq_type),  
             		Utility.nullToString(shockid), 
+            		src_id,
             		Utility.nullToString(working_dir),
             		auth);
 

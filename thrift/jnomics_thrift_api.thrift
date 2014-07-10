@@ -58,7 +58,7 @@ service JnomicsCompute{
 		
 		JnomicsThriftJobID callCuffmerge( 1: string inPath ,2: string ref_genome,3: string outpath, 4: string alignOpts , 5: string gtffile ,6: string workingdir, 7: Authentication auth)throws (1: JnomicsThriftException je),
 		
-		JnomicsThriftJobID callCuffdiff( 1: string inPath , 2: string outpath, 3: string ref_genome,4: string alignOpts, 5: string condn_labels, 6: string merged_gtf, 7: string workingdir, 8: Authentication auth)throws (1: JnomicsThriftException je),
+		JnomicsThriftJobID callCuffdiff( 1: string inPath , 2: string outpath, 3: string ref_genome,4: string alignOpts, 5: string condn_labels, 6: string merged_gtf, 7: string withReplicates,8: string workingdir, 9: Authentication auth)throws (1: JnomicsThriftException je),
 	
 		JnomicsThriftJobID callCuffcompare( 1: string inPath ,2: string outpath, 3: string alignOpts , 4: string gtffile ,5: string workingdir, 6: Authentication auth)throws (1: JnomicsThriftException je),
 		
@@ -66,7 +66,7 @@ service JnomicsCompute{
 		
 		JnomicsThriftJobID ShockWrite (1: string filename,2: string hdfsPath,3: Authentication auth) throws (1: JnomicsThriftException je),
 		
-		JnomicsThriftJobID workspaceUpload(1: string filename,3: string genome_id, 4: string desc, 5: string title, 6: string srcDate ,7: string onto_term_id, 8: string onto_term_def, 9: string onto_term_name,10: string seq_type,11: string reference,12: string working_dir,13: Authentication auth) throws (1: JnomicsThriftException je),
+		JnomicsThriftJobID workspaceUpload(1: string filename,3: string genome_id, 4: string desc, 5: string title, 6: string srcDate ,7: string onto_term_id, 8: string onto_term_def, 9: string onto_term_name,10: string seq_type,11: string reference,12: string ext_src_id,13: string working_dir,14: Authentication auth) throws (1: JnomicsThriftException je),
 		
 		JnomicsThriftJobID ShockBatchWrite (1: list<string> inPath , 2: string outPath,3: Authentication auth) throws (1: JnomicsThriftException je),
 

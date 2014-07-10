@@ -50,6 +50,9 @@ public class Cuffdiff extends ComputeBase {
 	@Parameter(shortForm = "-merged_gtf", longForm = "--merged_gtf", description = "Merged gtf file for Cuffdiff ")
 	public String merged_gtf;
 
+	@Parameter(shortForm = "-with_Replicates", longForm = "--with_Replicates", description = " Set flag to yes if Replicates are present ")
+	public String with_Replicates;
+	
 	@Parameter(shortForm = "-working_dir", longForm = "--working_dir", description = "workingdir (optional)")
 	public String working_dir;
 
@@ -74,18 +77,18 @@ public class Cuffdiff extends ComputeBase {
 		}else{
 			boolean check = false;
 			List<String> genomes = fsclient.listGenomes(auth);
-			List<String> lbls = Arrays.asList(condition_labels.split(","));
-			List<String> input = Arrays.asList(in.split(","));
-			if(lbls.size() != input.size()){
-				System.out.println("ERROR: condition_labels should match the number of input files");
-			}
+//			List<String> lbls = Arrays.asList(condition_labels.split(","));
+//			List<String> input = Arrays.asList(in.split(","));
+//			if(lbls.size() != input.size()){
+//				System.out.println("ERROR: condition_labels should match the number of input files");
+//			}
 			//            System.out.println("assembly_opts is " + assembly_opts + " in path is " +  in  + "outpath is " + out + "merged gtf " + merged_gtf + " workingdir is " + working_dir);
-			for(String file : input) {
-				if(!fsclient.checkFileStatus(file, auth)){
-					System.out.println("ERROR : " + file + " does'nt exist");
-					return;
-				}
-			}
+//			for(String file : input) {
+//				if(!fsclient.checkFileStatus(file, auth)){
+//					System.out.println("ERROR : " + file + " does'nt exist");
+//					return;
+//				}
+//			}
 			for(String genome : genomes){
             	if(genome.equals(ref)){
             		check = true;
@@ -103,6 +106,7 @@ public class Cuffdiff extends ComputeBase {
 					Utility.nullToString(assembly_opts),
 					condition_labels,
 					merged_gtf,
+					Utility.nullToString(with_Replicates),
 					Utility.nullToString(working_dir),
 					auth);
 			System.out.println("Submitted Job: " + jobID.getJob_id());

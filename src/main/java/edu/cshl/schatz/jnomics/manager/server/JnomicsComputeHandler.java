@@ -319,7 +319,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 	}
 
 	public JnomicsThriftJobID callCuffdiff(String infiles, String outPath, String ref_genome,
-			String assemblyOpts, String condn_labels, String merged_gtf, String workingdir, Authentication auth)
+			String assemblyOpts, String condn_labels, String merged_gtf,String withReplicates, String workingdir, Authentication auth)
 					throws TException, JnomicsThriftException {
 		String username;
 
@@ -331,7 +331,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		String jobname = username+"-cuffdiff-"+uuid;
 		String refGenome = properties.getProperty("hdfs-index-repo")+"/"+ref_genome+"_bowtie.tar.gz"; 
 		String cuffopts = assemblyOpts.replaceAll(","," ").toString();
-
+		
 		logger.info("cufflinks_binary - " + cufflinks_binary);
 		logger.info("Reference is -" + refGenome ) ;
 		logger.info("jobname - " + jobname);
@@ -339,6 +339,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		logger.info("assemblyOpts - " + cuffopts);
 		logger.info("condn_labels - " + condn_labels);
 		logger.info("merged_gtf - " + merged_gtf);
+		logger.info("withReplicates - " +  withReplicates);
 		logger.info("working dir - " + workingdir);
 
 		Configuration conf = null;
@@ -354,6 +355,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		.setJobName(jobname)
 		.setParam("cuffdiff_merged_gtf",merged_gtf)
 		.setParam("cuffdiff_ref_genome",refGenome)
+		.setParam("withReplicates", withReplicates)
 		.setParam("cufflinks_binary",cufflinks_binary);
 
 		try{
@@ -525,8 +527,8 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		return new JnomicsThriftJobID(conf.get("grid_jobId"));	
 	}
 
-	public JnomicsThriftJobID workspaceUpload(String filename, String genome_id,String desc ,String title,String srcDate, String onto_term_id, 
-			String onto_term_def, String onto_term_name, String seq_type, String shockid, String workingdir,
+	public JnomicsThriftJobID workspaceUpload(String filename,String genome_id,String desc ,String title,String srcDate, String onto_term_id, 
+			String onto_term_def, String onto_term_name, String seq_type, String shockid,String src_id, String workingdir,
 			Authentication auth) throws TException , JnomicsThriftException{	
 		String username;
 		String bedtools_binary =  properties.getProperty("hdfs-index-repo")+"/bedtools_2.17.0.tar.gz";
@@ -544,10 +546,14 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		String kbaseid = null;
 		byte[] btoken = auth.token.getBytes();
 		String etoken = Base64.encodeBase64String(btoken);
-		
+		String prefix ="kb|sample";
+		String ext_src_id =  src_id.replace(" ", "::")+"::"+"kb|"+genome_id;
+//		String keyvalue = username+"_"+prefix+"_"+genome_id+"_"+shockid;
+		String keyvalue = ext_src_id+"___"+ext_src_id.split("::")[1];
+		logger.info("key : "+keyvalue );
 		try {
-			int ret_id = IDServer.registerId();
-			kbaseid = "sample_test." + ret_id;
+//			int ret_id = IDServer.registerId();
+			kbaseid = IDServer.registerId(prefix,keyvalue); ///"sample." + ret_id;
 		}catch( Exception e) {
 			e.toString();
 		}
@@ -564,6 +570,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		.setParam("description",desc)
 		.setParam("title",title)
 		.setParam("ext_src_date",srcDate)
+		.setParam("ext_src_id", ext_src_id)
 		.setParam("onto_term_id", onto_term_id)
 		.setParam("onto_term_def", onto_term_def)
 		.setParam("onto_term_name", onto_term_name)
