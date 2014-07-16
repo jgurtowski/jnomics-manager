@@ -66,7 +66,7 @@ service JnomicsCompute{
 		
 		JnomicsThriftJobID ShockWrite (1: string filename,2: string hdfsPath,3: Authentication auth) throws (1: JnomicsThriftException je),
 		
-		JnomicsThriftJobID workspaceUpload(1: string filename,3: string genome_id, 4: string desc, 5: string title, 6: string srcDate ,7: string onto_term_id, 8: string onto_term_def, 9: string onto_term_name,10: string seq_type,11: string reference,12: string ext_src_id,13: string working_dir,14: Authentication auth) throws (1: JnomicsThriftException je),
+		JnomicsThriftJobID workspaceUpload(1: string filename,2: string genome_id, 3: string desc, 4: string title, 5: string srcDate ,6: string onto_term_id, 7: string onto_term_def, 8: string onto_term_name,9: string seq_type,10: string shock_id,11: string src_id,12: string working_dir,13: Authentication auth) throws (1: JnomicsThriftException je),
 		
 		JnomicsThriftJobID ShockBatchWrite (1: list<string> inPath , 2: string outPath,3: Authentication auth) throws (1: JnomicsThriftException je),
 
