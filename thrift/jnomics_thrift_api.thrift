@@ -51,7 +51,9 @@ service JnomicsCompute{
         JnomicsThriftJobID alignBowtie (1: string inPath, 2: string organism, 3: string outPath, 4: string opts, 5: Authentication auth) throws (1: JnomicsThriftException je),
  
         JnomicsThriftJobID alignBWA (1: string inPath, 2: string organism, 3: string outPath, 4: string alignOpts, 5: string sampeOpts, 6: Authentication auth) throws (1: JnomicsThriftException je),
-
+		
+		JnomicsThriftJobID fastqtoPe(1: string file1, 2: string file2, 3: string outpath,4: string workingdir , 5:  Authentication auth) throws (1: JnomicsThriftException je),
+		
 		JnomicsThriftJobID alignTophat(1: string ref_genome, 2: string inPath ,3: string gtffile, 4: string outPath, 5: string alignOpts,6: string workingdir, 7: Authentication auth)throws (1: JnomicsThriftException je),
 		
 		JnomicsThriftJobID callCufflinks( 1: string inPath ,2: string outpath, 3: string ref_gtf, 4: string alignOpts,5: string workingdir, 6: Authentication auth)throws (1: JnomicsThriftException je),

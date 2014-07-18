@@ -17,7 +17,7 @@ import java.util.Properties;
         "There are also a number of utility functions that help with monitoring\n"
 )
 @KbaseScript(prefix = "compute",
-        exportFields = {"bowtie","bwa","tophat","cufflinks","cuffmerge","cuffdiff","cuffcompare","shock_read","shock_write","workspace_upload","shock_batch_write","list_genomes","vcf_merge","list_jobs","job_status","grid_job_status","samtools_snp"})
+        exportFields = {"bowtie","bwa","fastqtoPe","tophat","cufflinks","cuffmerge","cuffdiff","cuffcompare","shock_read","shock_write","workspace_upload","shock_batch_write","list_genomes","vcf_merge","list_jobs","job_status","grid_job_status","samtools_snp"})
 public class Compute implements ClientFunctionHandler {
  
     @Flag(shortForm = "bowtie", longForm = "bowtie", description = "Run Bowtie Aligner",group="Alignment")
@@ -25,6 +25,9 @@ public class Compute implements ClientFunctionHandler {
 
     @Flag(shortForm = "bwa", longForm = "bwa", description = "Run BWA Aligner",group="Alignment")
     public boolean bwa;
+    
+    @Flag(shortForm = "fastqtope", longForm = "fastqtope", description = "Run FastqtoPe",group="Alignment")
+    public boolean fastqtoPe;
     
     @Flag(shortForm = "tophat", longForm = "tophat", description = "Run Tophat Aligner",group="Alignment")
     public boolean tophat;
@@ -81,6 +84,8 @@ public class Compute implements ClientFunctionHandler {
             handlerClass = Bowtie.class;
         }else if(bwa){
             handlerClass = BWA.class;
+        }else if(fastqtoPe){
+        	handlerClass = FastqtoPe.class;
         }else if(tophat){
             handlerClass = Tophat.class;
         }else if(cufflinks){

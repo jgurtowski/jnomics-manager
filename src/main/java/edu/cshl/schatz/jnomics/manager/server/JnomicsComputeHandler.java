@@ -143,6 +143,49 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		}
 		return launchJobAs(username,conf);
 	}
+	
+	public JnomicsThriftJobID fastqtoPe(String file1 ,String file2,String outPath, String workingdir, Authentication auth)throws TException, JnomicsThriftException{	
+		String username;
+		if(null == (username = authenticator.authenticate(auth))){
+			throw new JnomicsThriftException("Permission Denied");
+		}
+		String uuid = UUID.randomUUID().toString();
+		String jobname =username+"-fastqtopege-"+uuid;
+		//String jobname =username+"-tophat-"+inPath.substring(inPath.lastIndexOf('/') + 1).replaceAll("[./,]", "_");
+
+		Configuration conf = null;
+		OutputStream out = null;
+		String jobid = null;	
+
+
+		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
+		builder.setOutputPath(outPath)
+		.setParam("fastq1",file1)
+		.setParam("fastq2",file2)
+		.setJobName(jobname);
+		logger.info("conf properties are set");
+
+		try{
+			conf = builder.getJobConf();
+			out = new FileOutputStream(System.getProperty("user.home")+ "/" + jobname +".xml");
+			conf.writeXml(out);
+			builder.LaunchGridJob(conf);
+			jobid = conf.get("grid_jobId");
+			//scontact = conf.get("grid_session");
+			//sout = new FileOutputStream(System.getProperty("user.home")+ "/" + jobid +".xml");
+			//sout.write(scontact.getBytes(),0,scontact.length());
+		}catch(Exception e){
+			throw new JnomicsThriftException(e.toString());
+		}finally{
+			try {
+				out.close();
+				//	sout.close();
+			} catch (Exception e) {
+				throw new JnomicsThriftException(e.toString());
+			}
+		}
+		return new JnomicsThriftJobID(conf.get("grid_jobId"));	
+	}
 
 	public JnomicsThriftJobID alignTophat(String ref_genome,String inPath ,String gtffile,String outPath, String alignOpts, String workingdir, Authentication auth)throws TException, JnomicsThriftException{	
 		String username;
