@@ -1,0 +1,17 @@
+
+
+
+Have a magellan node (public ip 140.221.67.178) with ports 10000,10001,10003 open
+Told ssh to listen on port 10003 because mshadoop1 cannot ssh
+to magellan nodes on port 22 for some (firewall/unknown) reason.
+Also set 'GatewayPorts yes' in sshd_config
+
+Establish remote
+ssh -p 10003 -R *:10000:localhost:10000 jnomics@140.221.67.178
+ssh -p 10003 -R *:10001:localhost:10001 jnomics@140.221.67.178
+
+Need to reboot the machine to get the ssh to actually listen on 10003
+
+Needed to disable ssl on client and server in jnomics
+Use the nossl branch of jnomics-manager
+
