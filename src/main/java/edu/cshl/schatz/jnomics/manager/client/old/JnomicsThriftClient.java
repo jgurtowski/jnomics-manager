@@ -39,7 +39,9 @@ public class JnomicsThriftClient {
         TSSLTransportFactory.TSSLTransportParameters params =
                 new TSSLTransportFactory.TSSLTransportParameters();
         params.setTrustStore(trustStore,"kbasekeystore");
-        TTransport transport = TSSLTransportFactory.getClientSocket(thriftDataHost,thriftDataPort,10000,params);
+        //TTransport transport = TSSLTransportFactory.getClientSocket(thriftDataHost,thriftDataPort,10000,params);
+        TTransport transport = new TSocket(thriftDataHost, thriftDataPort);
+        transport.open();
 
         TProtocol protocol = new TBinaryProtocol(transport);
         JnomicsData.Client client = new JnomicsData.Client(protocol);
@@ -58,7 +60,9 @@ public class JnomicsThriftClient {
         TSSLTransportFactory.TSSLTransportParameters params =
                 new TSSLTransportFactory.TSSLTransportParameters();
         params.setTrustStore(trustStore,"kbasekeystore");
-        TTransport thriftTransport = TSSLTransportFactory.getClientSocket(thriftComputeHost,thriftComputePort,10000,params);
+        //TTransport thriftTransport = TSSLTransportFactory.getClientSocket(thriftComputeHost,thriftComputePort,10000,params);
+        TTransport thriftTransport = new TSocket(thriftComputeHost, thriftComputePort);
+        thriftTransport.open();
 
         TProtocol protocol = new TBinaryProtocol(thriftTransport);
         JnomicsCompute.Client client = new JnomicsCompute.Client(protocol);

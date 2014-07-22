@@ -57,8 +57,9 @@ public class JnomicsDataServer {
 
         TSSLTransportFactory.TSSLTransportParameters params = new TSSLTransportFactory.TSSLTransportParameters();
         params.setKeyStore(keyStore,"kbasekeystore");
-        TServerTransport serverTransport = TSSLTransportFactory.getServerSocket(port,10000,
-                InetAddress.getByName(host),params);
+        TServerTransport serverTransport = new TServerSocket(port);
+        //TSSLTransportFactory.getServerSocket(port,10000,
+        //      InetAddress.getByName(host),params);
 
         TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
 
