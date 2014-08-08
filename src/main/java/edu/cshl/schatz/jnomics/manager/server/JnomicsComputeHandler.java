@@ -576,7 +576,7 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		String username;
 		String bedtools_binary =  properties.getProperty("hdfs-index-repo")+"/bedtools_2.17.0.tar.gz";
 		String bedtools_script = properties.getProperty("bedtools-script-path");
-		String shock_url = properties.getProperty("shock-url")+"node/"+shockid;
+		String shock_url = properties.getProperty("shock-url")+"/node/"+shockid;
 	
 		if(null == (username = authenticator.authenticate(auth))){
 			throw new JnomicsThriftException("Permission Denied");
