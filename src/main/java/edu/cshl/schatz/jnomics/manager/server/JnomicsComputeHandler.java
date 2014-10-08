@@ -774,11 +774,12 @@ public class JnomicsComputeHandler implements JnomicsCompute.Iface{
 		}
 		logger.info("Getting job status for user "+ username);
 		JnomicsGridJobBuilder builder = new JnomicsGridJobBuilder(getGenericConf());
-		String status = null;
+		String status = "UNDETERMINED";
 		try {
 			status = builder.getjobstatus(jobID.getJob_id());
-		} catch (Exception e) {
-			throw new JnomicsThriftException(e.toString());
+		}catch (Exception e) {
+			e.printStackTrace();
+//			throw new JnomicsThriftException(e.toString());
 		}
 		return status ;
 
